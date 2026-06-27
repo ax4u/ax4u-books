@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/lib/auth";
+import { hasPageImage } from "@/lib/books/images";
 import { getBook } from "@/lib/books/store";
 
 /** Lightweight status endpoint the book page polls during generation. */
@@ -22,7 +23,7 @@ export async function GET(
     title: book.title,
     pageCount: book.options.pageCount,
     pagesReady: book.pages.length,
-    imagesReady: book.pages.filter((p) => p.image).length,
+    imagesReady: book.pages.filter(hasPageImage).length,
     updatedAt: book.updatedAt,
     error: book.error,
   });

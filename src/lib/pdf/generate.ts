@@ -8,6 +8,7 @@ import {
   type PDFImage,
 } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { pageImageDataUrl } from "@/lib/books/assets";
 import type { Book } from "@/lib/books/types";
 
 const PAGE_W = 595; // A4 portrait, points
@@ -51,7 +52,8 @@ export async function generateBookPdf(book: Book): Promise<Uint8Array> {
     color: rgb(0.97, 0.96, 0.99),
   });
 
-  const firstImage = book.pages.find((p) => p.image)?.image ?? null;
+  const firstImagePage = book.pages.find((p) => p.image || p.imagePath);
+  const firstImage = firstImagePage ? await pageImageDataUrl(firstImagePage) : null;
   if (firstImage) {
     const img = await embedImage(doc, firstImage);
     if (img) {
@@ -88,8 +90,9 @@ export async function generateBookPdf(book: Book): Promise<Uint8Array> {
     });
 
     const imgSize = PAGE_W - MARGIN * 2;
-    if (page.image) {
-      const img = await embedImage(doc, page.image);
+    const pageImage = await pageImageDataUrl(page);
+    if (pageImage) {
+      const img = await embedImage(doc, pageImage);
       if (img) {
         drawImageFit(
           pdfPage,

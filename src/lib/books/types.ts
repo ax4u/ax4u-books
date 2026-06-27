@@ -17,8 +17,14 @@ export type BookPage = {
   text: string;
   /** Prompt used to (re)generate this page's illustration. Enables resuming. */
   imagePrompt?: string;
-  /** Illustration as a data URL (data:image/png;base64,...) or a public URL. */
-  image: string | null;
+  /** Legacy/mock illustration data URL. New Supabase-backed books use imagePath. */
+  image?: string | null;
+  /** Private Supabase Storage path for the illustration. */
+  imagePath?: string | null;
+  imageMime?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
+  imageBytes?: number | null;
 };
 
 export type Book = {
@@ -29,6 +35,8 @@ export type Book = {
   options: BookOptions;
   status: BookStatus;
   pages: BookPage[];
+  coverImagePath: string | null;
+  pdfPath: string | null;
   /** Polar checkout id, used to correlate webhooks. */
   checkoutId: string | null;
   error: string | null;
@@ -40,4 +48,17 @@ export type CreateBookInput = {
   userId: string;
   topic: string;
   options: BookOptions;
+};
+
+export type BookSummary = {
+  id: string;
+  userId: string;
+  topic: string;
+  title: string | null;
+  status: BookStatus;
+  coverImagePath: string | null;
+  /** Legacy/mock cover image data URL. */
+  coverImage: string | null;
+  createdAt: string;
+  updatedAt: string;
 };

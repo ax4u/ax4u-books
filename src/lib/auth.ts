@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -20,7 +21,7 @@ function mockUserId(email: string): string {
 }
 
 /** Current signed-in user, or null. Works in both Supabase and mock mode. */
-export async function getSessionUser(): Promise<SessionUser | null> {
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (isSupabaseConfigured) {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase!.auth.getUser();
@@ -33,7 +34,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const email = cookieStore.get(MOCK_COOKIE)?.value;
   if (!email) return null;
   return { id: mockUserId(email), email };
-}
+});
 
 /** Mock-mode sign-in: just remember the email in a cookie. */
 export async function mockSignIn(email: string): Promise<void> {

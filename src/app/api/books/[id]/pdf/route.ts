@@ -1,5 +1,10 @@
 import { getSessionUser } from "@/lib/auth";
-import { getBook } from "@/lib/books/store";
+import {
+  bufferToArrayBuffer,
+  readStoredAsset,
+  storeBookPdf,
+} from "@/lib/books/assets";
+import { getBook, updateBook } from "@/lib/books/store";
 import { generateBookPdf } from "@/lib/pdf/generate";
 
 export async function GET(
@@ -19,15 +24,31 @@ export async function GET(
     return new Response("Book is not ready yet", { status: 409 });
   }
 
-  const pdf = await generateBookPdf(book);
   const filename = `${(book.title || book.topic || "storybook")
     .replace(/[^\p{L}\p{N}_ -]/gu, "")
     .slice(0, 60)
     .trim() || "storybook"}.pdf`;
 
-  return new Response(Buffer.from(pdf), {
+  if (book.pdfPath) {
+    const cached = await readStoredAsset(book.pdfPath);
+    if (cached) return pdfResponse(cached.bytes, filename);
+  }
+
+  const pdf = await generateBookPdf(book);
+  const storedPath = await storeBookPdf(book.id, pdf);
+  if (storedPath) {
+    await updateBook(book.id, { pdfPath: storedPath });
+  }
+
+  return pdfResponse(Buffer.from(pdf), filename);
+}
+
+function pdfResponse(pdf: Buffer, filename: string) {
+  return new Response(bufferToArrayBuffer(pdf), {
     status: 200,
     headers: {
+      "Cache-Control": "private, max-age=300",
+      "Content-Length": String(pdf.byteLength),
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
     },

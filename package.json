@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "migrate": "node scripts/migrate.mjs",
+    "migrate:assets": "node scripts/migrate-assets.mjs",
     "build": "node scripts/migrate.mjs && next build",
     "start": "next start",
     "lint": "eslint",

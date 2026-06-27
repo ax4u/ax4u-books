@@ -1,6 +1,12 @@
 import { getAIProvider } from "./index";
+import { env } from "@/lib/env";
+import {
+  pageImageDataUrl,
+  storePageImage,
+} from "@/lib/books/assets";
+import { hasPageImage } from "@/lib/books/images";
 import { getBook, updateBook } from "@/lib/books/store";
-import type { BookPage } from "@/lib/books/types";
+import type { Book, BookPage } from "@/lib/books/types";
 import { buildConsistentImagePrompt, type ImageReference } from "./types";
 
 /**
@@ -15,9 +21,8 @@ import { buildConsistentImagePrompt, type ImageReference } from "./types";
  * makes it safe to re-trigger (from the webhook, the generate route, or the
  * client's stall-retry) until the book is complete.
  *
- * We intentionally do not batch image generation here. Character continuity is
- * more important than raw speed for a picture book, so each new image receives
- * the first finished image and the previous finished image as visual references.
+ * The first finished image establishes the visual reference; remaining missing
+ * pages are generated with limited concurrency against that reference.
  *
  * Pass `admin: true` when there's no user session (webhook path).
  */
@@ -26,8 +31,9 @@ export async function runGeneration(
   opts: { admin?: boolean } = {},
 ): Promise<void> {
   const admin = opts.admin ?? false;
-  let book = await getBook(bookId, { admin });
-  if (!book) throw new Error(`runGeneration: book ${bookId} not found`);
+  const initialBook = await getBook(bookId, { admin });
+  if (!initialBook) throw new Error(`runGeneration: book ${bookId} not found`);
+  let book = initialBook;
   if (book.status === "completed") return;
 
   const provider = getAIProvider();
@@ -47,6 +53,11 @@ export async function runGeneration(
           pageNumber: i + 1,
         }),
         image: null,
+        imagePath: null,
+        imageMime: null,
+        imageWidth: null,
+        imageHeight: null,
+        imageBytes: null,
       }));
       book = await updateBook(
         bookId,
@@ -57,34 +68,37 @@ export async function runGeneration(
       await updateBook(bookId, { status: "generating", error: null }, { admin });
     }
 
-    // 2. Fill in missing illustrations in order. The first image establishes
-    //    the character reference; later pages get both the first and previous
-    //    images as references so the model has a concrete visual anchor.
+    // 2. Fill in missing illustrations. The first finished image establishes
+    //    the character reference; later pages can be generated in parallel
+    //    against that stable reference instead of waiting on each other.
     const pages = [...book.pages].sort((a, b) => a.index - b.index);
-    let firstReference = pages.find((p) => p.image)?.image ?? null;
-    let previousReference: string | null = null;
+    let firstReference = await firstAvailableReference(pages);
 
-    for (const page of pages) {
-      if (page.image) {
-        previousReference = page.image;
-        continue;
-      }
-
-      const references = buildImageReferences(firstReference, previousReference);
-      const prompt = page.imagePrompt ?? page.text;
-      page.image = await provider.generateImage(
-        prompt,
-        book.options,
-        references,
-      );
-      firstReference ??= page.image;
-      previousReference = page.image;
-      await updateBook(bookId, { pages, status: "generating" }, { admin });
+    const firstPage = pages[0];
+    if (!firstReference && firstPage && !hasPageImage(firstPage)) {
+      firstReference = await generateAndPersistPage({
+        book,
+        page: firstPage,
+        pages,
+        references: [],
+        admin,
+      });
     }
+
+    const missing = pages.filter((page) => !hasPageImage(page));
+    await runInBatches(missing, imageConcurrency(), async (page) => {
+      await generateAndPersistPage({
+        book,
+        page,
+        pages,
+        references: buildImageReferences(firstReference, null),
+        admin,
+      });
+    });
 
     // 3. Mark complete only when every page has an illustration.
     const fresh = await getBook(bookId, { admin });
-    if (fresh && fresh.pages.length > 0 && fresh.pages.every((p) => p.image)) {
+    if (fresh && fresh.pages.length > 0 && fresh.pages.every(hasPageImage)) {
       await updateBook(bookId, { status: "completed" }, { admin });
     }
   } catch (err) {
@@ -92,6 +106,78 @@ export async function runGeneration(
     console.error(`[storybook] generation failed for ${bookId}:`, err);
     await updateBook(bookId, { status: "failed", error: message }, { admin });
     throw err;
+  }
+}
+
+async function generateAndPersistPage({
+  book,
+  page,
+  pages,
+  references,
+  admin,
+}: {
+  book: Book;
+  page: BookPage;
+  pages: BookPage[];
+  references: ImageReference[];
+  admin: boolean;
+}): Promise<string> {
+  const provider = getAIProvider();
+  const prompt = page.imagePrompt ?? page.text;
+  const dataUrl = await provider.generateImage(prompt, book.options, references);
+  const stored = await storePageImage(book.id, page.index, dataUrl);
+
+  if (stored) {
+    page.image = null;
+    page.imagePath = stored.path;
+    page.imageMime = stored.mimeType;
+    page.imageWidth = stored.width;
+    page.imageHeight = stored.height;
+    page.imageBytes = stored.byteSize;
+  } else {
+    page.image = dataUrl;
+    page.imagePath = null;
+    page.imageMime = null;
+    page.imageWidth = null;
+    page.imageHeight = null;
+    page.imageBytes = null;
+  }
+
+  await updateBook(
+    book.id,
+    {
+      pages,
+      status: "generating",
+      coverImagePath: pages.find((p) => p.imagePath)?.imagePath ?? null,
+      pdfPath: null,
+    },
+    { admin },
+  );
+
+  return dataUrl;
+}
+
+async function firstAvailableReference(
+  pages: BookPage[],
+): Promise<string | null> {
+  for (const page of pages) {
+    const dataUrl = await pageImageDataUrl(page);
+    if (dataUrl) return dataUrl;
+  }
+  return null;
+}
+
+function imageConcurrency(): number {
+  return Math.max(1, Math.min(4, Math.floor(env.imageGenerationConcurrency)));
+}
+
+async function runInBatches<T>(
+  items: T[],
+  batchSize: number,
+  worker: (item: T) => Promise<void>,
+) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    await Promise.all(items.slice(i, i + batchSize).map(worker));
   }
 }
 

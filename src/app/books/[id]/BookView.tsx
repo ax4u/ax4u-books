@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Book } from "@/lib/books/types";
+import { hasPageImage, pageImageSrc } from "@/lib/books/images";
 import { statusLabel, statusClass } from "@/app/books/status";
 
 // If a generating book hasn't been updated in this long, the serverless run
@@ -12,7 +13,7 @@ const STALL_MS = 150_000;
 export default function BookView({ book }: { book: Book }) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
-  const imagesReady = book.pages.filter((p) => p.image).length;
+  const imagesReady = book.pages.filter(hasPageImage).length;
   const lastSig = useRef(`${book.status}:${imagesReady}`);
   const lastTrigger = useRef(0);
 
@@ -143,32 +144,45 @@ export default function BookView({ book }: { book: Book }) {
 
       <div className="grid gap-6 sm:grid-cols-2">
         {pages.map((page) => (
-          <div
-            key={page.index}
-            className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800"
-          >
-            <div className="aspect-square bg-zinc-100 dark:bg-zinc-900">
-              {page.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={page.image}
-                  alt={`${page.index + 1}쪽 삽화`}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-zinc-400">
-                  그림 생성 중…
-                </div>
-              )}
-            </div>
-            <div className="p-4">
-              <p className="mb-1 text-xs font-medium text-zinc-400">
-                {page.index + 1}쪽
-              </p>
-              <p className="text-sm leading-relaxed">{page.text}</p>
-            </div>
-          </div>
+          <PageCard key={page.index} bookId={book.id} page={page} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function PageCard({
+  bookId,
+  page,
+}: {
+  bookId: string;
+  page: Book["pages"][number];
+}) {
+  const src = pageImageSrc(bookId, page);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+      <div className="aspect-square bg-zinc-100 dark:bg-zinc-900">
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt={`${page.index + 1}쪽 삽화`}
+            loading={page.index === 0 ? "eager" : "lazy"}
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-zinc-400">
+            그림 생성 중…
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <p className="mb-1 text-xs font-medium text-zinc-400">
+          {page.index + 1}쪽
+        </p>
+        <p className="text-sm leading-relaxed">{page.text}</p>
       </div>
     </div>
   );

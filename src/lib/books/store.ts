@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { Book, CreateBookInput } from "./types";
+import type { Book, BookSummary, CreateBookInput } from "./types";
 
 /**
  * Data access for books. Backed by Supabase when configured, otherwise by an
@@ -33,6 +33,8 @@ function mockCreate(input: CreateBookInput): Book {
     options: input.options,
     status: "draft",
     pages: [],
+    coverImagePath: null,
+    pdfPath: null,
     checkoutId: null,
     error: null,
     createdAt: nowIso(),
@@ -65,6 +67,8 @@ function rowToBook(row: any): Book {
     options: row.options,
     status: row.status,
     pages: row.pages ?? [],
+    coverImagePath: row.cover_image_path ?? null,
+    pdfPath: row.pdf_path ?? null,
     checkoutId: row.checkout_id,
     error: row.error,
     createdAt: row.created_at,
@@ -80,12 +84,45 @@ function bookToRow(patch: Partial<Book>): Record<string, unknown> {
   if (patch.options !== undefined) row.options = patch.options;
   if (patch.status !== undefined) row.status = patch.status;
   if (patch.pages !== undefined) row.pages = patch.pages;
+  if (patch.coverImagePath !== undefined) {
+    row.cover_image_path = patch.coverImagePath;
+  }
+  if (patch.pdfPath !== undefined) row.pdf_path = patch.pdfPath;
   if (patch.checkoutId !== undefined) row.checkout_id = patch.checkoutId;
   if (patch.error !== undefined) row.error = patch.error;
   row.updated_at = nowIso();
   return row;
 }
+
+function rowToSummary(row: any): BookSummary {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    topic: row.topic,
+    title: row.title,
+    status: row.status,
+    coverImagePath: row.cover_image_path ?? null,
+    coverImage: null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+function bookToSummary(book: Book): BookSummary {
+  const cover = book.pages.find((p) => p.imagePath || p.image);
+  return {
+    id: book.id,
+    userId: book.userId,
+    topic: book.topic,
+    title: book.title,
+    status: book.status,
+    coverImagePath: book.coverImagePath ?? cover?.imagePath ?? null,
+    coverImage: cover?.image ?? null,
+    createdAt: book.createdAt,
+    updatedAt: book.updatedAt,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -135,6 +172,26 @@ export async function listBooks(userId: string): Promise<Book[]> {
     .order("created_at", { ascending: false });
   if (error) throw new Error(`listBooks: ${error.message}`);
   return (data ?? []).map(rowToBook);
+}
+
+export async function listBookSummaries(userId: string): Promise<BookSummary[]> {
+  if (!isSupabaseConfigured) {
+    return [...mockBooks.values()]
+      .filter((b) => b.userId === userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(bookToSummary);
+  }
+
+  const supabase = await getClient(false);
+  const { data, error } = await supabase!
+    .from("books")
+    .select(
+      "id,user_id,topic,title,status,cover_image_path,created_at,updated_at",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(`listBookSummaries: ${error.message}`);
+  return (data ?? []).map(rowToSummary);
 }
 
 export async function updateBook(

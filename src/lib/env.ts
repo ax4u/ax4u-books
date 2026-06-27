@@ -43,6 +43,8 @@ export const env = {
   geminiTextModel: read("GEMINI_TEXT_MODEL") ?? "gemini-2.5-flash",
   // Nano Banana 2 = Gemini 3.1 Flash Image.
   geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
+  imageGenerationConcurrency:
+    Number(read("IMAGE_GENERATION_CONCURRENCY") ?? "2") || 2,
 
   // App base URL. Prefer an explicit value, else the stable Vercel production
   // domain, else localhost for dev.

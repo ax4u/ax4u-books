@@ -2,14 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Header from "@/app/components/Header";
 import { getSessionUser } from "@/lib/auth";
-import { listBooks } from "@/lib/books/store";
+import { coverImageSrc } from "@/lib/books/images";
+import { listBookSummaries } from "@/lib/books/store";
 import { statusLabel, statusClass } from "@/app/books/status";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const books = await listBooks(user.id);
+  const books = await listBookSummaries(user.id);
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -38,7 +39,8 @@ export default async function DashboardPage() {
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {books.map((book) => {
-              const cover = book.pages.find((p) => p.image)?.image;
+              const cover =
+                book.coverImage ?? coverImageSrc(book.id, book.coverImagePath);
               return (
                 <li key={book.id}>
                   <Link
@@ -51,6 +53,8 @@ export default async function DashboardPage() {
                         <img
                           src={cover}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       ) : (

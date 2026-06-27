@@ -16,13 +16,20 @@ create table if not exists public.books (
   status      text not null default 'draft'
                 check (status in ('draft','paid','generating','completed','failed')),
   pages       jsonb not null default '[]'::jsonb,
+  cover_image_path text,
+  pdf_path    text,
   checkout_id text,
   error       text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
+alter table public.books add column if not exists cover_image_path text;
+alter table public.books add column if not exists pdf_path text;
+
 create index if not exists books_user_id_idx on public.books (user_id);
+create index if not exists books_user_created_at_idx
+  on public.books (user_id, created_at desc);
 create index if not exists books_checkout_id_idx on public.books (checkout_id);
 
 -- ---------------------------------------------------------------------------

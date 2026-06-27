@@ -104,6 +104,16 @@ GEMINI_IMAGE_MODEL=gemini-3-pro-image-preview   # Nano Banana 2
 
 Model names are env-configurable so you can adjust as the providers update them.
 
+Image generation creates the first illustration as the character/style
+reference, then generates the remaining missing pages with limited concurrency.
+Tune this with:
+
+```
+IMAGE_GENERATION_CONCURRENCY=2
+```
+
+Keep it low if your provider rate-limits image requests.
+
 ### 4. Korean/Japanese PDF text
 
 pdf-lib's built-in fonts are Latin-only. Drop a Unicode `.ttf`/`.otf` (e.g.
@@ -127,8 +137,11 @@ Noto Sans KR) into `public/fonts/` — it's embedded automatically. See
 
 ## Notes & next steps
 
-- Illustrations are stored as base64 data URLs inside the book record. For
-  production, upload them to the `book-assets` Supabase Storage bucket and store
-  URLs instead (keeps DB rows small).
+- New illustrations are stored in the private `book-assets` Supabase Storage
+  bucket; book rows keep only Storage paths and metadata. If you already have
+  legacy rows with base64 data URLs in `books.pages`, migrate them once with:
+  ```bash
+  npm run migrate:assets
+  ```
 - Long generation runs inside `after()`. On serverless, raise `maxDuration` or
   move generation to a queue/background worker for many pages.
