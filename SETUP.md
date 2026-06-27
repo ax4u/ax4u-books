@@ -114,9 +114,12 @@ IMAGE_GENERATION_CONCURRENCY=2
 
 Keep it low if your provider rate-limits image requests.
 
-Generation is queued after payment and processed by `/api/jobs/generate`.
-Production deployments call that route from Vercel Cron every minute. Set a
-strong secret in Vercel:
+Generation is queued after payment. The payment route/webhook starts work with
+`after()` so generation can continue even when the user leaves the page, and
+`/api/jobs/generate` is available as a recovery worker for queued or interrupted
+jobs. This repo's default `vercel.json` schedules the worker once per day so it
+deploys on Vercel Hobby. If your Vercel plan supports more frequent Cron Jobs,
+raise the schedule for faster recovery. Set a strong secret in Vercel:
 
 ```
 CRON_SECRET=...
