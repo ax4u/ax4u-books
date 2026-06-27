@@ -1,4 +1,9 @@
-import { GoogleGenAI, Modality, type Part } from "@google/genai";
+import {
+  GoogleGenAI,
+  Modality,
+  type GoogleGenAIOptions,
+  type Part,
+} from "@google/genai/node";
 import type { BookOptions } from "@/lib/books/types";
 import { env } from "@/lib/env";
 import type { AIProvider, ImageReference, StoryPlan } from "./types";
@@ -9,11 +14,7 @@ let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
   if (!client) {
     if (env.geminiVertexProject && env.geminiVertexLocation) {
-      client = new GoogleGenAI({
-        vertexai: true,
-        project: env.geminiVertexProject,
-        location: env.geminiVertexLocation,
-      });
+      client = new GoogleGenAI(vertexClientOptions());
     } else {
       client = new GoogleGenAI({ apiKey: env.geminiApiKey! });
     }
@@ -25,12 +26,16 @@ export const geminiProvider: AIProvider = {
   name: "gemini",
 
   async generateStory(topic, options): Promise<StoryPlan> {
-    const response = await getClient().models.generateContent({
-      model: env.geminiTextModel,
-      contents: buildStoryPrompt(topic, options),
-      config: { responseMimeType: "application/json" },
-    });
-    return parseStoryPlan(response.text ?? "", options.pageCount);
+    try {
+      const response = await getClient().models.generateContent({
+        model: env.geminiTextModel,
+        contents: buildStoryPrompt(topic, options),
+        config: { responseMimeType: "application/json" },
+      });
+      return parseStoryPlan(response.text ?? "", options.pageCount);
+    } catch (err) {
+      throw decorateVertexAuthError(err);
+    }
   },
 
   async generateImage(
@@ -89,4 +94,71 @@ function buildGeminiImageContents(
   }
 
   return [{ role: "user", parts }];
+}
+
+function vertexClientOptions(): GoogleGenAIOptions {
+  const credentials = vertexServiceAccountCredentials();
+  return {
+    vertexai: true,
+    project: env.geminiVertexProject,
+    location: env.geminiVertexLocation,
+    ...(credentials
+      ? { googleAuthOptions: { credentials } }
+      : {}),
+  };
+}
+
+type VertexCredentials = NonNullable<
+  NonNullable<GoogleGenAIOptions["googleAuthOptions"]>["credentials"]
+>;
+
+function vertexServiceAccountCredentials(): VertexCredentials | undefined {
+  const raw = env.googleVertexServiceAccountJson;
+  if (!raw) return undefined;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      "GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON must be a valid Google Cloud service account JSON object.",
+    );
+  }
+
+  if (!isServiceAccountCredentials(parsed)) {
+    throw new Error(
+      "GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON must contain service account credentials with type, client_email, and private_key.",
+    );
+  }
+
+  return parsed as VertexCredentials;
+}
+
+function isServiceAccountCredentials(value: unknown): value is {
+  type: "service_account";
+  client_email: string;
+  private_key: string;
+} {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    record.type === "service_account" &&
+    typeof record.client_email === "string" &&
+    typeof record.private_key === "string"
+  );
+}
+
+function decorateVertexAuthError(err: unknown): Error {
+  if (
+    env.geminiVertexProject &&
+    env.geminiVertexLocation &&
+    !env.googleVertexServiceAccountJson &&
+    err instanceof Error &&
+    err.message.includes("Could not load the default credentials")
+  ) {
+    return new Error(
+      "Vertex AI credentials are not configured. Set GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON in Vercel Production or provide Google Application Default Credentials for local runs.",
+    );
+  }
+  return err instanceof Error ? err : new Error(String(err));
 }

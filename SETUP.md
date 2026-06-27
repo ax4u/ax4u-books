@@ -102,6 +102,21 @@ GEMINI_TEXT_MODEL=gemini-2.5-flash
 GEMINI_IMAGE_MODEL=gemini-3-pro-image-preview   # Nano Banana 2
 ```
 
+**Google Cloud prepaid credits / Vertex AI** — use this path when you want
+usage billed to a Google Cloud project instead of a Gemini API key:
+```
+AI_PROVIDER=gemini
+GEMINI_VERTEX_PROJECT=your-gcp-project-id
+GEMINI_VERTEX_LOCATION=us-central1
+GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+```
+
+Enable the Vertex AI API in the Google Cloud project and grant the service
+account `Vertex AI User` (`roles/aiplatform.user`). In Vercel, store
+`GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON` as a Production environment variable. The
+JSON can be compacted to one line; keep the `private_key` newlines escaped as
+`\n`.
+
 Model names are env-configurable so you can adjust as the providers update them.
 
 Image generation creates the first illustration as the character/style

@@ -45,6 +45,7 @@ export const env = {
   geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
   geminiVertexProject: read("GEMINI_VERTEX_PROJECT"),
   geminiVertexLocation: read("GEMINI_VERTEX_LOCATION"),
+  googleVertexServiceAccountJson: read("GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON"),
   imageGenerationConcurrency:
     Number(read("IMAGE_GENERATION_CONCURRENCY") ?? "2") || 2,
   cronSecret: read("CRON_SECRET"),
