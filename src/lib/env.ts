@@ -43,6 +43,8 @@ export const env = {
   geminiTextModel: read("GEMINI_TEXT_MODEL") ?? "gemini-2.5-flash",
   // Nano Banana 2 = Gemini 3.1 Flash Image.
   geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
+  geminiVertexProject: read("GEMINI_VERTEX_PROJECT"),
+  geminiVertexLocation: read("GEMINI_VERTEX_LOCATION"),
   imageGenerationConcurrency:
     Number(read("IMAGE_GENERATION_CONCURRENCY") ?? "2") || 2,
   cronSecret: read("CRON_SECRET"),
@@ -70,7 +72,9 @@ export const isPolarConfigured = Boolean(
 );
 
 export const isOpenAiConfigured = Boolean(env.openaiApiKey);
-export const isGeminiConfigured = Boolean(env.geminiApiKey);
+export const isGeminiConfigured = Boolean(
+  env.geminiApiKey || (env.geminiVertexProject && env.geminiVertexLocation),
+);
 
 /** Which AI provider will actually be used, accounting for missing keys. */
 export function resolveAiProvider(): "openai" | "gemini" | "mock" {

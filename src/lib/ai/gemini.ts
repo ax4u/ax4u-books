@@ -7,7 +7,17 @@ import { placeholderIllustration } from "./png";
 
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
-  if (!client) client = new GoogleGenAI({ apiKey: env.geminiApiKey! });
+  if (!client) {
+    if (env.geminiVertexProject && env.geminiVertexLocation) {
+      client = new GoogleGenAI({
+        vertexai: true,
+        project: env.geminiVertexProject,
+        location: env.geminiVertexLocation,
+      });
+    } else {
+      client = new GoogleGenAI({ apiKey: env.geminiApiKey! });
+    }
+  }
   return client;
 }
 
