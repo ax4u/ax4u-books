@@ -1,64 +1,73 @@
-import Image from "next/image";
+import Link from "next/link";
+import Header from "@/app/components/Header";
+import { getSessionUser } from "@/lib/auth";
+import { isAiMock } from "@/lib/env";
+import { isPolarConfigured } from "@/lib/env";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getSessionUser();
+
+  const steps = [
+    { n: "1", t: "주제 입력", d: "“우주를 여행하는 고양이”처럼 원하는 주제를 적어요." },
+    { n: "2", t: "결제", d: "그림책 1권당 1회 결제로 간단하게 시작해요." },
+    { n: "3", t: "AI 생성", d: "글과 그림을 AI가 만들어 한 장씩 채워 나가요." },
+    { n: "4", t: "PDF 다운로드", d: "완성된 그림책을 PDF로 내려받아요." },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex min-h-full flex-1 flex-col">
+      <Header />
+
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
+        <section className="flex flex-col items-center gap-6 py-20 text-center">
+          <span className="rounded-full bg-violet-100 px-4 py-1 text-sm font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+            AI 그림책 생성 서비스
+          </span>
+          <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+            주제만 입력하면, <br className="hidden sm:block" />
+            나만의 그림책이 완성됩니다.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
+            OpenAI · Gemini가 글과 그림을 만들고, 한 권의 그림책 PDF로 묶어
+            드려요. 아이를 위한 동화, 선물용 그림책을 몇 분 만에.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <div className="flex gap-3">
+            <Link
+              href={user ? "/create" : "/login"}
+              className="rounded-full bg-violet-600 px-6 py-3 font-medium text-white hover:bg-violet-700"
+            >
+              그림책 만들기
+            </Link>
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className="rounded-full border border-zinc-300 px-6 py-3 font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            >
+              내 그림책 보기
+            </Link>
+          </div>
+
+          {(isAiMock || !isPolarConfigured) && (
+            <p className="mt-2 max-w-xl rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              데모 모드: 키가 설정되지 않은 서비스는 모의 데이터로 동작합니다.
+              실제 연동은 SETUP.md를 참고하세요.
+            </p>
+          )}
+        </section>
+
+        <section className="grid gap-6 pb-20 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((s) => (
+            <div
+              key={s.n}
+              className="rounded-2xl border border-zinc-200 p-6 dark:border-zinc-800"
+            >
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 font-bold text-white">
+                {s.n}
+              </div>
+              <h3 className="mb-1 font-semibold">{s.t}</h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">{s.d}</p>
+            </div>
+          ))}
+        </section>
       </main>
     </div>
   );
