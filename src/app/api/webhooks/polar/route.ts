@@ -4,6 +4,8 @@ import { env, isPolarConfigured } from "@/lib/env";
 import { getBook, getBookByCheckoutId, updateBook } from "@/lib/books/store";
 import { runGeneration } from "@/lib/ai/storybook";
 
+export const maxDuration = 300;
+
 /**
  * Polar webhook. On a successful one-time payment it marks the corresponding
  * book as paid and kicks off generation in the background via `after()`.

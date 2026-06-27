@@ -22,6 +22,8 @@ export async function GET(
     title: book.title,
     pageCount: book.options.pageCount,
     pagesReady: book.pages.length,
+    imagesReady: book.pages.filter((p) => p.image).length,
+    updatedAt: book.updatedAt,
     error: book.error,
   });
 }

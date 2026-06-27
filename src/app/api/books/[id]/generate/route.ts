@@ -3,6 +3,10 @@ import { getSessionUser } from "@/lib/auth";
 import { getBook, updateBook } from "@/lib/books/store";
 import { runGeneration } from "@/lib/ai/storybook";
 
+// Image generation is slow; give the background work as much time as the plan
+// allows. Generation is resumable, so the client re-triggers if this is hit.
+export const maxDuration = 300;
+
 /**
  * Manual generation trigger. Useful for paid books whose webhook hasn't been
  * received yet (e.g. local Polar testing) or to retry a failed generation.

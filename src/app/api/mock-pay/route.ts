@@ -4,6 +4,8 @@ import { getBook, updateBook } from "@/lib/books/store";
 import { runGeneration } from "@/lib/ai/storybook";
 import { env, isPolarConfigured } from "@/lib/env";
 
+export const maxDuration = 300;
+
 /**
  * Mock checkout used when Polar is not configured. Instantly "pays" for the
  * book and starts generation, then redirects to the book page. Disabled once

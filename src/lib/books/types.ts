@@ -15,6 +15,8 @@ export type BookOptions = {
 export type BookPage = {
   index: number;
   text: string;
+  /** Prompt used to (re)generate this page's illustration. Enables resuming. */
+  imagePrompt?: string;
   /** Illustration as a data URL (data:image/png;base64,...) or a public URL. */
   image: string | null;
 };

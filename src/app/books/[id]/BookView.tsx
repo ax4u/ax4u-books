@@ -5,39 +5,73 @@ import { useRouter } from "next/navigation";
 import type { Book } from "@/lib/books/types";
 import { statusLabel, statusClass } from "@/app/books/status";
 
+// If a generating book hasn't been updated in this long, the serverless run
+// likely timed out — nudge it to resume (generation is resumable).
+const STALL_MS = 150_000;
+
 export default function BookView({ book }: { book: Book }) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
-  const lastSig = useRef(`${book.status}:${book.pages.length}`);
+  const imagesReady = book.pages.filter((p) => p.image).length;
+  const lastSig = useRef(`${book.status}:${imagesReady}`);
+  const lastTrigger = useRef(0);
 
   const active = book.status === "paid" || book.status === "generating";
 
-  // Poll the lightweight status endpoint while generating; when something
-  // changes, pull fresh server-rendered data (including new images).
+  const triggerGeneration = useCallback(async () => {
+    if (Date.now() - lastTrigger.current < STALL_MS) return;
+    lastTrigger.current = Date.now();
+    await fetch(`/api/books/${book.id}/generate`, { method: "POST" }).catch(
+      () => {},
+    );
+  }, [book.id]);
+
+  // Poll status while generating; refresh on progress, and resume if stalled.
   useEffect(() => {
     if (!active) return;
-    const interval = setInterval(async () => {
+    const tick = async () => {
       try {
         const res = await fetch(`/api/books/${book.id}/status`, {
           cache: "no-store",
         });
         if (!res.ok) return;
         const data = await res.json();
-        const sig = `${data.status}:${data.pagesReady}`;
+        const sig = `${data.status}:${data.imagesReady ?? data.pagesReady}`;
         if (sig !== lastSig.current) {
           lastSig.current = sig;
           router.refresh();
         }
+        // Resume a stalled/timed-out run.
+        const stale =
+          data.updatedAt &&
+          Date.now() - new Date(data.updatedAt).getTime() > STALL_MS;
+        const incomplete = (data.imagesReady ?? 0) < data.pageCount;
+        if (
+          incomplete &&
+          (data.status === "paid" || (data.status === "generating" && stale))
+        ) {
+          triggerGeneration();
+        }
       } catch {
         // transient — keep polling
       }
-    }, 2500);
+    };
+    tick();
+    const interval = setInterval(tick, 5000);
     return () => clearInterval(interval);
-  }, [active, book.id, router]);
+  }, [active, book.id, router, triggerGeneration]);
 
-  const startGeneration = useCallback(async () => {
+  // Kick off generation for a freshly paid book.
+  useEffect(() => {
+    if (book.status === "paid" && book.pages.length === 0) {
+      triggerGeneration();
+    }
+  }, [book.status, book.pages.length, triggerGeneration]);
+
+  const manualRetry = useCallback(async () => {
     setStarting(true);
     try {
+      lastTrigger.current = 0; // allow immediate retry
       await fetch(`/api/books/${book.id}/generate`, { method: "POST" });
       router.refresh();
     } finally {
@@ -45,21 +79,8 @@ export default function BookView({ book }: { book: Book }) {
     }
   }, [book.id, router]);
 
-  // If a paid book hasn't started generating yet (e.g. webhook delay), nudge it.
-  // Fire-and-forget so we don't set state synchronously inside the effect.
-  useEffect(() => {
-    if (book.status !== "paid" || book.pages.length > 0) return;
-    let cancelled = false;
-    void (async () => {
-      await fetch(`/api/books/${book.id}/generate`, { method: "POST" });
-      if (!cancelled) router.refresh();
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [book.status, book.pages.length, book.id, router]);
-
   const pages = [...book.pages].sort((a, b) => a.index - b.index);
+  const pct = Math.round((imagesReady / book.options.pageCount) * 100);
 
   return (
     <div>
@@ -79,14 +100,13 @@ export default function BookView({ book }: { book: Book }) {
             AI가 그림책을 만들고 있어요…
           </p>
           <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-            {pages.length} / {book.options.pageCount} 쪽 완성
+            그림 {imagesReady} / {book.options.pageCount} 장 완성
+            {" · "}한 장당 1~2분 정도 걸려요
           </p>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-amber-200 dark:bg-amber-900">
             <div
               className="h-full rounded-full bg-amber-500 transition-all"
-              style={{
-                width: `${Math.round((pages.length / book.options.pageCount) * 100)}%`,
-              }}
+              style={{ width: `${pct}%` }}
             />
           </div>
         </div>
@@ -103,7 +123,7 @@ export default function BookView({ book }: { book: Book }) {
             </p>
           )}
           <button
-            onClick={startGeneration}
+            onClick={manualRetry}
             disabled={starting}
             className="mt-3 rounded-full bg-red-600 px-5 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
           >
