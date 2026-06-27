@@ -19,6 +19,7 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold">내 그림책</h1>
           <Link
             href="/create"
+            prefetch={false}
             className="rounded-full bg-violet-600 px-5 py-2.5 font-medium text-white hover:bg-violet-700"
           >
             새 그림책 만들기
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
             <p className="mb-4 text-zinc-500">아직 만든 그림책이 없어요.</p>
             <Link
               href="/create"
+              prefetch={false}
               className="font-medium text-violet-600 hover:underline"
             >
               첫 그림책 만들러 가기 →

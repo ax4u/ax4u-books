@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Header from "@/app/components/Header";
 import BookView from "./BookView";
 import { getSessionUser } from "@/lib/auth";
+import { stripInlineImagesForClient } from "@/lib/books/images";
 import { getBook } from "@/lib/books/store";
 
 export default async function BookPage({
@@ -21,7 +22,7 @@ export default async function BookPage({
     <div className="flex min-h-full flex-1 flex-col">
       <Header />
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
-        <BookView book={book} />
+        <BookView book={stripInlineImagesForClient(book)} />
       </main>
     </div>
   );

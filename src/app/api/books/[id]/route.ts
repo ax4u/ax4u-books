@@ -72,7 +72,9 @@ export async function DELETE(
     return new Response("Not found", { status: 404 });
   }
 
-  await deleteBookAssets(book);
+  await deleteBookAssets(book).catch((err) => {
+    console.warn(`[books] asset cleanup failed for ${id}:`, err);
+  });
   await deleteBook(id, { userId: user.id });
 
   return Response.json({ ok: true });

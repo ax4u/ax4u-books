@@ -4,6 +4,7 @@ import {
   dataUrlToBuffer,
   readStoredAsset,
 } from "@/lib/books/assets";
+import { persistInlinePageImage } from "@/lib/books/legacy";
 import { getBook } from "@/lib/books/store";
 
 export async function GET(
@@ -44,6 +45,9 @@ export async function GET(
   if (coverPage?.image) {
     const parsed = dataUrlToBuffer(coverPage.image);
     if (!parsed) return new Response("Invalid image", { status: 422 });
+    await persistInlinePageImage(book, coverPage).catch((err) => {
+      console.warn("[books] inline cover migration skipped:", err);
+    });
     return assetResponse(parsed.bytes, parsed.mimeType);
   }
 

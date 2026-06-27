@@ -14,11 +14,16 @@ export default async function Header() {
         <nav className="flex items-center gap-4 text-sm">
           {user ? (
             <>
-              <Link href="/dashboard" className="hover:underline">
+              <Link
+                href="/dashboard"
+                prefetch={false}
+                className="hover:underline"
+              >
                 내 그림책
               </Link>
               <Link
                 href="/create"
+                prefetch={false}
                 className="rounded-full bg-violet-600 px-4 py-1.5 font-medium text-white hover:bg-violet-700"
               >
                 새로 만들기

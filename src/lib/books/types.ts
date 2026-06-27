@@ -19,6 +19,8 @@ export type BookPage = {
   imagePrompt?: string;
   /** Legacy/mock illustration data URL. New Supabase-backed books use imagePath. */
   image?: string | null;
+  /** Lightweight marker for stripped legacy inline images. */
+  imageAvailable?: boolean | null;
   /** Private Supabase Storage path for the illustration. */
   imagePath?: string | null;
   imageMime?: string | null;
@@ -57,6 +59,7 @@ export type BookSummary = {
   title: string | null;
   status: BookStatus;
   coverImagePath: string | null;
+  coverImageAvailable: boolean;
   /** Legacy/mock cover image data URL. */
   coverImage: string | null;
   pageCount: number;

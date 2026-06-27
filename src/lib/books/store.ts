@@ -5,6 +5,14 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { hasPageImage } from "./images";
 import type { Book, BookPage, BookSummary, CreateBookInput } from "./types";
 
+type StoredPageImage = {
+  path: string;
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+};
+
 /**
  * Data access for books. Backed by Supabase when configured, otherwise by an
  * in-memory map (persisted on globalThis so it survives dev hot-reloads).
@@ -95,9 +103,15 @@ function bookToRow(patch: Partial<Book>): Record<string, unknown> {
   return row;
 }
 
-function rowToSummary(row: any): BookSummary {
-  const pages = (row.pages ?? []) as BookPage[];
-  const cover = firstCover(pages);
+function rowToSummary(row: any, pages: BookPage[] | null = null): BookSummary {
+  const pageCount = Number(row.options?.pageCount ?? pages?.length ?? 0);
+  const cover = pages ? firstCover(pages) : undefined;
+  const coverImageAvailable = Boolean(
+    row.cover_image_path ||
+      cover?.imagePath ||
+      cover?.image ||
+      (row.status === "completed" && pageCount > 0),
+  );
   return {
     id: row.id,
     userId: row.user_id,
@@ -105,9 +119,13 @@ function rowToSummary(row: any): BookSummary {
     title: row.title,
     status: row.status,
     coverImagePath: row.cover_image_path ?? cover?.imagePath ?? null,
-    coverImage: cover?.image ?? null,
-    pageCount: Number(row.options?.pageCount ?? pages.length ?? 0),
-    imagesReady: pages.filter(hasPageImage).length,
+    coverImageAvailable,
+    coverImage: null,
+    pageCount,
+    imagesReady:
+      row.status === "completed" && !pages
+        ? pageCount
+        : (pages ?? []).filter(hasPageImage).length,
     error: row.error ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -124,7 +142,8 @@ function bookToSummary(book: Book): BookSummary {
     title: book.title,
     status: book.status,
     coverImagePath: book.coverImagePath ?? cover?.imagePath ?? null,
-    coverImage: cover?.image ?? null,
+    coverImageAvailable: Boolean(cover),
+    coverImage: null,
     pageCount: book.options.pageCount,
     imagesReady: book.pages.filter(hasPageImage).length,
     error: book.error,
@@ -201,12 +220,33 @@ export async function listBookSummaries(userId: string): Promise<BookSummary[]> 
   const { data, error } = await supabase!
     .from("books")
     .select(
-      "id,user_id,topic,title,options,status,pages,cover_image_path,error,created_at,updated_at",
+      "id,user_id,topic,title,options,status,cover_image_path,error,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw new Error(`listBookSummaries: ${error.message}`);
-  return (data ?? []).map(rowToSummary);
+
+  const rows = data ?? [];
+  const activeIds = rows
+    .filter((row) => row.status !== "completed")
+    .map((row) => row.id);
+  const activePages = new Map<string, BookPage[]>();
+
+  if (activeIds.length > 0) {
+    const { data: pageRows, error: pageError } = await supabase!
+      .from("books")
+      .select("id,pages")
+      .eq("user_id", userId)
+      .in("id", activeIds);
+    if (pageError) {
+      throw new Error(`listBookSummaries pages: ${pageError.message}`);
+    }
+    for (const row of pageRows ?? []) {
+      activePages.set(row.id, (row.pages ?? []) as BookPage[]);
+    }
+  }
+
+  return rows.map((row) => rowToSummary(row, activePages.get(row.id) ?? null));
 }
 
 export async function updateBook(
@@ -247,6 +287,52 @@ export async function deleteBook(
   if (!opts.admin && opts.userId) query = query.eq("user_id", opts.userId);
   const { error } = await query;
   if (error) throw new Error(`deleteBook: ${error.message}`);
+}
+
+export async function markBookPageImageStored(
+  bookId: string,
+  pageIndex: number,
+  image: StoredPageImage,
+  opts: { admin?: boolean } = {},
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const existing = mockBooks.get(bookId);
+    if (!existing) return;
+    const firstImage = firstCover(existing.pages);
+    mockBooks.set(bookId, {
+      ...existing,
+      coverImagePath:
+        existing.coverImagePath ??
+        (firstImage?.index === pageIndex ? image.path : null),
+      pages: existing.pages.map((page) =>
+        page.index === pageIndex
+          ? {
+              ...page,
+              image: null,
+              imagePath: image.path,
+              imageMime: image.mimeType,
+              imageWidth: image.width,
+              imageHeight: image.height,
+              imageBytes: image.byteSize,
+            }
+          : page,
+      ),
+      updatedAt: nowIso(),
+    });
+    return;
+  }
+
+  const supabase = await getClient(opts.admin ?? false);
+  const { error } = await supabase!.rpc("mark_book_page_image_stored", {
+    p_book_id: bookId,
+    p_page_index: pageIndex,
+    p_image_path: image.path,
+    p_image_mime: image.mimeType,
+    p_image_width: image.width,
+    p_image_height: image.height,
+    p_image_bytes: image.byteSize,
+  });
+  if (error) throw new Error(`markBookPageImageStored: ${error.message}`);
 }
 
 /** Find a book by its Polar checkout id (used by the webhook). */

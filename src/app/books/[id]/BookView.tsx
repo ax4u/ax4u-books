@@ -16,6 +16,7 @@ export default function BookView({ book }: { book: Book }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pageBusy, setPageBusy] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState(book.title ?? "");
   const [draftPages, setDraftPages] = useState<Book["pages"]>(() =>
     [...book.pages].sort((a, b) => a.index - b.index),
@@ -79,10 +80,16 @@ export default function BookView({ book }: { book: Book }) {
 
   const manualRetry = useCallback(async () => {
     setStarting(true);
+    setError(null);
     try {
       lastTrigger.current = 0; // allow immediate retry
-      await fetch(`/api/books/${book.id}/generate`, { method: "POST" });
+      const res = await fetch(`/api/books/${book.id}/generate`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error(await res.text());
       router.refresh();
+    } catch (err) {
+      setError(errorMessage(err, "다시 시도 요청에 실패했어요."));
     } finally {
       setStarting(false);
     }
@@ -90,6 +97,7 @@ export default function BookView({ book }: { book: Book }) {
 
   const saveEdits = useCallback(async () => {
     setSaving(true);
+    setError(null);
     try {
       const res = await fetch(`/api/books/${book.id}`, {
         method: "PATCH",
@@ -106,6 +114,8 @@ export default function BookView({ book }: { book: Book }) {
       if (!res.ok) throw new Error(await res.text());
       setEditing(false);
       router.refresh();
+    } catch (err) {
+      setError(errorMessage(err, "수정 저장에 실패했어요."));
     } finally {
       setSaving(false);
     }
@@ -115,15 +125,21 @@ export default function BookView({ book }: { book: Book }) {
     if (!window.confirm("이 그림책을 삭제할까요? 생성된 이미지와 PDF도 삭제됩니다.")) {
       return;
     }
-    const res = await fetch(`/api/books/${book.id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text());
-    router.push("/dashboard");
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch(`/api/books/${book.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await res.text());
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(errorMessage(err, "그림책 삭제에 실패했어요."));
+    }
   }, [book.id, router]);
 
   const regeneratePage = useCallback(
     async (pageIndex: number) => {
       setPageBusy(pageIndex);
+      setError(null);
       try {
         const res = await fetch(
           `/api/books/${book.id}/pages/${pageIndex}/regenerate`,
@@ -131,6 +147,8 @@ export default function BookView({ book }: { book: Book }) {
         );
         if (!res.ok) throw new Error(await res.text());
         router.refresh();
+      } catch (err) {
+        setError(errorMessage(err, "그림 재생성 요청에 실패했어요."));
       } finally {
         setPageBusy(null);
       }
@@ -156,6 +174,12 @@ export default function BookView({ book }: { book: Book }) {
 
   return (
     <div>
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           {editing ? (
@@ -378,4 +402,11 @@ function PageCard({
       </div>
     </div>
   );
+}
+
+function errorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message.trim()) {
+    return `${fallback} ${err.message}`;
+  }
+  return fallback;
 }

@@ -10,6 +10,7 @@ import { statusClass, statusLabel } from "@/app/books/status";
 export default function DashboardBooks({ books }: { books: BookSummary[] }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const recent = books
     .filter((book) => book.status === "completed" || book.status === "failed")
@@ -17,9 +18,15 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
 
   async function resume(bookId: string) {
     setBusyId(bookId);
+    setError(null);
     try {
-      await fetch(`/api/books/${bookId}/generate`, { method: "POST" });
+      const res = await fetch(`/api/books/${bookId}/generate`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error(await res.text());
       router.refresh();
+    } catch (err) {
+      setError(errorMessage(err, "생성 재개 요청에 실패했어요."));
     } finally {
       setBusyId(null);
     }
@@ -31,10 +38,13 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
     }
 
     setBusyId(bookId);
+    setError(null);
     try {
       const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       router.refresh();
+    } catch (err) {
+      setError(errorMessage(err, "그림책 삭제에 실패했어요."));
     } finally {
       setBusyId(null);
     }
@@ -42,13 +52,23 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
       {recent.length > 0 && (
         <section className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
           <h2 className="mb-3 text-sm font-semibold text-zinc-500">최근 알림</h2>
           <ul className="space-y-2 text-sm">
             {recent.map((book) => (
               <li key={book.id} className="flex items-center justify-between gap-3">
-                <Link href={`/books/${book.id}`} className="min-w-0 hover:underline">
+                <Link
+                  href={`/books/${book.id}`}
+                  prefetch={false}
+                  className="min-w-0 hover:underline"
+                >
                   <span className="line-clamp-1">
                     {book.title || book.topic}
                   </span>
@@ -67,7 +87,12 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {books.map((book) => {
           const cover =
-            book.coverImage ?? coverImageSrc(book.id, book.coverImagePath);
+            book.coverImage ??
+            coverImageSrc(
+              book.id,
+              book.coverImagePath,
+              book.coverImageAvailable,
+            );
           const pct =
             book.pageCount > 0
               ? Math.round((book.imagesReady / book.pageCount) * 100)
@@ -82,7 +107,11 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
               key={book.id}
               className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800"
             >
-              <Link href={`/books/${book.id}`} className="block">
+              <Link
+                href={`/books/${book.id}`}
+                prefetch={false}
+                className="block"
+              >
                 <div className="aspect-square bg-zinc-100 dark:bg-zinc-900">
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -159,4 +188,11 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
       </ul>
     </div>
   );
+}
+
+function errorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message.trim()) {
+    return `${fallback} ${err.message}`;
+  }
+  return fallback;
 }
