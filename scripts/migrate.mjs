@@ -32,8 +32,22 @@ const tableSql = idx === -1 ? sql : sql.slice(0, idx);
 const storageSql = idx === -1 ? "" : sql.slice(idx);
 
 const { default: pg } = await import("pg");
+
+// Supabase's connection string includes `sslmode=require`, which pg lets take
+// precedence over the `ssl` option (so it would verify the self-signed chain).
+// Strip it and force a non-verifying TLS connection instead.
+let connString = conn;
+try {
+  const u = new URL(conn);
+  u.searchParams.delete("sslmode");
+  u.searchParams.delete("ssl");
+  connString = u.toString();
+} catch {
+  // not a URL — use as-is
+}
+
 const client = new pg.Client({
-  connectionString: conn,
+  connectionString: connString,
   ssl: { rejectUnauthorized: false },
 });
 
