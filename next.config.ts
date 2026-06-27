@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: "/workspaces/ax4u-books",
+    // Pin the workspace root to this project directory so it resolves correctly
+    // in any environment (local, CI, Vercel) instead of a hardcoded path.
+    root: import.meta.dirname,
   },
 };
 
