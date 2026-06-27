@@ -13,10 +13,17 @@ function read(name: string): string | undefined {
 }
 
 export const env = {
-  // Supabase
-  supabaseUrl: read("NEXT_PUBLIC_SUPABASE_URL"),
-  supabaseAnonKey: read("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-  supabaseServiceRoleKey: read("SUPABASE_SERVICE_ROLE_KEY"),
+  // Supabase. Supabase's newer API keys are "publishable"/"secret"; the Vercel
+  // integration provides both those and the legacy anon/service_role names, so
+  // we accept whichever is present.
+  supabaseUrl: read("NEXT_PUBLIC_SUPABASE_URL") ?? read("SUPABASE_URL"),
+  supabaseAnonKey:
+    read("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
+    read("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") ??
+    read("SUPABASE_ANON_KEY") ??
+    read("SUPABASE_PUBLISHABLE_KEY"),
+  supabaseServiceRoleKey:
+    read("SUPABASE_SERVICE_ROLE_KEY") ?? read("SUPABASE_SECRET_KEY"),
 
   // Polar
   polarAccessToken: read("POLAR_ACCESS_TOKEN"),
@@ -31,10 +38,17 @@ export const env = {
   openaiImageModel: read("OPENAI_IMAGE_MODEL") ?? "gpt-image-2",
   geminiApiKey: read("GEMINI_API_KEY"),
   geminiTextModel: read("GEMINI_TEXT_MODEL") ?? "gemini-2.5-flash",
-  geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3-pro-image-preview",
+  // Nano Banana 2 = Gemini 3.1 Flash Image.
+  geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
 
-  // App
-  appUrl: read("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000",
+  // App base URL. Prefer an explicit value, else the stable Vercel production
+  // domain, else localhost for dev.
+  appUrl:
+    read("NEXT_PUBLIC_APP_URL") ??
+    (read("VERCEL_PROJECT_PRODUCTION_URL")
+      ? `https://${read("VERCEL_PROJECT_PRODUCTION_URL")}`
+      : undefined) ??
+    "http://localhost:3000",
 } as const;
 
 export const isSupabaseConfigured = Boolean(

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "migrate": "node scripts/migrate.mjs",
+    "build": "node scripts/migrate.mjs && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -14,9 +15,11 @@
     "@polar-sh/sdk": "^0.48.1",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
+    "@vercel/analytics": "^2.0.1",
     "next": "16.2.9",
     "openai": "^6.45.0",
     "pdf-lib": "^1.17.1",
+    "pg": "^8.22.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "zod": "^4.4.3"
@@ -25,6 +28,7 @@
     "@tailwindcss/oxide-linux-x64-gnu": "^4.3.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
