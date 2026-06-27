@@ -50,15 +50,38 @@ renamed `middleware` → `proxy`).
 2. Create a **Product** (one-time price) and copy its ID → `POLAR_PRODUCT_ID`.
 3. Create an **Organization Access Token** → `POLAR_ACCESS_TOKEN`.
 4. Set `POLAR_SERVER=sandbox` (switch to `production` when ready).
-5. Create a **Webhook**:
+5. For local webhook testing, use the Polar CLI:
+   ```bash
+   npm run polar:install   # installs the official `polar` binary
+   npm run polar:login     # choose Sandbox first
+   npm run dev
+   npm run polar:listen
+   ```
+   `polar:listen` forwards events to
+   `http://localhost:3000/api/webhooks/polar` by default. If your app runs
+   somewhere else, set `POLAR_FORWARD_URL` first:
+   ```bash
+   POLAR_FORWARD_URL=http://localhost:3001/api/webhooks/polar npm run polar:listen
+   ```
+   When `polar:listen` connects, it prints a `Secret`. Copy that value into
+   `.env.local` as `POLAR_WEBHOOK_SECRET`, then restart `npm run dev`. If you
+   use both a dashboard webhook and CLI listen, comma-separate both secrets:
+   `POLAR_WEBHOOK_SECRET=dashboard_secret,cli_listen_secret`.
+6. For production or preview deployments, create a **Webhook** in the Polar
+   dashboard:
    - URL: `https://YOUR_DOMAIN/api/webhooks/polar`
    - Secret → `POLAR_WEBHOOK_SECRET`
-   - Events: at least `order.paid` (also handles `checkout.updated`).
+   - Events: `order.paid`, `checkout.updated`, and `order.created`
 
 Flow: creating a book opens a Polar checkout with the `bookId` in metadata. On
-`order.paid` the webhook marks the book paid and starts generation via `after()`.
-The book page also has a manual **생성 시작/다시 시도** button as a fallback if the
-webhook is delayed (handy for local testing without a public URL/tunnel).
+`order.paid` (or a successful `checkout.updated`) the webhook marks the book
+paid and starts generation via `after()`. The book page also has a manual
+**생성 시작/다시 시도** button as a fallback if the webhook is delayed.
+
+The npm scripts above mirror the Polar CLI documented at
+https://github.com/polarsource/cli. The official install script installs a
+global `polar` binary and resets the local Polar token cache, so rerun
+`npm run polar:login` if needed after installing/updating.
 
 ### 3. AI provider (text + images)
 

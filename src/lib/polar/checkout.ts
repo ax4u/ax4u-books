@@ -20,10 +20,16 @@ export async function createBookCheckout(
     return { url: `${env.appUrl}/api/mock-pay?bookId=${book.id}` };
   }
 
+  const successUrl = new URL(`/books/${book.id}`, env.appUrl);
+  successUrl.searchParams.set("paid", "1");
+  successUrl.searchParams.set("checkout_id", "{CHECKOUT_ID}");
+
   const checkout = await polar.checkouts.create({
     products: [env.polarProductId!],
-    successUrl: `${env.appUrl}/books/${book.id}?paid=1`,
+    successUrl: successUrl.toString(),
+    returnUrl: `${env.appUrl}/create`,
     customerEmail: user.email,
+    externalCustomerId: user.id,
     metadata: { bookId: book.id, userId: user.id },
   });
 

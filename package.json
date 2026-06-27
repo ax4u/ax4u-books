@@ -7,7 +7,11 @@
     "migrate": "node scripts/migrate.mjs",
     "build": "node scripts/migrate.mjs && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "polar:install": "curl -fsSL https://raw.githubusercontent.com/polarsource/cli/main/install.sh | bash",
+    "polar:login": "polar login",
+    "polar:logout": "polar logout",
+    "polar:listen": "polar listen ${POLAR_FORWARD_URL:-http://localhost:3000/api/webhooks/polar}"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
