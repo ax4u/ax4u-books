@@ -44,10 +44,6 @@ export const env = {
   // Nano Banana 2 = Gemini 3.1 Flash Image.
   geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
 
-  // How many illustrations to generate in parallel (image models are slow, so
-  // parallelism is the main speed lever). Keep modest to avoid rate limits.
-  imageConcurrency: Number(read("IMAGE_CONCURRENCY") ?? "4"),
-
   // App base URL. Prefer an explicit value, else the stable Vercel production
   // domain, else localhost for dev.
   appUrl:

@@ -1,8 +1,8 @@
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import type { BookOptions } from "@/lib/books/types";
 import { env } from "@/lib/env";
-import type { AIProvider, StoryPlan } from "./types";
-import { buildStoryPrompt, parseStoryPlan } from "./types";
+import type { AIProvider, ImageReference, StoryPlan } from "./types";
+import { buildStoryPrompt, parseDataUrl, parseStoryPlan } from "./types";
 import { placeholderIllustration } from "./png";
 
 let client: OpenAI | null = null;
@@ -31,18 +31,33 @@ export const openaiProvider: AIProvider = {
     return parseStoryPlan(raw, options.pageCount);
   },
 
-  async generateImage(prompt: string, _options: BookOptions): Promise<string> {
+  async generateImage(
+    prompt: string,
+    _options: BookOptions,
+    references: ImageReference[] = [],
+  ): Promise<string> {
     void _options;
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const result = await getClient().images.generate({
-          model: env.openaiImageModel, // gpt-image-2
-          prompt,
-          size: env.openaiImageSize as "1024x1024",
-          quality: env.openaiImageQuality as "medium",
-          n: 1,
-        });
+        const result =
+          references.length > 0
+            ? await getClient().images.edit({
+                model: env.openaiImageModel, // gpt-image-2
+                image: await Promise.all(references.map(referenceToFile)),
+                prompt: withReferenceInstruction(prompt, references),
+                input_fidelity: "high",
+                size: env.openaiImageSize as "1024x1024",
+                quality: env.openaiImageQuality as "medium",
+                n: 1,
+              })
+            : await getClient().images.generate({
+                model: env.openaiImageModel, // gpt-image-2
+                prompt,
+                size: env.openaiImageSize as "1024x1024",
+                quality: env.openaiImageQuality as "medium",
+                n: 1,
+              });
         const b64 = result.data?.[0]?.b64_json;
         if (b64) return `data:image/png;base64,${b64}`;
         throw new Error("OpenAI image: no b64_json returned");
@@ -63,3 +78,30 @@ export const openaiProvider: AIProvider = {
     return `data:image/png;base64,${png.toString("base64")}`;
   },
 };
+
+async function referenceToFile(reference: ImageReference) {
+  const parsed = parseDataUrl(reference.dataUrl);
+  if (!parsed) throw new Error(`Invalid image reference: ${reference.label}`);
+  const ext = parsed.mimeType.includes("jpeg")
+    ? "jpg"
+    : parsed.mimeType.split("/")[1] || "png";
+  return toFile(
+    Buffer.from(parsed.base64, "base64"),
+    `${reference.label.replace(/[^a-z0-9_-]+/gi, "-")}.${ext}`,
+    { type: parsed.mimeType },
+  );
+}
+
+function withReferenceInstruction(
+  prompt: string,
+  references: ImageReference[],
+): string {
+  const labels = references.map((ref) => ref.label).join(", ");
+  return [
+    prompt,
+    ``,
+    `REFERENCE IMAGES PROVIDED: ${labels}.`,
+    `Use these images only to preserve recurring character identity, exact outfit, proportions, palette, and illustration style.`,
+    `Create a new composition for the current page; do not copy the previous page layout.`,
+  ].join("\n");
+}

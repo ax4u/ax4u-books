@@ -22,7 +22,14 @@ export const mockProvider: AIProvider = {
         imagePrompt: `${options.style} children's book illustration, page ${n}, scene about ${topic}, warm and friendly, consistent character`,
       };
     });
-    return { title: `${topic}`, pages };
+    return {
+      title: `${topic}`,
+      characterSheet: [
+        `Recurring protagonist: one small friendly childlike hero, same species, same round face, same warm expression, same simple outfit, same color palette on every page.`,
+        `Art direction: ${options.style}, soft children's picture book look.`,
+      ].join(" "),
+      pages,
+    };
   },
 
   async generateImage(prompt: string, _options: BookOptions): Promise<string> {

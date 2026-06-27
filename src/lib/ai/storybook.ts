@@ -1,19 +1,23 @@
 import { getAIProvider } from "./index";
 import { getBook, updateBook } from "@/lib/books/store";
-import { env } from "@/lib/env";
 import type { BookPage } from "@/lib/books/types";
+import { buildConsistentImagePrompt, type ImageReference } from "./types";
 
 /**
  * Generation pipeline for one book — designed to be **resumable**.
  *
- * Image models can be slow (gpt-image-2 ≈ 100s/image), so a multi-page book
- * easily exceeds a serverless function's time limit. To cope, this function:
+ * Image models can be slow, so a multi-page book can exceed a serverless
+ * function's time limit. To cope, this function:
  *   1. Plans the story ONCE and persists every page's text + image prompt.
- *   2. Fills in missing illustrations one at a time, saving after each.
+ *   2. Fills in missing illustrations in page order, saving after each.
  * If the invocation is killed mid-way, the book keeps its finished pages and a
  * later call simply continues with the pages that still need an image. This
  * makes it safe to re-trigger (from the webhook, the generate route, or the
  * client's stall-retry) until the book is complete.
+ *
+ * We intentionally do not batch image generation here. Character continuity is
+ * more important than raw speed for a picture book, so each new image receives
+ * the first finished image and the previous finished image as visual references.
  *
  * Pass `admin: true` when there's no user session (webhook path).
  */
@@ -36,7 +40,12 @@ export async function runGeneration(
       const pages: BookPage[] = plan.pages.map((p, i) => ({
         index: i,
         text: p.text,
-        imagePrompt: p.imagePrompt,
+        imagePrompt: buildConsistentImagePrompt({
+          characterSheet: plan.characterSheet,
+          pagePrompt: p.imagePrompt,
+          options: book!.options,
+          pageNumber: i + 1,
+        }),
         image: null,
       }));
       book = await updateBook(
@@ -48,22 +57,28 @@ export async function runGeneration(
       await updateBook(bookId, { status: "generating", error: null }, { admin });
     }
 
-    // 2. Fill in missing illustrations in parallel batches. Image models are
-    //    slow (~100s each), so generating a batch concurrently turns an N×100s
-    //    job into ~ceil(N/concurrency)×100s. We save after each batch so the
-    //    work survives a timeout and can resume.
+    // 2. Fill in missing illustrations in order. The first image establishes
+    //    the character reference; later pages get both the first and previous
+    //    images as references so the model has a concrete visual anchor.
     const pages = [...book.pages].sort((a, b) => a.index - b.index);
-    const missing = pages.filter((p) => !p.image);
-    const concurrency = Math.max(1, env.imageConcurrency || 4);
+    let firstReference = pages.find((p) => p.image)?.image ?? null;
+    let previousReference: string | null = null;
 
-    for (let i = 0; i < missing.length; i += concurrency) {
-      const batch = missing.slice(i, i + concurrency);
-      await Promise.all(
-        batch.map(async (page) => {
-          const prompt = page.imagePrompt ?? page.text;
-          page.image = await provider.generateImage(prompt, book!.options);
-        }),
+    for (const page of pages) {
+      if (page.image) {
+        previousReference = page.image;
+        continue;
+      }
+
+      const references = buildImageReferences(firstReference, previousReference);
+      const prompt = page.imagePrompt ?? page.text;
+      page.image = await provider.generateImage(
+        prompt,
+        book.options,
+        references,
       );
+      firstReference ??= page.image;
+      previousReference = page.image;
       await updateBook(bookId, { pages, status: "generating" }, { admin });
     }
 
@@ -78,4 +93,21 @@ export async function runGeneration(
     await updateBook(bookId, { status: "failed", error: message }, { admin });
     throw err;
   }
+}
+
+function buildImageReferences(
+  firstReference: string | null,
+  previousReference: string | null,
+): ImageReference[] {
+  const references: ImageReference[] = [];
+  if (firstReference) {
+    references.push({ dataUrl: firstReference, label: "first page reference" });
+  }
+  if (previousReference && previousReference !== firstReference) {
+    references.push({
+      dataUrl: previousReference,
+      label: "previous page reference",
+    });
+  }
+  return references;
 }
