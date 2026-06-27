@@ -59,6 +59,32 @@ export type BookSummary = {
   coverImagePath: string | null;
   /** Legacy/mock cover image data URL. */
   coverImage: string | null;
+  pageCount: number;
+  imagesReady: number;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GenerationJobType = "book" | "page";
+export type GenerationJobStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed";
+
+export type GenerationJob = {
+  id: string;
+  bookId: string;
+  userId: string;
+  type: GenerationJobType;
+  pageIndex: number | null;
+  status: GenerationJobStatus;
+  attempts: number;
+  maxAttempts: number;
+  nextRunAt: string;
+  lockedAt: string | null;
+  lastError: string | null;
   createdAt: string;
   updatedAt: string;
 };

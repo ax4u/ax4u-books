@@ -5,21 +5,18 @@ import {
   enqueueGenerationJob,
   processGenerationJobs,
 } from "@/lib/jobs/generation";
-import { hasPageImage } from "@/lib/books/images";
 
-// Image generation is slow; give the background work as much time as the plan
-// allows. Generation is resumable, so the client re-triggers if this is hit.
 export const maxDuration = 300;
 
-/**
- * Manual generation trigger. Useful for paid books whose webhook hasn't been
- * received yet (e.g. local Polar testing) or to retry a failed generation.
- */
 export async function POST(
   _request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string; index: string }> },
 ) {
-  const { id } = await ctx.params;
+  const { id, index } = await ctx.params;
+  const pageIndex = Number(index);
+  if (!Number.isInteger(pageIndex) || pageIndex < 0) {
+    return new Response("Invalid page index", { status: 400 });
+  }
 
   const user = await getSessionUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
@@ -31,16 +28,18 @@ export async function POST(
   if (book.status === "draft") {
     return new Response("Payment required", { status: 402 });
   }
-  if (book.status === "completed" && book.pages.every(hasPageImage)) {
-    return Response.json({ status: book.status });
+  if (!book.pages.some((page) => page.index === pageIndex)) {
+    return new Response("Page not found", { status: 404 });
   }
 
-  await updateBook(id, { status: "paid", error: null });
+  await updateBook(id, { status: "generating", error: null, pdfPath: null });
   await enqueueGenerationJob({
     bookId: id,
     userId: user.id,
-    type: "book",
+    type: "page",
+    pageIndex,
   });
   after(() => processGenerationJobs({ limit: 1 }));
-  return Response.json({ status: "generating" });
+
+  return Response.json({ ok: true, status: "generating" });
 }

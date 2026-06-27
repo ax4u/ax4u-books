@@ -1,7 +1,10 @@
 import { after, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getBook, updateBook } from "@/lib/books/store";
-import { runGeneration } from "@/lib/ai/storybook";
+import {
+  enqueueGenerationJob,
+  processGenerationJobs,
+} from "@/lib/jobs/generation";
 import { env, isPolarConfigured } from "@/lib/env";
 
 export const maxDuration = 300;
@@ -33,7 +36,12 @@ export async function GET(request: Request) {
 
   if (book.status === "draft") {
     await updateBook(bookId, { status: "paid" });
-    after(() => runGeneration(bookId));
+    await enqueueGenerationJob({
+      bookId,
+      userId: user.id,
+      type: "book",
+    });
+    after(() => processGenerationJobs({ limit: 1 }));
   }
 
   return NextResponse.redirect(`${env.appUrl}/books/${bookId}?paid=1`);

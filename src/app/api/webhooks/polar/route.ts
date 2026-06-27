@@ -2,7 +2,10 @@ import { after } from "next/server";
 import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
 import { env, isPolarConfigured } from "@/lib/env";
 import { getBook, getBookByCheckoutId, updateBook } from "@/lib/books/store";
-import { runGeneration } from "@/lib/ai/storybook";
+import {
+  enqueueGenerationJob,
+  processGenerationJobs,
+} from "@/lib/jobs/generation";
 
 export const maxDuration = 300;
 
@@ -133,7 +136,12 @@ async function confirmPaidBook({
   }
 
   await updateBook(book.id, { status: "paid", checkoutId }, { admin: true });
-  after(() => runGeneration(book.id, { admin: true }));
+  await enqueueGenerationJob({
+    bookId: book.id,
+    userId: book.userId,
+    type: "book",
+  });
+  after(() => processGenerationJobs({ limit: 1 }));
 
   console.log(
     JSON.stringify({

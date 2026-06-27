@@ -45,6 +45,7 @@ export const env = {
   geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
   imageGenerationConcurrency:
     Number(read("IMAGE_GENERATION_CONCURRENCY") ?? "2") || 2,
+  cronSecret: read("CRON_SECRET"),
 
   // App base URL. Prefer an explicit value, else the stable Vercel production
   // domain, else localhost for dev.

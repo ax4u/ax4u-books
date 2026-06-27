@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { Book, BookSummary, CreateBookInput } from "./types";
+import { hasPageImage } from "./images";
+import type { Book, BookPage, BookSummary, CreateBookInput } from "./types";
 
 /**
  * Data access for books. Backed by Supabase when configured, otherwise by an
@@ -95,14 +96,19 @@ function bookToRow(patch: Partial<Book>): Record<string, unknown> {
 }
 
 function rowToSummary(row: any): BookSummary {
+  const pages = (row.pages ?? []) as BookPage[];
+  const cover = firstCover(pages);
   return {
     id: row.id,
     userId: row.user_id,
     topic: row.topic,
     title: row.title,
     status: row.status,
-    coverImagePath: row.cover_image_path ?? null,
-    coverImage: null,
+    coverImagePath: row.cover_image_path ?? cover?.imagePath ?? null,
+    coverImage: cover?.image ?? null,
+    pageCount: Number(row.options?.pageCount ?? pages.length ?? 0),
+    imagesReady: pages.filter(hasPageImage).length,
+    error: row.error ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -110,7 +116,7 @@ function rowToSummary(row: any): BookSummary {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 function bookToSummary(book: Book): BookSummary {
-  const cover = book.pages.find((p) => p.imagePath || p.image);
+  const cover = firstCover(book.pages);
   return {
     id: book.id,
     userId: book.userId,
@@ -119,9 +125,18 @@ function bookToSummary(book: Book): BookSummary {
     status: book.status,
     coverImagePath: book.coverImagePath ?? cover?.imagePath ?? null,
     coverImage: cover?.image ?? null,
+    pageCount: book.options.pageCount,
+    imagesReady: book.pages.filter(hasPageImage).length,
+    error: book.error,
     createdAt: book.createdAt,
     updatedAt: book.updatedAt,
   };
+}
+
+function firstCover(pages: BookPage[]): BookPage | undefined {
+  return [...pages]
+    .sort((a, b) => a.index - b.index)
+    .find((p) => p.imagePath || p.image);
 }
 
 // ---------------------------------------------------------------------------
@@ -186,7 +201,7 @@ export async function listBookSummaries(userId: string): Promise<BookSummary[]> 
   const { data, error } = await supabase!
     .from("books")
     .select(
-      "id,user_id,topic,title,status,cover_image_path,created_at,updated_at",
+      "id,user_id,topic,title,options,status,pages,cover_image_path,error,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -216,6 +231,22 @@ export async function updateBook(
     .single();
   if (error) throw new Error(`updateBook: ${error.message}`);
   return rowToBook(data);
+}
+
+export async function deleteBook(
+  id: string,
+  opts: { userId?: string; admin?: boolean } = {},
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    mockBooks.delete(id);
+    return;
+  }
+
+  const supabase = await getClient(opts.admin ?? false);
+  let query = supabase!.from("books").delete().eq("id", id);
+  if (!opts.admin && opts.userId) query = query.eq("user_id", opts.userId);
+  const { error } = await query;
+  if (error) throw new Error(`deleteBook: ${error.message}`);
 }
 
 /** Find a book by its Polar checkout id (used by the webhook). */

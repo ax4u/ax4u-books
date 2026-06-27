@@ -114,6 +114,18 @@ IMAGE_GENERATION_CONCURRENCY=2
 
 Keep it low if your provider rate-limits image requests.
 
+Generation is queued after payment and processed by `/api/jobs/generate`.
+Production deployments call that route from Vercel Cron every minute. Set a
+strong secret in Vercel:
+
+```
+CRON_SECRET=...
+```
+
+Vercel sends it as `Authorization: Bearer <CRON_SECRET>` for Cron invocations.
+Without it, the production worker route returns 401 to avoid public expensive
+AI-triggering requests.
+
 ### 4. Korean/Japanese PDF text
 
 pdf-lib's built-in fonts are Latin-only. Drop a Unicode `.ttf`/`.otf` (e.g.
@@ -131,6 +143,7 @@ Noto Sans KR) into `public/fonts/` — it's embedded automatically. See
 | Data store     | `src/lib/books/` (Supabase + in-memory)   |
 | AI providers   | `src/lib/ai/` (openai / gemini / mock)    |
 | Generation     | `src/lib/ai/storybook.ts`                 |
+| Background jobs | `src/lib/jobs/generation.ts`, `app/api/jobs/generate` |
 | Payments       | `src/lib/polar/`, `app/api/webhooks/polar`|
 | PDF            | `src/lib/pdf/generate.ts`, `app/api/books/[id]/pdf` |
 | Pages          | `app/` (landing, login, dashboard, create, books/[id]) |

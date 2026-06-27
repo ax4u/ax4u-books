@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/env";
-import type { BookPage } from "./types";
+import type { Book, BookPage } from "./types";
 
 const BUCKET = "book-assets";
 
@@ -69,6 +69,22 @@ export async function pageImageDataUrl(page: BookPage): Promise<string | null> {
   const asset = await readStoredAsset(page.imagePath);
   if (!asset) return null;
   return `data:${asset.mimeType};base64,${asset.bytes.toString("base64")}`;
+}
+
+export async function deleteStoredAssets(paths: Array<string | null | undefined>) {
+  const unique = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+  if (unique.length === 0 || !isSupabaseAdminConfigured) return;
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase!.storage.from(BUCKET).remove(unique);
+  if (error) throw new Error(`deleteStoredAssets: ${error.message}`);
+}
+
+export async function deleteBookAssets(book: Book): Promise<void> {
+  await deleteStoredAssets([
+    book.pdfPath,
+    ...book.pages.map((page) => page.imagePath),
+  ]);
 }
 
 export function dataUrlToBuffer(dataUrl: string): ParsedDataUrl | null {

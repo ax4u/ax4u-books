@@ -1,6 +1,7 @@
 import { getAIProvider } from "./index";
 import { env } from "@/lib/env";
 import {
+  deleteStoredAssets,
   pageImageDataUrl,
   storePageImage,
 } from "@/lib/books/assets";
@@ -34,7 +35,7 @@ export async function runGeneration(
   const initialBook = await getBook(bookId, { admin });
   if (!initialBook) throw new Error(`runGeneration: book ${bookId} not found`);
   let book = initialBook;
-  if (book.status === "completed") return;
+  if (book.status === "completed" && book.pages.every(hasPageImage)) return;
 
   const provider = getAIProvider();
 
@@ -106,6 +107,46 @@ export async function runGeneration(
     console.error(`[storybook] generation failed for ${bookId}:`, err);
     await updateBook(bookId, { status: "failed", error: message }, { admin });
     throw err;
+  }
+}
+
+export async function runPageRegeneration(
+  bookId: string,
+  pageIndex: number,
+  opts: { admin?: boolean } = {},
+): Promise<void> {
+  const admin = opts.admin ?? false;
+  const book = await getBook(bookId, { admin });
+  if (!book) throw new Error(`runPageRegeneration: book ${bookId} not found`);
+
+  const pages = [...book.pages].sort((a, b) => a.index - b.index);
+  const page = pages.find((p) => p.index === pageIndex);
+  if (!page) {
+    throw new Error(`runPageRegeneration: page ${pageIndex} not found`);
+  }
+
+  await updateBook(bookId, { status: "generating", error: null }, { admin });
+
+  const oldPath = page.imagePath ?? null;
+  const firstReference = await firstAvailableReference(
+    pages.filter((p) => p.index !== pageIndex),
+  );
+
+  await generateAndPersistPage({
+    book,
+    page,
+    pages,
+    references: buildImageReferences(firstReference, null),
+    admin,
+  });
+
+  if (oldPath && oldPath !== page.imagePath) {
+    await deleteStoredAssets([oldPath]);
+  }
+
+  const fresh = await getBook(bookId, { admin });
+  if (fresh && fresh.pages.length > 0 && fresh.pages.every(hasPageImage)) {
+    await updateBook(bookId, { status: "completed" }, { admin });
   }
 }
 

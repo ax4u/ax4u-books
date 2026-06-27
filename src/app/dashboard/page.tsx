@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Header from "@/app/components/Header";
+import DashboardBooks from "./DashboardBooks";
 import { getSessionUser } from "@/lib/auth";
-import { coverImageSrc } from "@/lib/books/images";
 import { listBookSummaries } from "@/lib/books/store";
-import { statusLabel, statusClass } from "@/app/books/status";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
@@ -37,52 +36,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {books.map((book) => {
-              const cover =
-                book.coverImage ?? coverImageSrc(book.id, book.coverImagePath);
-              return (
-                <li key={book.id}>
-                  <Link
-                    href={`/books/${book.id}`}
-                    className="block overflow-hidden rounded-2xl border border-zinc-200 transition hover:shadow-md dark:border-zinc-800"
-                  >
-                    <div className="aspect-square bg-zinc-100 dark:bg-zinc-900">
-                      {cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={cover}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-4xl">
-                          📖
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="mb-1 flex items-center gap-2">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(book.status)}`}
-                        >
-                          {statusLabel(book.status)}
-                        </span>
-                      </div>
-                      <p className="line-clamp-1 font-semibold">
-                        {book.title || book.topic}
-                      </p>
-                      <p className="line-clamp-1 text-sm text-zinc-500">
-                        {book.topic}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <DashboardBooks books={books} />
         )}
       </main>
     </div>

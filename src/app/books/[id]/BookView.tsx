@@ -13,11 +13,19 @@ const STALL_MS = 150_000;
 export default function BookView({ book }: { book: Book }) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [pageBusy, setPageBusy] = useState<number | null>(null);
+  const [draftTitle, setDraftTitle] = useState(book.title ?? "");
+  const [draftPages, setDraftPages] = useState<Book["pages"]>(() =>
+    [...book.pages].sort((a, b) => a.index - b.index),
+  );
   const imagesReady = book.pages.filter(hasPageImage).length;
   const lastSig = useRef(`${book.status}:${imagesReady}`);
   const lastTrigger = useRef(0);
 
   const active = book.status === "paid" || book.status === "generating";
+  const pages = [...book.pages].sort((a, b) => a.index - b.index);
 
   const triggerGeneration = useCallback(async () => {
     if (Date.now() - lastTrigger.current < STALL_MS) return;
@@ -80,20 +88,147 @@ export default function BookView({ book }: { book: Book }) {
     }
   }, [book.id, router]);
 
-  const pages = [...book.pages].sort((a, b) => a.index - b.index);
-  const pct = Math.round((imagesReady / book.options.pageCount) * 100);
+  const saveEdits = useCallback(async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/books/${book.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: draftTitle.trim() || null,
+          pages: draftPages.map((page) => ({
+            index: page.index,
+            text: page.text,
+            imagePrompt: page.imagePrompt ?? "",
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setEditing(false);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }, [book.id, draftPages, draftTitle, router]);
+
+  const deleteBook = useCallback(async () => {
+    if (!window.confirm("이 그림책을 삭제할까요? 생성된 이미지와 PDF도 삭제됩니다.")) {
+      return;
+    }
+    const res = await fetch(`/api/books/${book.id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await res.text());
+    router.push("/dashboard");
+    router.refresh();
+  }, [book.id, router]);
+
+  const regeneratePage = useCallback(
+    async (pageIndex: number) => {
+      setPageBusy(pageIndex);
+      try {
+        const res = await fetch(
+          `/api/books/${book.id}/pages/${pageIndex}/regenerate`,
+          { method: "POST" },
+        );
+        if (!res.ok) throw new Error(await res.text());
+        router.refresh();
+      } finally {
+        setPageBusy(null);
+      }
+    },
+    [book.id, router],
+  );
+
+  const updateDraftPage = useCallback(
+    (pageIndex: number, patch: Partial<Book["pages"][number]>) => {
+      setDraftPages((current) =>
+        current.map((page) =>
+          page.index === pageIndex ? { ...page, ...patch } : page,
+        ),
+      );
+    },
+    [],
+  );
+
+  const pct =
+    book.options.pageCount > 0
+      ? Math.round((imagesReady / book.options.pageCount) * 100)
+      : 0;
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold">{book.title || book.topic}</h1>
-        <span
-          className={`rounded-full px-3 py-1 text-sm font-medium ${statusClass(book.status)}`}
-        >
-          {statusLabel(book.status)}
-        </span>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          {editing ? (
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-zinc-500">
+                제목
+              </span>
+              <input
+                value={draftTitle}
+                onChange={(event) => setDraftTitle(event.currentTarget.value)}
+                placeholder={book.topic}
+                className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-xl font-bold dark:border-zinc-700 dark:bg-zinc-900"
+              />
+            </label>
+          ) : (
+            <h1 className="text-2xl font-bold">{book.title || book.topic}</h1>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span
+              className={`rounded-full px-3 py-1 text-sm font-medium ${statusClass(book.status)}`}
+            >
+              {statusLabel(book.status)}
+            </span>
+            <span className="text-sm text-zinc-500">주제: {book.topic}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {editing ? (
+            <>
+              <button
+                type="button"
+                onClick={saveEdits}
+                disabled={saving}
+                className="rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-60"
+              >
+                {saving ? "저장 중" : "저장"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftTitle(book.title ?? "");
+                  setDraftPages(pages);
+                  setEditing(false);
+                }}
+                disabled={saving}
+                className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
+              >
+                취소
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setDraftTitle(book.title ?? "");
+                setDraftPages(pages);
+                setEditing(true);
+              }}
+              className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            >
+              편집
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={deleteBook}
+            className="rounded-full border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+          >
+            삭제
+          </button>
+        </div>
       </div>
-      <p className="mb-8 text-zinc-500">주제: {book.topic}</p>
 
       {(book.status === "paid" || book.status === "generating") && (
         <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30">
@@ -143,8 +278,16 @@ export default function BookView({ book }: { book: Book }) {
       )}
 
       <div className="grid gap-6 sm:grid-cols-2">
-        {pages.map((page) => (
-          <PageCard key={page.index} bookId={book.id} page={page} />
+        {(editing ? draftPages : pages).map((page) => (
+          <PageCard
+            key={page.index}
+            bookId={book.id}
+            page={page}
+            editing={editing}
+            regenerating={pageBusy === page.index}
+            onChange={(patch) => updateDraftPage(page.index, patch)}
+            onRegenerate={() => regeneratePage(page.index)}
+          />
         ))}
       </div>
     </div>
@@ -154,9 +297,17 @@ export default function BookView({ book }: { book: Book }) {
 function PageCard({
   bookId,
   page,
+  editing,
+  regenerating,
+  onChange,
+  onRegenerate,
 }: {
   bookId: string;
   page: Book["pages"][number];
+  editing: boolean;
+  regenerating: boolean;
+  onChange: (patch: Partial<Book["pages"][number]>) => void;
+  onRegenerate: () => void;
 }) {
   const src = pageImageSrc(bookId, page);
 
@@ -179,10 +330,51 @@ function PageCard({
         )}
       </div>
       <div className="p-4">
-        <p className="mb-1 text-xs font-medium text-zinc-400">
-          {page.index + 1}쪽
-        </p>
-        <p className="text-sm leading-relaxed">{page.text}</p>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-xs font-medium text-zinc-400">
+            {page.index + 1}쪽
+          </p>
+          <button
+            type="button"
+            onClick={onRegenerate}
+            disabled={regenerating}
+            className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          >
+            {regenerating ? "요청 중" : "그림 재생성"}
+          </button>
+        </div>
+        {editing ? (
+          <div className="space-y-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">
+                본문
+              </span>
+              <textarea
+                value={page.text}
+                onChange={(event) =>
+                  onChange({ text: event.currentTarget.value })
+                }
+                rows={4}
+                className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm leading-relaxed dark:border-zinc-700 dark:bg-zinc-900"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">
+                이미지 프롬프트
+              </span>
+              <textarea
+                value={page.imagePrompt ?? ""}
+                onChange={(event) =>
+                  onChange({ imagePrompt: event.currentTarget.value })
+                }
+                rows={4}
+                className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-xs leading-relaxed dark:border-zinc-700 dark:bg-zinc-900"
+              />
+            </label>
+          </div>
+        ) : (
+          <p className="text-sm leading-relaxed">{page.text}</p>
+        )}
       </div>
     </div>
   );
