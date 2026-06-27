@@ -157,7 +157,7 @@ function decorateVertexAuthError(err: unknown): Error {
     err.message.includes("Could not load the default credentials")
   ) {
     return new Error(
-      "Vertex AI credentials are not configured. Set GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON in Vercel Production or provide Google Application Default Credentials for local runs.",
+      "Google Cloud Gemini credentials are not configured. Set GOOGLE_VERTEX_SERVICE_ACCOUNT_JSON in Vercel Production or provide Google Application Default Credentials for local runs.",
     );
   }
   return err instanceof Error ? err : new Error(String(err));
