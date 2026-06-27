@@ -1,5 +1,6 @@
 import { getAIProvider } from "./index";
 import { getBook, updateBook } from "@/lib/books/store";
+import { env } from "@/lib/env";
 import type { BookPage } from "@/lib/books/types";
 
 /**
@@ -47,13 +48,22 @@ export async function runGeneration(
       await updateBook(bookId, { status: "generating", error: null }, { admin });
     }
 
-    // 2. Fill in any missing illustrations, persisting after each one so the
-    //    work survives a timeout.
+    // 2. Fill in missing illustrations in parallel batches. Image models are
+    //    slow (~100s each), so generating a batch concurrently turns an N×100s
+    //    job into ~ceil(N/concurrency)×100s. We save after each batch so the
+    //    work survives a timeout and can resume.
     const pages = [...book.pages].sort((a, b) => a.index - b.index);
-    for (const page of pages) {
-      if (page.image) continue;
-      const prompt = page.imagePrompt ?? page.text;
-      page.image = await provider.generateImage(prompt, book.options);
+    const missing = pages.filter((p) => !p.image);
+    const concurrency = Math.max(1, env.imageConcurrency || 4);
+
+    for (let i = 0; i < missing.length; i += concurrency) {
+      const batch = missing.slice(i, i + concurrency);
+      await Promise.all(
+        batch.map(async (page) => {
+          const prompt = page.imagePrompt ?? page.text;
+          page.image = await provider.generateImage(prompt, book!.options);
+        }),
+      );
       await updateBook(bookId, { pages, status: "generating" }, { admin });
     }
 

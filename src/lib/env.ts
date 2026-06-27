@@ -36,10 +36,17 @@ export const env = {
   openaiApiKey: read("OPENAI_API_KEY"),
   openaiTextModel: read("OPENAI_TEXT_MODEL") ?? "gpt-5.1",
   openaiImageModel: read("OPENAI_IMAGE_MODEL") ?? "gpt-image-2",
+  // "low" | "medium" | "high" | "auto" — lower is much faster/cheaper.
+  openaiImageQuality: read("OPENAI_IMAGE_QUALITY") ?? "medium",
+  openaiImageSize: read("OPENAI_IMAGE_SIZE") ?? "1024x1024",
   geminiApiKey: read("GEMINI_API_KEY"),
   geminiTextModel: read("GEMINI_TEXT_MODEL") ?? "gemini-2.5-flash",
   // Nano Banana 2 = Gemini 3.1 Flash Image.
   geminiImageModel: read("GEMINI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
+
+  // How many illustrations to generate in parallel (image models are slow, so
+  // parallelism is the main speed lever). Keep modest to avoid rate limits.
+  imageConcurrency: Number(read("IMAGE_CONCURRENCY") ?? "4"),
 
   // App base URL. Prefer an explicit value, else the stable Vercel production
   // domain, else localhost for dev.
