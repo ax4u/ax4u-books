@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import Header from "@/app/components/Header";
+import localFont from "next/font/local";
+const gallerySerif = localFont({ src: "../../../public/fonts/gallery/NanumMyeongjo-Regular.ttf", variable: "--font-gallery-serif", display: "swap", preload: false });
 import { publishedBooks } from "@/lib/exhibition/catalog";
+import GalleryPreview from "./gallery-preview";
+import styles from "./gallery.module.css";
 
-export const metadata: Metadata = { title: "오픈 그림책 전시회 | AX4U Books", description: "로그인 없이 누구나 감상하는 공개 그림책 전시회." };
+export const metadata: Metadata = { title: "오픈 그림책 전시회 | AX4U Books", description: "종이 위에 펼쳐지는 작은 우주. 공개가 승인된 그림책을 로그인 없이 감상하세요." };
 
 export default function ExhibitionPage() {
-  return <div lang="ko" className="flex min-h-screen flex-col">
-    <Header />
-    <main className="mx-auto w-full max-w-5xl px-6 py-12">
-      <p className="mb-3 text-sm font-semibold text-violet-600 dark:text-violet-300">함께 펼치는 이야기</p>
-      <h1 className="text-3xl font-bold sm:text-4xl">오픈 그림책 전시회</h1>
-      <p className="mb-10 mt-4 text-zinc-600 dark:text-zinc-400">공개가 승인된 그림책을 로그인 없이 자유롭게 감상하세요.</p>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {publishedBooks.map(book => <Link key={book.slug} href={`/exhibition/${book.slug}`} className="group overflow-hidden rounded-2xl border border-zinc-200 shadow-sm focus-visible:outline-4 focus-visible:outline-violet-600 dark:border-zinc-700">
-          <div className="bg-violet-50 p-5 dark:bg-zinc-900"><Image src={book.pages[0].src} alt={`${book.title} 앞표지`} width={book.pages[0].width} height={book.pages[0].height} sizes="(max-width: 640px) 90vw, 320px" className="aspect-square w-full object-contain" /></div>
-          <div className="p-6"><p className="text-xs text-violet-600 dark:text-violet-300">공개 작품 · 앞표지 + 본문 28쪽</p><h2 className="mt-2 text-xl font-bold group-hover:underline">{book.title}</h2><p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{book.description}</p><p className="mt-5 font-semibold">그림책 펼치기 →</p></div>
-        </Link>)}
-      </div>
-    </main>
+  return <div className={`${styles.gallery} ${gallerySerif.variable}`} lang="ko">
+    <header className={styles.header}>
+      <Link href="/" className={styles.brand}>AX4U <i>Books</i></Link>
+      <nav aria-label="전시회 메뉴"><Link href="/">홈</Link><a href="#collection" aria-current="page">그림책 전시회</a><Link href="/create">나의 책 만들기 ↗</Link></nav>
+    </header>
+    <main id="collection">
+      <div className={styles.intro}><p>THE PICTURE BOOK GALLERY</p><h1>오픈 그림책 전시회</h1><span>한 장씩, 이야기 속으로.</span></div>
+      {publishedBooks.map((book, i) => <article key={book.slug} id={book.slug}>
+        <GalleryPreview book={book} />
+        <div className={styles.caption}><p>EXHIBIT {String(i + 1).padStart(2, "0")} · 공개 작품</p><h2>{book.title}</h2><Link href={`/exhibition/${book.slug}`}>독서실에서 처음부터 읽기 <span aria-hidden="true">↗</span></Link></div>
+      </article>)}
+      <section className={styles.index} aria-labelledby="index-title"><div><p>CONTENTS</p><h2 id="index-title">오늘의 책장</h2></div><div>{publishedBooks.map((book, i) => <a href={`/exhibition/${book.slug}`} key={book.slug}><span>{String(i + 1).padStart(2, "0")}</span><strong>{book.title}</strong><span aria-hidden="true">↑</span></a>)}<p>공개가 승인된 원본 그림책만 전시합니다.<br />로그인 없이, 누구나 천천히 감상하세요.</p></div></section>
+    </main><footer className={styles.footer}><span>AX4U BOOKS</span><span>이야기가 머무는 작은 전시실</span></footer>
   </div>;
 }
