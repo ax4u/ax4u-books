@@ -1,5 +1,7 @@
 "use client";
 import { useState } from 'react';
+import ui from '@/app/studio.module.css';
+
 export default function QuotePanel({ bookId, enabled, reason }: { bookId: string; enabled: boolean; reason: string }) {
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -17,11 +19,22 @@ export default function QuotePanel({ bookId, enabled, reason }: { bookId: string
     } catch { setMessage('견적 연결에 실패했습니다. 잠시 후 다시 확인해 주세요.'); }
     finally { setBusy(false); }
   }
-  return <section className="space-y-3 rounded-xl border p-5">
-    <h2 className="text-lg font-semibold">공급사 원가 견적</h2>
-    <p>{reason}</p>
-    <label className="block">수량 <input aria-label="인쇄 견적 수량" className="ml-2 w-24 rounded border p-2" type="number" min={1} max={200} value={quantity} disabled={!enabled || busy} onChange={e => setQuantity(Number(e.target.value))} /></label>
-    <button className="rounded-full bg-violet-700 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50" disabled={!enabled || busy || !Number.isInteger(quantity) || quantity < 1 || quantity > 200} onClick={quote}>{busy ? '견적 확인 중…' : '견적 확인 (주문 아님)'}</button>
-    <p role="status" aria-live="polite">{message}</p>
-  </section>;
+  return (
+    <section className={ui.quotePanel} aria-labelledby="quote-title" aria-busy={busy}>
+      <div className={ui.quoteHeading}>
+        <p className={ui.eyebrow}>SUPPLIER ESTIMATE</p>
+        <span className={ui.statusBadge} data-status={enabled ? 'completed' : 'draft'}>{enabled ? '견적 확인 가능' : '연결 준비 중'}</span>
+      </div>
+      <h2 id="quote-title">공급사 원가 견적</h2>
+      <p id="quote-reason" className={ui.quoteReason}>{reason}</p>
+      <label className={ui.field}>
+        <span>수량</span>
+        <input aria-label="인쇄 견적 수량" aria-describedby="quote-quantity-hint quote-reason" className={ui.input} type="number" min={1} max={200} value={quantity} disabled={!enabled || busy} onChange={e => setQuantity(Number(e.target.value))} />
+        <small id="quote-quantity-hint" className={ui.fieldHint}>1~200권 사이의 정수를 입력해 주세요.</small>
+      </label>
+      <button type="button" className={ui.primaryButton} disabled={!enabled || busy || !Number.isInteger(quantity) || quantity < 1 || quantity > 200} onClick={quote}>{busy ? '견적 확인 중…' : '견적 확인 (주문 아님)'}</button>
+      <p className={ui.fieldHint}>견적 확인만으로 주문되거나 금액이 차감되지 않습니다.</p>
+      <p role="status" aria-live="polite" aria-atomic="true" className={message ? ui.quoteMessage : ui.srOnly}>{message}</p>
+    </section>
+  );
 }

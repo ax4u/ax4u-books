@@ -9,10 +9,15 @@ const nanumGothic = localFont({
   display: "swap",
 });
 
+const gobibiFont = localFont({
+  src: "../../public/fonts/gobibi/BagelFatOne-korean.ttf",
+  variable: "--font-gobibi",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "AX4U Books — AI 그림책 생성",
-  description:
-    "주제만 입력하면 AI가 글과 그림이 있는 나만의 그림책 PDF를 만들어 드립니다.",
+  title: "GOBIBI × 상멍이 — 작은 상상이 머무는 세계",
+  description: "고래가 나는 세계 고비비. 상멍이와 나만의 이야기를 만들고, 그림책을 펼쳐 보세요.",
 };
 
 export default function RootLayout({
@@ -23,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${nanumGothic.variable} h-full antialiased`}
+      className={`${nanumGothic.variable} ${gobibiFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

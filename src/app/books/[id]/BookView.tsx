@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Book } from "@/lib/books/types";
 import { hasPageImage, pageImageSrc } from "@/lib/books/images";
-import { statusLabel, statusClass } from "@/app/books/status";
+import { statusLabel } from "@/app/books/status";
+import Link from "next/link";
+import ui from "@/app/studio.module.css";
 
 // If a generating book hasn't been updated in this long, the serverless run
 // likely timed out — nudge it to resume (generation is resumable).
@@ -173,51 +175,32 @@ export default function BookView({ book }: { book: Book }) {
       : 0;
 
   return (
-    <div>
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-          {error}
-        </div>
-      )}
+    <div className={ui.reader}>
+      <nav className={ui.readerBreadcrumb} aria-label="현재 위치">
+        <Link href="/dashboard" prefetch={false}>← 내 책장</Link>
+        <span>GOBIBI READING ROOM</span>
+      </nav>
+      {error && <div className={ui.errorNotice} role="alert">{error}</div>}
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          {editing ? (
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-zinc-500">
-                제목
-              </span>
-              <input
-                value={draftTitle}
-                onChange={(event) => setDraftTitle(event.currentTarget.value)}
-                placeholder={book.topic}
-                className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-xl font-bold dark:border-zinc-700 dark:bg-zinc-900"
-              />
-            </label>
-          ) : (
-            <h1 className="text-2xl font-bold">{book.title || book.topic}</h1>
-          )}
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <span
-              className={`rounded-full px-3 py-1 text-sm font-medium ${statusClass(book.status)}`}
-            >
-              {statusLabel(book.status)}
-            </span>
-            <span className="text-sm text-zinc-500">주제: {book.topic}</span>
+      <header className={ui.bookHeading}>
+        <div className={ui.bookHeadingCopy}>
+          <p className={ui.eyebrow}>한 권의 상상을 펼치는 곳 · 그림책 상세</p>
+          <h1 className={ui.bookTitle}>{book.title || book.topic}</h1>
+          <div className={ui.bookMeta}>
+            <span className={ui.statusBadge} data-status={book.status}>{statusLabel(book.status)}</span>
+            <span className={ui.bookSubject}>주제: {book.topic}</span>
           </div>
+          {editing && (
+            <label className={ui.field}>
+              <span>제목</span>
+              <input value={draftTitle} onChange={(event) => setDraftTitle(event.currentTarget.value)} placeholder={book.topic} className={ui.input} />
+            </label>
+          )}
         </div>
-
-        <div className="flex flex-wrap gap-2">
+        <div className={ui.editorActions}>
           {editing ? (
             <>
-              <button
-                type="button"
-                onClick={saveEdits}
-                disabled={saving}
-                className="rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-60"
-              >
-                {saving ? "저장 중" : "저장"}
-              </button>
+              <button type="button" onClick={saveEdits} disabled={saving} className={ui.primarySmall}>{saving ? "저장 중" : "저장"}</button>
               <button
                 type="button"
                 onClick={() => {
@@ -226,10 +209,8 @@ export default function BookView({ book }: { book: Book }) {
                   setEditing(false);
                 }}
                 disabled={saving}
-                className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
-              >
-                취소
-              </button>
+                className={ui.secondarySmall}
+              >취소</button>
             </>
           ) : (
             <button
@@ -239,87 +220,75 @@ export default function BookView({ book }: { book: Book }) {
                 setDraftPages(pages);
                 setEditing(true);
               }}
-              className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            >
-              편집
-            </button>
+              className={ui.secondarySmall}
+            >편집</button>
           )}
-          <button
-            type="button"
-            onClick={deleteBook}
-            className="rounded-full border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
-          >
-            삭제
-          </button>
+          <button type="button" onClick={deleteBook} className={ui.dangerQuiet}>삭제</button>
         </div>
-      </div>
+      </header>
+
+      {editing && <p className={ui.notice}>제목과 각 쪽의 글·이미지 프롬프트를 수정할 수 있어요. 글을 저장하는 것과 그림 재생성은 별도 작업입니다.</p>}
+
+      {book.status === "draft" && (
+        <section className={ui.statePanel} data-state="draft" aria-labelledby="draft-title">
+          <p className={ui.eyebrow}>BEFORE THE FIRST PAGE</p>
+          <h2 id="draft-title">아직 결제를 기다리고 있어요.</h2>
+          <p>결제가 확인되면 그림책 제작을 시작합니다. 결제를 마쳤는데 이 상태가 계속된다면 잠시 후 다시 확인해 주세요.</p>
+        </section>
+      )}
 
       {(book.status === "paid" || book.status === "generating") && (
-        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30">
-          <p className="font-medium text-amber-800 dark:text-amber-200">
-            AI가 그림책을 만들고 있어요…
-          </p>
-          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-            그림 {imagesReady} / {book.options.pageCount} 장 완성
-            {" · "}한 장당 1~2분 정도 걸려요
-          </p>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-amber-200 dark:bg-amber-900">
-            <div
-              className="h-full rounded-full bg-amber-500 transition-all"
-              style={{ width: `${pct}%` }}
-            />
+        <section className={ui.statePanel} data-state="generating" aria-labelledby="generating-title" role="status" aria-live="polite">
+          <p className={ui.eyebrow}>IN THE STORY STUDIO</p>
+          <h2 id="generating-title">한 장씩, 이야기를 만들고 있어요.</h2>
+          <p>AI가 글과 그림을 생성하고 있어요. 제작 상황에 따라 시간이 걸릴 수 있습니다.</p>
+          <div className={ui.progressMeta}><strong>그림 {imagesReady} / {book.options.pageCount}장 완성</strong><span>진행 상황 자동 확인 중</span></div>
+          <div className={ui.progressTrack} role="progressbar" aria-label="삽화 생성 진행" aria-valuemin={0} aria-valuemax={book.options.pageCount} aria-valuenow={imagesReady}>
+            <div className={ui.progressFill} style={{ width: `${pct}%` }} />
           </div>
-        </div>
+        </section>
       )}
 
       {book.status === "failed" && (
-        <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
-          <p className="font-medium text-red-700 dark:text-red-300">
-            생성에 실패했어요.
-          </p>
-          {book.error && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {book.error}
-            </p>
-          )}
-          <button
-            onClick={manualRetry}
-            disabled={starting}
-            className="mt-3 rounded-full bg-red-600 px-5 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-          >
-            {starting ? "다시 시도 중…" : "다시 시도"}
-          </button>
+        <section className={ui.statePanel} data-state="failed" aria-labelledby="failed-title">
+          <p className={ui.eyebrow}>A PAUSE IN THE STORY</p>
+          <h2 id="failed-title">제작 도중, 잠시 멈췄어요.</h2>
+          <p>그림책 생성에 실패했어요. 아래 내용을 확인하고 다시 시도해 주세요.</p>
+          {book.error && <p className={ui.errorDetail}>{book.error}</p>}
+          <button type="button" onClick={manualRetry} disabled={starting} className={ui.primaryButton}>{starting ? "다시 시도 중…" : "다시 시도"}<span aria-hidden="true">↗</span></button>
+        </section>
+      )}
+
+      {book.status === "completed" && (
+        <section className={ui.statePanel} data-state="completed" aria-labelledby="completed-title">
+          <p className={ui.eyebrow}>YOUR STORY, NOW A BOOK</p>
+          <h2 id="completed-title">한 권의 이야기가 완성됐어요.</h2>
+          <p>글과 그림을 천천히 살펴보세요. 필요한 부분을 편집하고 PDF로 간직할 수 있어요.</p>
+          <div className={ui.downloadActions}>
+            <a href={`/api/books/${book.id}/pdf`} className={ui.primaryButton}>PDF 다운로드 <span aria-hidden="true">↓</span></a>
+            <a href={`/printing/${book.id}`} className={ui.secondaryButton}>종이책 인쇄 준비 · 견적 <span aria-hidden="true">↗</span></a>
+          </div>
+          <p className={ui.fieldHint}>전자책 PDF는 인쇄용 파일이 아닙니다. 종이책 판매·결제·주문·배송은 아직 제공하지 않습니다.</p>
+        </section>
+      )}
+
+      <section aria-labelledby="book-pages-title" className={ui.pagesSection}>
+        <div className={ui.shelfHeading}><h2 id="book-pages-title">{editing ? "이야기 다듬기" : "그림책 펼쳐보기"}</h2><p>{pages.length}쪽</p></div>
+        {pages.length === 0 && <div className={ui.pagesEmpty}><span className={ui.placeholderMark} aria-hidden="true">G.</span><p>아직 펼쳐볼 페이지가 없어요.</p><small>위의 제작 상태를 확인해 주세요.</small></div>}
+        <div className={ui.pageGrid}>
+          {(editing ? draftPages : pages).map((page) => (
+            <PageCard
+              key={page.index}
+              bookId={book.id}
+              page={page}
+              editing={editing}
+              regenerating={pageBusy === page.index}
+              onChange={(patch) => updateDraftPage(page.index, patch)}
+              onRegenerate={() => regeneratePage(page.index)}
+            />
+          ))}
         </div>
-      )}
-
-      {book.status === "completed" && (
-        <a
-          href={`/api/books/${book.id}/pdf`}
-          className="mb-8 inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-3 font-medium text-white hover:bg-violet-700"
-        >
-          ⬇️ PDF 다운로드
-        </a>
-      )}
-
-      {book.status === "completed" && (
-        <a href={`/printing/${book.id}`} className="mb-8 ml-3 inline-flex rounded-full border border-violet-300 px-6 py-3 font-medium text-violet-700">
-          종이책 인쇄 준비 · 견적
-        </a>
-      )}
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        {(editing ? draftPages : pages).map((page) => (
-          <PageCard
-            key={page.index}
-            bookId={book.id}
-            page={page}
-            editing={editing}
-            regenerating={pageBusy === page.index}
-            onChange={(patch) => updateDraftPage(page.index, patch)}
-            onRegenerate={() => regeneratePage(page.index)}
-          />
-        ))}
-      </div>
+      </section>
     </div>
   );
 }
@@ -342,8 +311,8 @@ function PageCard({
   const src = pageImageSrc(bookId, page);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
-      <div className="aspect-square bg-zinc-100 dark:bg-zinc-900">
+    <div className={ui.pageCard}>
+      <div className={ui.pageImageFrame}>
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -351,32 +320,32 @@ function PageCard({
             alt={`${page.index + 1}쪽 삽화`}
             loading={page.index === 0 ? "eager" : "lazy"}
             decoding="async"
-            className="h-full w-full object-cover"
+            className={ui.pageImage}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-zinc-400">
-            그림 생성 중…
+          <div className={ui.imagePlaceholder}>
+            아직 그림이 준비되지 않았어요.
           </div>
         )}
       </div>
-      <div className="p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-xs font-medium text-zinc-400">
+      <div className={ui.pageCardBody}>
+        <div className={ui.pageCardHeading}>
+          <p className={ui.pageNumber}>
             {page.index + 1}쪽
           </p>
           <button
             type="button"
             onClick={onRegenerate}
             disabled={regenerating}
-            className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            className={ui.secondarySmall}
           >
             {regenerating ? "요청 중" : "그림 재생성"}
           </button>
         </div>
         {editing ? (
-          <div className="space-y-3">
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-zinc-500">
+          <div className={ui.formStack}>
+            <label className={ui.field}>
+              <span className={ui.fieldLabel}>
                 본문
               </span>
               <textarea
@@ -385,11 +354,11 @@ function PageCard({
                   onChange({ text: event.currentTarget.value })
                 }
                 rows={4}
-                className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm leading-relaxed dark:border-zinc-700 dark:bg-zinc-900"
+                className={ui.input}
               />
             </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-zinc-500">
+            <label className={ui.field}>
+              <span className={ui.fieldLabel}>
                 이미지 프롬프트
               </span>
               <textarea
@@ -398,12 +367,12 @@ function PageCard({
                   onChange({ imagePrompt: event.currentTarget.value })
                 }
                 rows={4}
-                className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-xs leading-relaxed dark:border-zinc-700 dark:bg-zinc-900"
+                className={ui.input}
               />
             </label>
           </div>
         ) : (
-          <p className="text-sm leading-relaxed">{page.text}</p>
+          <p className={ui.pageText}>{page.text}</p>
         )}
       </div>
     </div>

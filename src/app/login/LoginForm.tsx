@@ -6,6 +6,7 @@ import {
   signUpAction,
   type AuthState,
 } from "@/app/auth/actions";
+import ui from "@/app/studio.module.css";
 
 const initial: AuthState = {};
 
@@ -25,70 +26,66 @@ export default function LoginForm({ mockMode }: { mockMode: boolean }) {
   const pending = isSignin ? signinPending : signupPending;
 
   return (
-    <div className="w-full max-w-sm">
-      <div className="mb-6 flex rounded-full bg-zinc-100 p-1 text-sm dark:bg-zinc-900">
+    <div className={ui.loginForm}>
+      <div className={ui.modeSwitch} role="group" aria-label="로그인 또는 회원가입 선택">
         {(["signin", "signup"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={`flex-1 rounded-full py-2 font-medium transition ${
-              mode === m
-                ? "bg-white shadow dark:bg-zinc-700"
-                : "text-zinc-500"
-            }`}
+            aria-pressed={mode === m}
+            className={ui.modeButton}
           >
             {m === "signin" ? "로그인" : "회원가입"}
           </button>
         ))}
       </div>
+      <div className={ui.formIntro}>
+        <h2>{isSignin ? "다시 만나 반가워요." : "첫 이야기를 함께 시작해요."}</h2>
+        <p>{isSignin ? "로그인하면 내 그림책을 이어서 만날 수 있어요." : "이메일과 비밀번호로 고비비에 가입하세요."}</p>
+      </div>
 
-      <form action={isSignin ? signin : signup} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          이메일
+      <form action={isSignin ? signin : signup} className={ui.formStack} aria-busy={pending}>
+        <label className={ui.field}>
+          <span>이메일</span>
           <input
             name="email"
             type="email"
             required
+            autoComplete="email"
             placeholder="you@example.com"
-            className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+            className={ui.input}
           />
         </label>
 
         {!mockMode && (
-          <label className="flex flex-col gap-1 text-sm">
-            비밀번호
+          <label className={ui.field}>
+            <span>비밀번호</span>
             <input
               name="password"
               type="password"
               required
               minLength={6}
-              placeholder="••••••••"
-              className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+              autoComplete={isSignin ? "current-password" : "new-password"}
+              aria-describedby="password-hint"
+              placeholder="6자 이상 입력해 주세요"
+              className={ui.input}
             />
+            <small id="password-hint" className={ui.fieldHint}>비밀번호는 6자 이상이어야 해요.</small>
           </label>
         )}
 
         {mockMode && (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          <p className={ui.notice}>
             데모 모드: 비밀번호 없이 이메일만으로 로그인됩니다.
           </p>
         )}
 
-        {state.error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
-        )}
+        {state.error && <p className={ui.errorNotice} role="alert">{state.error}</p>}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-full bg-violet-600 px-5 py-3 font-medium text-white hover:bg-violet-700 disabled:opacity-60"
-        >
-          {pending
-            ? "처리 중…"
-            : isSignin
-              ? "로그인"
-              : "회원가입"}
+        <button type="submit" disabled={pending} className={ui.primaryButton}>
+          {pending ? "처리 중…" : isSignin ? "로그인" : "회원가입"}
+          {!pending && <span aria-hidden="true">↗</span>}
         </button>
       </form>
     </div>

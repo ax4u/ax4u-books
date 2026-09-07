@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import Header from "@/app/components/Header";
+import GobibiShell from "@/app/components/gobibi/GobibiShell";
+import PageHero from "@/app/components/gobibi/PageHero";
 import DashboardBooks from "./DashboardBooks";
 import { getSessionUser } from "@/lib/auth";
 import { listBookSummaries } from "@/lib/books/store";
+import ui from "@/app/studio.module.css";
+
+export const metadata = { title: "내 그림책 · 나의 책장 | GOBIBI" };
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
@@ -12,35 +16,40 @@ export default async function DashboardPage() {
   const books = await listBookSummaries(user.id);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <Header />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">내 그림책</h1>
-          <Link
-            href="/create"
-            prefetch={false}
-            className="rounded-full bg-violet-600 px-5 py-2.5 font-medium text-white hover:bg-violet-700"
-          >
-            새 그림책 만들기
-          </Link>
-        </div>
-
-        {books.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-300 p-16 text-center dark:border-zinc-700">
-            <p className="mb-4 text-zinc-500">아직 만든 그림책이 없어요.</p>
-            <Link
-              href="/create"
-              prefetch={false}
-              className="font-medium text-violet-600 hover:underline"
-            >
-              첫 그림책 만들러 가기 →
-            </Link>
+    <GobibiShell theme="cream" className={ui.brand}>
+      <main id="main">
+        <PageHero
+          eyebrow="MY LITTLE LIBRARY · 나의 책장"
+          title={<>당신의 이야기가<br />머무는 책장.</>}
+          description="처음 떠올린 상상부터 완성된 그림책까지. 한 권씩 쌓이는 나만의 이야기를 만나 보세요. 완성된 책도 자동으로 공개 전시되지 않아요."
+          scene="library"
+        >
+          <Link href="/create" prefetch={false} className={ui.primaryButton}>새 그림책 만들기 <span aria-hidden="true">↗</span></Link>
+        </PageHero>
+        <div className={ui.content}>
+          <div className={ui.shelfHeading}>
+            <h2>내 그림책 <span>{books.length}권</span></h2>
+            <p>GOBIBI STORY COLLECTION</p>
           </div>
-        ) : (
-          <DashboardBooks books={books} />
-        )}
+          {books.length === 0 ? (
+            <section className={ui.emptyShelf} aria-labelledby="empty-shelf-title">
+              <div className={ui.emptyArt}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/home/gobibi/sangmung.webp" alt="책장 앞에서 첫 이야기를 기다리는 상멍이" width="787" height="1267" loading="lazy" />
+              </div>
+              <div className={ui.emptyCopy}>
+                <p className={ui.eyebrow}>A PLACE FOR YOUR FIRST BOOK</p>
+                <h3 id="empty-shelf-title">첫 번째 책 자리를<br />비워 두었어요.</h3>
+                <p>아직 만든 그림책이 없어요.<br />상멍이와 함께 작은 생각 하나를 이야기로 펼쳐 볼까요?</p>
+                <Link href="/create" prefetch={false} className={ui.primaryButton}>첫 그림책 만들러 가기 <span aria-hidden="true">↗</span></Link>
+                <Link href="/exhibition" className={ui.textLink}>다른 그림책에서 영감 얻기 <span aria-hidden="true">↗</span></Link>
+              </div>
+            </section>
+          ) : (
+            <DashboardBooks books={books} />
+          )}
+        </div>
       </main>
-    </div>
+    </GobibiShell>
   );
 }

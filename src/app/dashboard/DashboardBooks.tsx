@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { BookSummary } from "@/lib/books/types";
 import { coverImageSrc } from "@/lib/books/images";
-import { statusClass, statusLabel } from "@/app/books/status";
+import { statusLabel } from "@/app/books/status";
+import ui from "@/app/studio.module.css";
 
 export default function DashboardBooks({ books }: { books: BookSummary[] }) {
   const router = useRouter();
@@ -51,40 +52,24 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
   }
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-          {error}
-        </div>
-      )}
+    <div className={ui.library}>
+      {error && <div className={ui.errorNotice} role="alert">{error}</div>}
 
       {recent.length > 0 && (
-        <section className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-500">최근 알림</h2>
-          <ul className="space-y-2 text-sm">
+        <section className={ui.libraryNews} aria-labelledby="library-news-title">
+          <div><p className={ui.eyebrow}>FROM YOUR BOOKS</p><h3 id="library-news-title">책장에서 온 소식</h3></div>
+          <ul className={ui.newsList}>
             {recent.map((book) => (
-              <li key={book.id} className="flex items-center justify-between gap-3">
-                <Link
-                  href={`/books/${book.id}`}
-                  prefetch={false}
-                  className="min-w-0 hover:underline"
-                >
-                  <span className="line-clamp-1">
-                    {book.title || book.topic}
-                  </span>
-                </Link>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(book.status)}`}
-                >
-                  {statusLabel(book.status)}
-                </span>
+              <li key={book.id}>
+                <Link href={`/books/${book.id}`} prefetch={false} className={ui.newsLink}>{book.title || book.topic}</Link>
+                <span className={ui.statusBadge} data-status={book.status}>{statusLabel(book.status)}</span>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className={ui.bookGrid}>
         {books.map((book) => {
           const cover =
             book.coverImage ??
@@ -103,84 +88,43 @@ export default function DashboardBooks({ books }: { books: BookSummary[] }) {
             (book.status === "generating" && book.imagesReady < book.pageCount);
 
           return (
-            <li
-              key={book.id}
-              className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800"
-            >
-              <Link
-                href={`/books/${book.id}`}
-                prefetch={false}
-                className="block"
-              >
-                <div className="aspect-square bg-zinc-100 dark:bg-zinc-900">
+            <li key={book.id} className={ui.bookCard} data-status={book.status} aria-busy={busyId === book.id}>
+              <Link href={`/books/${book.id}`} prefetch={false} className={ui.bookCardLink}>
+                <div className={ui.coverFrame}>
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={cover}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={cover} alt="" loading="lazy" decoding="async" className={ui.bookImage} />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-4xl">
-                      📖
+                    <div className={ui.coverPlaceholder}>
+                      <span className={ui.placeholderMark} aria-hidden="true">G.</span>
+                      <span>{book.status === "failed" ? "제작이 잠시 멈췄어요" : book.status === "draft" ? "이야기의 시작을 기다려요" : book.status === "completed" ? "표지 이미지가 없어요" : "이야기를 펼치는 중이에요"}</span>
+                      <small>GOBIBI STORY COLLECTION</small>
                     </div>
                   )}
                 </div>
-                <div className="p-4 pb-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(book.status)}`}
-                    >
-                      {statusLabel(book.status)}
-                    </span>
-                    {book.pageCount > 0 && (
-                      <span className="text-xs text-zinc-500">
-                        {book.imagesReady}/{book.pageCount}
-                      </span>
-                    )}
+                <div className={ui.bookCardBody}>
+                  <div className={ui.bookMeta}>
+                    <span className={ui.statusBadge} data-status={book.status}>{statusLabel(book.status)}</span>
+                    {book.pageCount > 0 && <span className={ui.fieldHint}>그림 {book.imagesReady}/{book.pageCount}장</span>}
                   </div>
-                  <p className="line-clamp-1 font-semibold">
-                    {book.title || book.topic}
-                  </p>
-                  <p className="line-clamp-1 text-sm text-zinc-500">
-                    {book.topic}
-                  </p>
+                  <h3 className={ui.bookCardTitle}>{book.title || book.topic}</h3>
+                  <p className={ui.bookTopic}>{book.topic}</p>
                   {book.status === "generating" && (
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                      <div
-                        className="h-full rounded-full bg-amber-500"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className={ui.progressTrack} role="progressbar" aria-label="삽화 생성 진행" aria-valuemin={0} aria-valuemax={book.pageCount} aria-valuenow={book.imagesReady}>
+                      <div className={ui.progressFill} style={{ width: `${pct}%` }} />
                     </div>
                   )}
-                  {book.status === "failed" && book.error && (
-                    <p className="mt-2 line-clamp-2 text-xs text-red-600 dark:text-red-400">
-                      {book.error}
-                    </p>
-                  )}
+                  {book.status === "failed" && book.error && <p className={ui.cardError}>{book.error}</p>}
+                  <span className={ui.cardOpen}>{book.status === "completed" ? "그림책 펼치기" : "제작 상태 보기"}<span aria-hidden="true">↗</span></span>
                 </div>
               </Link>
-              <div className="flex gap-2 border-t border-zinc-200 p-3 dark:border-zinc-800">
+              <div className={ui.bookCardActions}>
                 {canResume && (
-                  <button
-                    type="button"
-                    onClick={() => resume(book.id)}
-                    disabled={busyId === book.id}
-                    className="flex-1 rounded-full bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-60"
-                  >
+                  <button type="button" onClick={() => resume(book.id)} disabled={busyId === book.id} className={ui.primarySmall}>
                     {busyId === book.id ? "요청 중" : "생성 재개"}
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => remove(book.id)}
-                  disabled={busyId === book.id}
-                  className="flex-1 rounded-full border border-zinc-300 px-3 py-2 text-xs font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
-                >
-                  삭제
-                </button>
+                <button type="button" onClick={() => remove(book.id)} disabled={busyId === book.id} className={ui.dangerQuiet} aria-label={`${book.title || book.topic} 삭제`}>삭제</button>
               </div>
             </li>
           );
