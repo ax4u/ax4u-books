@@ -1,16 +1,33 @@
-.reader { border-radius: 12px; }
+.reader { border-radius: 12px; min-width: 0; }
 .reader:focus-visible, .reader button:focus-visible, .reader select:focus-visible { outline: 3px solid #ffcf60; outline-offset: 4px; }
-.stage { position: relative; height: clamp(240px, 62dvh, 850px); perspective: 1600px; touch-action: pan-y pinch-zoom; }
-.page { width: 100%; height: 100%; object-fit: contain; user-select: none; transform-origin: left center; animation: turn .25s ease-out; }
-@keyframes turn { from { opacity: .5; transform: rotateY(-12deg); } to { opacity: 1; transform: rotateY(0); } }
+.stage { position: relative; display: flex; justify-content: center; align-items: center; padding: 72px 0; touch-action: pan-y pinch-zoom; }
+.book { position: relative; width: min(100%, var(--spread-width)); aspect-ratio: var(--spread-ratio); perspective: 1800px; isolation: isolate; filter: none; }
+.sheet, .leaf { position: absolute; top: 0; width: 50%; height: 100%; }
+.sheet { background: #f8f3e8; box-shadow: 0 12px 24px #0005, 0 2px 0 #c5bca9, 0 4px 0 #ede5d5, 0 6px 0 #8e887d; }
+.left { left: 0; border-radius: 3px 0 0 3px; }
+.right { left: 50%; border-radius: 0 3px 3px 0; }
+.absent { background: transparent; box-shadow: none; }
+.page { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.spine { position: absolute; z-index: 2; left: calc(50% - 12px); top: 0; bottom: 0; width: 24px; background: linear-gradient(90deg, transparent, #281b102b 42%, #160e1055 50%, #fff3 54%, transparent); pointer-events: none; }
+.leaf { z-index: 3; transform-style: preserve-3d; will-change: transform; }
+.forward { left: 50%; transform-origin: left center; animation: turn-forward 850ms cubic-bezier(.3,.05,.25,1) both; }
+.reverse { left: 0; transform-origin: right center; animation: turn-reverse 850ms cubic-bezier(.3,.05,.25,1) both; }
+.face { position: absolute; inset: 0; background: #f8f3e8; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 8px 22px #0005; }
+.front { transform: rotateY(0deg) translateZ(.2px); }
+.back { transform: rotateY(180deg) translateZ(.2px); }
+.face::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, #28150833, transparent 20%, #fff2 65%, #28150822); animation: leaf-shade 850ms ease-in-out both; }
+.reverse .face::after { background: linear-gradient(270deg, #28150833, transparent 20%, #fff2 65%, #28150822); }
+@keyframes turn-forward { from { transform: rotateY(0); } to { transform: rotateY(-180deg); } }
+@keyframes turn-reverse { from { transform: rotateY(0); } to { transform: rotateY(180deg); } }
+@keyframes leaf-shade { 0%,100% { opacity: .15; } 50% { opacity: 1; } }
 .progress { display: block; width: 100%; height: 8px; accent-color: #ffcf60; margin: 16px 0; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
 .controls button, .controls select, .error button { min-height: 44px; border: 1px solid #7a86a0; border-radius: 8px; background: #26324b; color: #fff; padding: 8px 12px; font: inherit; }
 .controls button, .error button { cursor: pointer; }
-.controls button:disabled { opacity: .4; cursor: default; }
+.controls button:disabled, .controls select:disabled { opacity: .4; cursor: default; }
 .controls output { font-variant-numeric: tabular-nums; text-align: center; font-size: .875rem; }
 .select { display: flex; align-items: center; gap: 8px; font-size: .875rem; }
 .help { margin: 16px auto 0; max-width: 640px; color: #bdc5da; font-size: .8rem; line-height: 1.7; text-align: center; }
-.error { position: absolute; inset: 0; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 12px; background: #141823; }
-@media (max-width: 480px) { .controls { gap: 8px; } .select { flex-basis: 100%; justify-content: center; } .stage { height: 54dvh; min-height: 240px; } }
-@media (prefers-reduced-motion: reduce) { .page { animation: none; } }
+.error { position: absolute; z-index: 5; inset: 0; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 12px; background: #141823e8; }
+@media (max-width: 480px) { .stage { padding-block: 28px; } .controls { gap: 8px; } .select { flex-basis: 100%; justify-content: center; } .controls output { font-size: .75rem; } .spine { left: calc(50% - 6px); width: 12px; } }
+@media (prefers-reduced-motion: reduce) { .leaf, .face::after { animation: none; } }
