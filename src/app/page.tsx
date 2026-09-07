@@ -1,33 +1,20 @@
+/* eslint-disable @next/next/no-img-element -- Pre-optimized local WebP sprites and untouched approved book cover; intentionally avoid remote image transforms. */
+import type {Metadata} from 'next';
 import Link from 'next/link';
-import Header from '@/app/components/Header';
-import StoryScene from './components/home/StoryScene';
-import styles from './home.module.css';
+import localFont from 'next/font/local';
+const gobibiFont = localFont({src:'../../public/fonts/gobibi/BagelFatOne-display.ttf',variable:'--font-gobibi',display:'swap'});
+import {publishedBooks} from '@/lib/exhibition/catalog';
+import GobibiWorld from './components/home/GobibiWorld';
+import HomeNavigation from './components/home/HomeNavigation';
 import CharacterDraft from './components/home/CharacterDraft';
-
-export default function Home() {
- return <div className={styles.home}><Header/><main>
-  <section className={styles.hero} aria-labelledby="hero-title">
-   <div className={styles.heroCopy}>
-    <p className={styles.eyebrow}><span/> YOUR CHARACTER. YOUR STORY.</p>
-    <h1 id="hero-title">상상하던<br/>주인공이,<br/><span>내 책 밖으로.</span></h1>
-    <p className={styles.intro}>작은 낙서 하나, 마음속 친구 하나.<br/>나만의 캐릭터로 이야기를 만들고,<br/>언제든 펼쳐 볼 그림책으로 간직하세요.</p>
-    <div className={styles.heroActions}><Link href="/create" className={styles.primary}>나의 그림책 만들기 <span>↗</span></Link><Link href="/exhibition" className={styles.secondary}>오픈 그림책 전시회 <span>→</span></Link></div>
-    <p className={styles.heroFoot}>캐릭터 구상부터 온라인 그림책까지.<br/>종이책 제작은 선택 사항이며, 사양과 가격은 준비 중이에요.</p>
-   </div>
-   <StoryScene/>
-  </section>
-  <div className={styles.chapterLine}><span>IMAGINATION, BOUND TOGETHER.</span><span>작은 상상이 한 권이 되는 곳 <i>↓</i></span></div>
-  <CharacterDraft/>
-  <section className={styles.journey} aria-labelledby="journey-title">
-   <div className={styles.sectionHead}><p className={styles.eyebrow}>FROM A SPARK TO A BOOK</p><h2 id="journey-title">주인공은 나답게.<br/>이야기는 자유롭게.</h2><p>처음부터 완벽할 필요 없어요.<br/>좋아하는 친구와 떠나고 싶은 세계만 있으면 돼요.</p></div>
-   <div className={styles.steps}>{[
-    ['01','CHARACTER','나만의 주인공','이름과 성격, 좋아하는 것을 정해요. 작은 특징이 특별한 친구를 만들어요.','✳'],
-    ['02','STORY','함께 쓰는 모험','떠나고 싶은 곳과 전하고 싶은 마음을 이야기의 씨앗으로 담아요.','⌁'],
-    ['03','ONLINE BOOK','언제든 펼치는 책','그림책을 온라인으로 읽고, 완성된 이야기를 다시 만나세요.','▤'],
-    ['04','OPTIONAL PRINT','손끝에 닿는 이야기','종이책 제작은 선택 사항이에요. 제작 사양과 가격, 주문 연결을 준비하고 있어요.','↗']
-   ].map(([n,en,title,body,icon])=><article key={n} className={styles.step}><div className={styles.stepTop}><span>{n} / {en}</span><i aria-hidden="true">{icon}</i></div><h3>{title}</h3><p>{body}</p>{n==='04'&&<span className={styles.comingSoon}>인쇄 주문 준비 중</span>}</article>)}</div>
-  </section>
-  <section className={styles.exhibition}><div><p className={styles.eyebrow}>THE OPEN BOOKSHELF</p><h2>어떤 세계가 펼쳐질까?</h2><p>공개된 그림책을 한 장씩 넘겨 보세요.<br/>다음 이야기의 주인공은 당신의 캐릭터일지도 몰라요.</p><Link href="/exhibition" className={styles.primary}>전시회에서 그림책 읽기 <span>↗</span></Link></div><div className={styles.bookDisplay} aria-hidden="true"><div className={styles.displayBook}><small>A STORY OF<br/>LITTLE WONDERS</small><strong>작은 친구의<br/>커다란 세계</strong><span>✳</span><small>OPEN YOUR IMAGINATION</small></div><span className={styles.bookLabel}>새로운 세계는<br/>첫 장에서 시작돼요.</span></div></section>
-  <footer className={styles.footer}><span>AX4U Books</span><p>캐릭터에서 이야기로, 이야기에서 한 권의 책으로.</p><Link href="/create">첫 이야기 시작하기 ↗</Link></footer>
- </main></div>;
+import styles from './home.module.css';
+export const metadata: Metadata = {title:'GOBIBI × 상멍이 — 고래가 나는 곳, 이야기가 태어나는 곳',description:'고래들의 이상향 고비비. 상멍이를 만나고, 나만의 캐릭터와 그림책 이야기를 펼쳐보세요.'};
+export default function Home(){
+ return <div className={`${styles.home} ${gobibiFont.variable}`}><a href="#main" className={styles.skipLink}>본문 바로가기</a><HomeNavigation/><main id="main"><GobibiWorld/>
+ <section className={styles.manifesto} aria-labelledby="manifesto-title"><div className={styles.sectionMeta}><span>01 — OUR WORLD</span><span>상상이 머무는 섬, 고비비</span></div><h2 id="manifesto-title">조금 엉뚱해도,<br/>끝없이 <em>다정한 세계.</em></h2><div className={styles.manifestoBottom}><span className={styles.bigAsterisk} aria-hidden="true">✳</span><p>하늘을 헤엄치는 고래들, 마음껏 꿈꿀 수 있는 작은 섬.<br/>고비비는 저마다의 이야기를 품은 고래들의 이상향이에요.<br/><br/>여기서는 작은 낙서도 모험의 시작이 되고,<br/>이름 없는 친구도 한 권의 주인공이 됩니다.<br/>당신의 상상이 잠시 쉬어 갈 자리를 비워 두었어요.</p><a href="#sangmung" className={styles.roundLink} aria-label="상멍이 만나러 가기">MEET<br/>SANGMUNG <span aria-hidden="true">↘</span></a></div></section>
+ <section id="sangmung" className={styles.character} aria-labelledby="sangmung-title"><div className={styles.characterArt}><span className={styles.characterWord} aria-hidden="true">HELLO,<br/>FRIEND!</span><img src="/home/gobibi/sangmung.webp" alt="흰 종이 선원 모자, 이마의 작은 흉터, 분홍 하트와 회색 몸의 상멍이 전체 모습" width="787" height="1267" loading="lazy"/><span className={styles.characterSignature}>고비비에 사는, 상멍이</span></div><div className={styles.characterCopy}><p className={styles.eyebrow}>02 — MEET SANGMUNG</p><h2 id="sangmung-title">안녕,<br/>나는 <em>상멍이.</em></h2><p className={styles.characterLead}>네 이야기 옆에서<br/>같이 날아갈게.</p><p>고비비에 사는 상멍이는 사람들의 그림책 만들기를 돕는 친구예요. 멋진 문장보다, 당신이 정말 하고 싶은 이야기가 궁금하대요.</p><dl className={styles.profileFacts}><div><dt>사는 곳</dt><dd>고래들의 이상향, 고비비</dd></div><div><dt>좋아하는 일</dt><dd>작은 상상이 한 권의 책이 되는 순간</dd></div><div><dt>너에게 하고 싶은 말</dt><dd>“첫 장은, 한 줄이면 충분해.”</dd></div></dl><a href="#studio" className={styles.textLink}>상멍이와 첫 이야기 시작하기 <span aria-hidden="true">↗</span></a></div></section>
+ <CharacterDraft/>
+ <section className={styles.portfolio} aria-labelledby="books-title"><div className={styles.sectionMeta}><span>04 — STORIES OUT IN THE WORLD</span><span>공개가 승인된 그림책</span></div><div className={styles.portfolioHeading}><h2 id="books-title">상상은,<br/>이렇게 책이 됩니다.</h2><Link href="/exhibition" className={styles.textLink}>전시회 모두 둘러보기 <span aria-hidden="true">↗</span></Link></div>{publishedBooks.slice(0,1).map(book=><article className={styles.bookFeature} key={book.slug}><Link href={`/exhibition/${book.slug}`} className={styles.coverLink} aria-label={`${book.title} 그림책 펼치기`}><img src={book.pages[0].src} alt={`${book.title} 공식 앞표지`} width={book.pages[0].width} height={book.pages[0].height} loading="lazy"/><span className={styles.coverSticker} aria-hidden="true">OPEN<br/>A BOOK ↗</span></Link><div className={styles.bookCopy}><p className={styles.eyebrow}>SELECTED PICTURE BOOK</p><h3>{book.title}</h3><p>{book.description}</p><Link href={`/exhibition/${book.slug}`} className={styles.textLink}>지금 그림책 펼치기 <span aria-hidden="true">↗</span></Link><small>로그인 없이 읽는 온라인 전시</small></div></article>)}</section>
+ <section className={styles.collaboration} aria-labelledby="collab-title"><p className={styles.eyebrow}>05 — LET’S MAKE A BIGGER WORLD</p><h2 id="collab-title">우리의 세계가<br/>만난다면<span>?</span></h2><div className={styles.collabBottom}><p>고비비의 세계와 상멍이의 이야기를<br/>더 넓은 경험으로 함께 펼칠 파트너를 기다립니다.</p><p className={styles.collabTypes}>출판 · 전시 · 교육 · 브랜드 라이선싱<br/><span>협업 제안을 받고 있어요.</span></p><a href="mailto:7pmbooks@gmail.com" className={styles.contactLink}>협업 이야기 나누기 <span aria-hidden="true">↗</span><small>7pmbooks@gmail.com</small></a></div></section>
+ </main><footer className={styles.footer}><div className={styles.footerBrand}>GOBIBI <span>×</span> SANGMUNG</div><div className={styles.footerBottom}><p>작은 상상과 오래 함께하는 세계.<br/><small>운영 · AX4U Books</small></p><p>종이책 인쇄·배송 주문은 준비 중입니다.<br/>제작 사양과 가격, 주문 연결은 추후 안내합니다.</p><a href="#world">BACK TO THE SKY ↑</a></div></footer></div>;
 }
