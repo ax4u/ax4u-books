@@ -1,0 +1,16 @@
+.reader { border-radius: 12px; }
+.reader:focus-visible, .reader button:focus-visible, .reader select:focus-visible { outline: 3px solid #ffcf60; outline-offset: 4px; }
+.stage { position: relative; height: clamp(240px, 62dvh, 850px); perspective: 1600px; touch-action: pan-y pinch-zoom; }
+.page { width: 100%; height: 100%; object-fit: contain; user-select: none; transform-origin: left center; animation: turn .25s ease-out; }
+@keyframes turn { from { opacity: .5; transform: rotateY(-12deg); } to { opacity: 1; transform: rotateY(0); } }
+.progress { display: block; width: 100%; height: 8px; accent-color: #ffcf60; margin: 16px 0; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.controls button, .controls select, .error button { min-height: 44px; border: 1px solid #7a86a0; border-radius: 8px; background: #26324b; color: #fff; padding: 8px 12px; font: inherit; }
+.controls button, .error button { cursor: pointer; }
+.controls button:disabled { opacity: .4; cursor: default; }
+.controls output { font-variant-numeric: tabular-nums; text-align: center; font-size: .875rem; }
+.select { display: flex; align-items: center; gap: 8px; font-size: .875rem; }
+.help { margin: 16px auto 0; max-width: 640px; color: #bdc5da; font-size: .8rem; line-height: 1.7; text-align: center; }
+.error { position: absolute; inset: 0; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 12px; background: #141823; }
+@media (max-width: 480px) { .controls { gap: 8px; } .select { flex-basis: 100%; justify-content: center; } .stage { height: 54dvh; min-height: 240px; } }
+@media (prefers-reduced-motion: reduce) { .page { animation: none; } }
