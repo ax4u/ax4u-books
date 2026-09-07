@@ -46,7 +46,7 @@ export async function GET(
 function assetResponse(bytes: Buffer, mimeType: string) {
   return new Response(bufferToArrayBuffer(bytes), {
     headers: {
-      "Cache-Control": "private, max-age=300",
+      "Cache-Control": "private, no-store",
       "Content-Length": String(bytes.byteLength),
       "Content-Type": mimeType,
     },

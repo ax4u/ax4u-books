@@ -29,6 +29,8 @@ export async function POST(request: Request) {
       await confirmPaidBook({
         eventType: event.type,
         bookId: readStringMetadata(event.data.metadata, "bookId"),
+        userId: readStringMetadata(event.data.metadata, "userId"),
+        productId: event.data.productId ?? undefined,
         checkoutId: event.data.checkoutId ?? undefined,
       });
       break;
@@ -38,6 +40,8 @@ export async function POST(request: Request) {
         await confirmPaidBook({
           eventType: event.type,
           bookId: readStringMetadata(event.data.metadata, "bookId"),
+        userId: readStringMetadata(event.data.metadata, "userId"),
+        productId: event.data.productId ?? undefined,
           checkoutId: event.data.checkoutId ?? undefined,
         });
       }
@@ -48,6 +52,8 @@ export async function POST(request: Request) {
         await confirmPaidBook({
           eventType: event.type,
           bookId: readStringMetadata(event.data.metadata, "bookId"),
+        userId: readStringMetadata(event.data.metadata, "userId"),
+        productId: event.data.productId ?? undefined,
           checkoutId: event.data.id,
         });
       }
@@ -97,10 +103,14 @@ async function confirmPaidBook({
   eventType,
   bookId,
   checkoutId,
+  userId,
+  productId,
 }: {
   eventType: string;
   bookId?: string;
   checkoutId?: string;
+  userId?: string;
+  productId?: string;
 }) {
   const book = bookId
     ? await getBook(bookId, { admin: true })
@@ -121,7 +131,18 @@ async function confirmPaidBook({
     return;
   }
 
-  if (book.status !== "draft") {
+  // A valid signature authenticates Polar, not arbitrary metadata. Bind the
+  // event to the checkout saved for this book and to the configured product.
+  if (!checkoutId || productId !== env.polarProductId ||
+      (userId !== undefined && userId !== book.userId) ||
+      (book.checkoutId !== null && book.checkoutId !== checkoutId)) {
+    console.warn("[polar] Ignored payment with mismatched book/checkout/product");
+    return;
+  }
+  // Checkout persistence may race an early webhook: retry, never grant blindly.
+  if (!book.checkoutId) throw new Error("Book checkout is not persisted yet");
+
+  if (book.status !== "draft" && book.status !== "paid") {
     console.log(
       JSON.stringify({
         level: "info",
@@ -135,7 +156,11 @@ async function confirmPaidBook({
     return;
   }
 
-  await updateBook(book.id, { status: "paid", checkoutId }, { admin: true });
+  if (book.status === "draft") {
+    await updateBook(book.id, { status: "paid" }, { admin: true });
+  }
+  // Retrying an event after a queue failure must repair a paid-but-unqueued book.
+  // enqueueGenerationJob deduplicates active jobs.
   await enqueueGenerationJob({
     bookId: book.id,
     userId: book.userId,

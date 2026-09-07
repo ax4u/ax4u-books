@@ -3,7 +3,6 @@ import type { BookOptions } from "@/lib/books/types";
 import { env } from "@/lib/env";
 import type { AIProvider, ImageReference, StoryPlan } from "./types";
 import { buildStoryPrompt, parseDataUrl, parseStoryPlan } from "./types";
-import { placeholderIllustration } from "./png";
 
 let client: OpenAI | null = null;
 function getClient(): OpenAI {
@@ -61,21 +60,17 @@ export const openaiProvider: AIProvider = {
         const b64 = result.data?.[0]?.b64_json;
         if (b64) return `data:image/png;base64,${b64}`;
         throw new Error("OpenAI image: no b64_json returned");
-      } catch (err) {
+      } catch {
         // Retry transient errors (e.g. rate limits) with backoff before giving
         // up — avoids silently baking a placeholder into a paid book.
         if (attempt < maxAttempts) {
           await new Promise((r) => setTimeout(r, attempt * 4000));
           continue;
         }
-        console.error("[openai] image failed after retries, using placeholder:", err);
-        const png = placeholderIllustration(prompt);
-        return `data:image/png;base64,${png.toString("base64")}`;
+        throw new Error("OpenAI 이미지 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
     }
-    // unreachable
-    const png = placeholderIllustration(prompt);
-    return `data:image/png;base64,${png.toString("base64")}`;
+    throw new Error("OpenAI 이미지 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
   },
 };
 

@@ -1,3 +1,4 @@
+import { isLocalDemoAllowed } from "@/lib/runtime-policy";
 import { env } from "@/lib/env";
 import { processGenerationJobs } from "@/lib/jobs/generation";
 
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
     if (auth !== `Bearer ${env.cronSecret}`) {
       return new Response("Unauthorized", { status: 401 });
     }
-  } else if (process.env.VERCEL_ENV === "production") {
+  } else if (!isLocalDemoAllowed()) {
     return new Response("CRON_SECRET is required in production", {
       status: 401,
     });

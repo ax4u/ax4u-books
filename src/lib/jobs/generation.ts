@@ -179,8 +179,11 @@ async function claimGenerationJobs(limit: number): Promise<GenerationJob[]> {
         updated_at: nowIso(),
       })
       .eq("id", job.id)
+      // Compare-and-swap: another worker may have claimed this snapshot.
+      .eq("status", job.status)
+      .eq("attempts", job.attempts)
       .select()
-      .single();
+      .maybeSingle();
     if (!error && data) claimed.push(rowToJob(data));
   }
 

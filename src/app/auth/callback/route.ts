@@ -1,3 +1,4 @@
+import { safeAuthNext } from "@/lib/auth-redirect";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
-  const next = url.searchParams.get("next") ?? "/dashboard";
+  const next = safeAuthNext(url.searchParams.get("next"));
 
   if (error) {
     return NextResponse.redirect(
@@ -25,7 +26,10 @@ export async function GET(request: Request) {
           `${env.appUrl}/login?error=${encodeURIComponent(exchangeError.message)}`,
         );
       }
+      return NextResponse.redirect(new URL(next, env.appUrl));
     }
   }
-  return NextResponse.redirect(`${env.appUrl}${next}`);
+  return NextResponse.redirect(
+    `${env.appUrl}/login?error=${encodeURIComponent("인증 링크가 올바르지 않거나 만료되었습니다.")}`,
+  );
 }

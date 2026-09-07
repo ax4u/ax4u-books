@@ -37,9 +37,8 @@ export async function runGeneration(
   let book = initialBook;
   if (book.status === "completed" && book.pages.every(hasPageImage)) return;
 
-  const provider = getAIProvider();
-
   try {
+    const provider = getAIProvider();
     // 1. Plan the story once (idempotent: only if we have no pages yet).
     if (book.pages.length === 0) {
       await updateBook(bookId, { status: "generating", error: null }, { admin });

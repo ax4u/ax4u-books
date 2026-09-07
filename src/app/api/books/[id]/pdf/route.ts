@@ -30,8 +30,13 @@ export async function GET(
     .trim() || "storybook"}.pdf`;
 
   if (book.pdfPath) {
-    const cached = await readStoredAsset(book.pdfPath);
-    if (cached) return pdfResponse(cached.bytes, filename);
+    try {
+      const cached = await readStoredAsset(book.pdfPath);
+      if (cached) return pdfResponse(cached.bytes, filename);
+    } catch (err) {
+      // Stored PDFs are a cache, not the source of truth. Recover stale paths.
+      console.warn("[books] cached PDF unavailable; rebuilding:", err);
+    }
   }
 
   const pdf = await generateBookPdf(book);
@@ -47,7 +52,7 @@ function pdfResponse(pdf: Buffer, filename: string) {
   return new Response(bufferToArrayBuffer(pdf), {
     status: 200,
     headers: {
-      "Cache-Control": "private, max-age=300",
+      "Cache-Control": "private, no-store",
       "Content-Length": String(pdf.byteLength),
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,

@@ -77,15 +77,12 @@ export const isGeminiConfigured = Boolean(
   env.geminiApiKey || (env.geminiVertexProject && env.geminiVertexLocation),
 );
 
-/** Which AI provider will actually be used, accounting for missing keys. */
+/** Honor the selected provider; never silently switch billing/API providers.
+ * `mock` signals missing configuration. Callers must restrict it to local demos.
+ */
 export function resolveAiProvider(): "openai" | "gemini" | "mock" {
-  if (env.aiProvider === "gemini") {
-    if (isGeminiConfigured) return "gemini";
-    if (isOpenAiConfigured) return "openai";
-    return "mock";
-  }
-  if (isOpenAiConfigured) return "openai";
-  if (isGeminiConfigured) return "gemini";
+  if (env.aiProvider === "gemini" && isGeminiConfigured) return "gemini";
+  if (env.aiProvider === "openai" && isOpenAiConfigured) return "openai";
   return "mock";
 }
 

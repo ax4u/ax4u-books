@@ -301,6 +301,12 @@ export default function BookView({ book }: { book: Book }) {
         </a>
       )}
 
+      {book.status === "completed" && (
+        <a href={`/printing/${book.id}`} className="mb-8 ml-3 inline-flex rounded-full border border-violet-300 px-6 py-3 font-medium text-violet-700">
+          종이책 인쇄 준비 · 견적
+        </a>
+      )}
+
       <div className="grid gap-6 sm:grid-cols-2">
         {(editing ? draftPages : pages).map((page) => (
           <PageCard

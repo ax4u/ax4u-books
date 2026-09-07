@@ -27,6 +27,7 @@
     "pg": "^8.22.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "three": "^0.185.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.185.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "supabase": "^2.108.0",

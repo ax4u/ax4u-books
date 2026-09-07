@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createBookAction, type CreateState } from "@/app/books/actions";
 
 const initial: CreateState = {};
@@ -14,9 +14,27 @@ const styles = [
 
 export default function CreateForm({ mockPayment }: { mockPayment: boolean }) {
   const [state, action, pending] = useActionState(createBookAction, initial);
+  const [characterName, setCharacterName] = useState("");
+  const [characterTraits, setCharacterTraits] = useState("");
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (!active) return;
+    try { const draft = JSON.parse(localStorage.getItem("ax4u.characterDraft.v1") || "null");
+      if (typeof draft?.name === "string") setCharacterName(draft.name.slice(0,40));
+      if (typeof draft?.trait === "string") setCharacterTraits(draft.trait.slice(0,120));
+    } catch { /* A disabled browser store must not block creation. */ }
+    });
+    return () => { active = false; };
+  }, []);
 
   return (
     <form action={action} className="flex flex-col gap-6">
+      <fieldset className="grid gap-4 rounded-xl border border-zinc-300 p-4">
+        <legend className="px-2 font-semibold">나의 캐릭터 (선택)</legend>
+        <label className="flex flex-col gap-2">주인공 이름<input name="characterName" maxLength={40} value={characterName} onChange={e=>setCharacterName(e.target.value)} className="rounded-lg border border-zinc-300 px-3 py-2"/></label>
+        <label className="flex flex-col gap-2">외형·성격·특징<input name="characterTraits" maxLength={120} value={characterTraits} onChange={e=>setCharacterTraits(e.target.value)} placeholder="예: 노란 우비를 입은 다정한 고양이" className="rounded-lg border border-zinc-300 px-3 py-2"/></label>
+        <p className="text-xs text-zinc-500">이 설정은 이야기와 삽화 제작에 함께 전달됩니다. AI 결과의 외형 일관성은 완성 후 확인해 주세요.</p>
+      </fieldset>
       <label className="flex flex-col gap-2">
         <span className="font-medium">주제</span>
         <textarea
@@ -66,9 +84,9 @@ export default function CreateForm({ mockPayment }: { mockPayment: boolean }) {
             defaultValue="3-5"
             className="rounded-xl border border-zinc-300 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
           >
-            {["0-2", "3-5", "6-8", "9-12"].map((a) => (
+            {["0-2", "3-5", "6-8", "9-12", "청소년", "성인", "전 연령"].map((a) => (
               <option key={a} value={a}>
-                {a}세
+                {/^\d/.test(a) ? `${a}세` : a}
               </option>
             ))}
           </select>

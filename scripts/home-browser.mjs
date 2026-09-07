@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/home/hermes/.hermes/profiles/sejongchief/workspace/imageclass_flipbook/browser-runtime/node_modules/playwright-core/index.mjs');
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/home/hermes/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome', headless: true, args: ['--no-sandbox', '--enable-unsafe-swiftshader'] });
+const base = process.env.TEST_BASE_URL || 'http://localhost:3110';
+try {
+ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+ const errors = []; page.on('pageerror', e => errors.push(e.message));
+ await page.goto(base);
+ await page.getByRole('heading', { name: '상상하던 주인공이, 내 책 밖으로.' }).waitFor({ timeout: 30000 });
+ await page.locator('[data-scene-ready="true"]').waitFor({ timeout: 30000 });
+ assert.equal(await page.locator('canvas').count(), 1);
+ await page.screenshot({ path: '/tmp/ax4u-home-desktop.png', fullPage: true });
+ console.log('PASS: editorial homepage with real canvas');
+ await page.getByLabel('주인공 이름').fill('별이');
+ await page.getByRole('button', { name: '용감한', exact: true }).click();
+ assert.match(await page.locator('[data-character-preview]').innerText(), /별이/);
+ assert.match(await page.locator('[data-character-preview]').innerText(), /용감한/);
+ await page.reload();
+ await page.waitForFunction(() => document.querySelector('input')?.value === '별이');
+ assert.equal(await page.getByLabel('주인공 이름').inputValue(), '별이');
+ console.log('PASS: local character draft persists');
+ await page.locator('canvas').scrollIntoViewIfNeeded();
+ await page.locator('[data-scene-ready="true"]').waitFor();
+ await page.getByRole('button',{name:'경례하기'}).click();
+ await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.mode==='salute');
+ await page.screenshot({path:'/tmp/ax4u-home-salute.png'});
+ await page.getByRole('button',{name:'구조하기'}).click();
+ await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.rescuePhase==='throw');
+ const initialX=Number(await page.locator('canvas').getAttribute('data-sailor-x'));
+ await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.rescuePhase==='safe',{},{timeout:30000});
+ assert.ok(Number(await page.locator('canvas').getAttribute('data-sailor-x'))<initialX);
+ await page.screenshot({path:'/tmp/ax4u-home-rescue.png'});
+ await page.getByRole('button',{name:'애니메이션 일시정지',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.motion==='paused');
+ console.log('PASS: salute, rescue throw→pull→safe, pause');
+ for(const width of [320,375,812]){
+   await page.setViewportSize({width,height:900});await page.waitForTimeout(300);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   if(width===375)await page.screenshot({path:'/tmp/ax4u-home-mobile.png',fullPage:true});
+ }
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.reload();await page.locator('[data-scene-ready="true"]').waitFor();
+ await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.motion==='paused');
+ assert.ok(await page.getByRole('button',{name:'애니메이션 재생',exact:true}).isDisabled());
+ console.log('PASS: mobile320/375/812 no overflow and reduced motion');
+ assert.deepEqual(errors, []);
+ const fallback=await browser.newPage();
+ await fallback.addInitScript(()=>{HTMLCanvasElement.prototype.getContext=function(){return null;};});
+ await fallback.goto(base);await fallback.getByText('그림으로 만나는 상멍이 · 3D를 지원하지 않는 환경이에요.').waitFor();
+ assert.ok(await fallback.getByRole('heading',{level:1}).isVisible());
+ console.log('PASS: no-WebGL fallback');
+} finally { await browser.close(); }

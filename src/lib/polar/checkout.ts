@@ -1,3 +1,4 @@
+import { isLocalDemoAllowed } from "@/lib/runtime-policy";
 import { getPolarClient } from "./client";
 import { updateBook } from "@/lib/books/store";
 import { env } from "@/lib/env";
@@ -16,6 +17,7 @@ export async function createBookCheckout(
   const polar = getPolarClient();
 
   if (!polar) {
+    if (!isLocalDemoAllowed()) throw new Error("결제 서비스가 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.");
     // Mock payment: a local route that marks the book paid and starts generation.
     return { url: `${env.appUrl}/api/mock-pay?bookId=${book.id}` };
   }

@@ -8,7 +8,6 @@ import type { BookOptions } from "@/lib/books/types";
 import { env } from "@/lib/env";
 import type { AIProvider, ImageReference, StoryPlan } from "./types";
 import { buildStoryPrompt, parseDataUrl, parseStoryPlan } from "./types";
-import { placeholderIllustration } from "./png";
 
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
@@ -59,10 +58,8 @@ export const geminiProvider: AIProvider = {
         }
       }
       throw new Error("Gemini image: no inline image data returned");
-    } catch (err) {
-      console.error("[gemini] image generation failed, using placeholder:", err);
-      const png = placeholderIllustration(prompt);
-      return `data:image/png;base64,${png.toString("base64")}`;
+    } catch {
+      throw new Error("Gemini 이미지 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     }
   },
 };

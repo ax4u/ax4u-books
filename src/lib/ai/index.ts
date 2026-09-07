@@ -1,4 +1,5 @@
 import { resolveAiProvider } from "@/lib/env";
+import { isLocalDemoAllowed } from "@/lib/runtime-policy";
 import type { AIProvider } from "./types";
 import { mockProvider } from "./mock";
 import { openaiProvider } from "./openai";
@@ -12,6 +13,9 @@ export function getAIProvider(): AIProvider {
     case "gemini":
       return geminiProvider;
     default:
+      if (!isLocalDemoAllowed()) {
+        throw new Error("AI 생성 서비스가 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+      }
       return mockProvider;
   }
 }

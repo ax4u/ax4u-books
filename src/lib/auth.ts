@@ -1,3 +1,4 @@
+import { isLocalDemoAllowed } from "@/lib/runtime-policy";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -29,7 +30,9 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     return { id: data.user.id, email: data.user.email };
   }
 
-  // Mock mode: a signed cookie holding the demo email.
+  if (!isLocalDemoAllowed()) return null;
+
+  // Local demo only: this cookie is deliberately not an authenticated identity.
   const cookieStore = await cookies();
   const email = cookieStore.get(MOCK_COOKIE)?.value;
   if (!email) return null;
@@ -38,6 +41,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
 
 /** Mock-mode sign-in: just remember the email in a cookie. */
 export async function mockSignIn(email: string): Promise<void> {
+  if (!isLocalDemoAllowed()) throw new Error("데모 로그인은 로컬 개발에서만 사용할 수 있습니다.");
   const cookieStore = await cookies();
   cookieStore.set(MOCK_COOKIE, email, {
     httpOnly: true,

@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ko"
       className={`${nanumGothic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
