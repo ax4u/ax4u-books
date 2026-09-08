@@ -1,71 +1,56 @@
 "고래들의 비상" / GOBIBI × SANG#MUNG
-TEN CETACEAN SPECIES / 고래류 10종
+LIVING POD — FIVE SPECIES / 100 INDEPENDENT ANIMALS
 
-이 웹 작품은 고래류 10종의 외형과 서로 다른 수영 동작을 실시간 3D로 표현합니다.
-스킨 애니메이션 GLB 5종과 직접 모델링한 절차적 3D 표현 5종으로 구성됩니다.
-영화급 스캔·촬영 모델이나 자연 다큐멘터리라고 주장하지 않습니다.
+대왕고래·혹등고래·향고래·범고래·상괭이, 각 20개체의 실시간 3D 작품입니다.
+종별 정보 카드·선택·크기 비교 기능은 제공하지 않습니다.
 This experience presents whales only; no 2D character overlay is rendered.
+Four licensed animated models and an original finless-porpoise anatomical study.
+This is live 3D rendering, not filmed wildlife or a paid generative-video service.
 
 1. 대왕고래 / Blue whale / Balaenoptera musculus
 "Blue Whale - Textured" by Bohdan Lvov (ostapblendercg).
 Original: https://sketchfab.com/3d-models/blue-whale-textured-d24d19021c724c3a9134eebcb76b0e0f
 Author: https://sketchfab.com/ostapblendercg
 Redistribution source: https://github.com/bob6664569/open-water/blob/bc8e763b47602d90e9a69cc2ea3a93d3a1d41c81/site/assets/animals/blue_whale_-_textured.glb
-Original GLB unchanged; runtime scale, camera, lighting and flight paths adapted.
+Original GLB unchanged; runtime scale, lighting, independent animation and flight paths adapted.
 
-2. 향고래 / Sperm whale / Physeter macrocephalus
-"Sperm Whale" by Bohdan Lvov (ostapblendercg).
-Original: https://sketchfab.com/3d-models/sperm-whale-7ac6a7cdc74744739092df2a7f44833c
-Redistribution source: https://github.com/NicholasRudy2172020/Grafika-Komputer/blob/614d76f0e2db1c60aede8da60f6d8dc42a332f34/Model/sperm_whale.glb
-
-3. 혹등고래 / Humpback whale / Megaptera novaeangliae
+2. 혹등고래 / Humpback whale / Megaptera novaeangliae
 "Humpback Whale" by Bohdan Lvov (ostapblendercg).
 Original: https://sketchfab.com/3d-models/humpback-whale-7984cdf86d6946ca8e13f94a5ad5b33c
 Redistribution source: https://github.com/lou-kail/WhaLife/blob/56518c6fcd70841074bd1b94a6a2439c517ffc55/assets/humpback_whale.glb
+
+3. 향고래 / Sperm whale / Physeter macrocephalus
+"Sperm Whale" by Bohdan Lvov (ostapblendercg).
+Original: https://sketchfab.com/3d-models/sperm-whale-7ac6a7cdc74744739092df2a7f44833c
+Redistribution source: https://github.com/NicholasRudy2172020/Grafika-Komputer/blob/614d76f0e2db1c60aede8da60f6d8dc42a332f34/Model/sperm_whale.glb
 
 4. 범고래 / Orca / Orcinus orca
 "Killer Whale" by Abner Wu (dashdu), currently displayed as Trouvaille on Sketchfab.
 Original: https://sketchfab.com/3d-models/killer-whale-63b680d7e58f463a9868ed7bf163094a
 Redistribution source: https://github.com/SapienzaInteractiveGraphicsCourse/final-project-astrographics_industries/blob/be4805f8ca3e79aa196f0cc0e797bc9c6b51ad64/assets/marine_creatures/killer_whale.glb
 
-5. 큰돌고래 표현 / Bottlenose dolphin representation / Tursiops truncatus
-"Dolphin" by Alex_Pfe.
-Original: https://sketchfab.com/3d-models/dolphin-c24dc835a6aa4d3c827450513525cdb8
-Redistribution source: https://github.com/sandeshdamkondwar/3d-viewer/blob/a33f107378e79b4458d2a400bb5e32fddcedbf73/models/dolphin.glb
-The artist's original title is Dolphin. The short beak, robust body and curved dorsal fin are used here to represent a bottlenose dolphin, not a scientifically identified specimen scan.
-
-License for all five third-party assets above:
+License for all four third-party models:
 Creative Commons Attribution 4.0 International (CC BY 4.0).
 https://creativecommons.org/licenses/by/4.0/
 https://creativecommons.org/licenses/by/4.0/legalcode
-Changes to assets 2–5: texture images resized/recompressed for web delivery; runtime scale, lighting and flight paths adapted. Dolphin decorative underwater bubble meshes and their unused animation tracks removed; anatomical geometry and skin animation retained.
-No noncommercial-only (NC) third-party models are included.
+Changes to models 2–4: texture images resized/recompressed for web delivery. Anatomical geometry, skin weights, inverse binds and native animation clips retained. All four models are independently instanced and animated, with runtime scale, lighting, camera, flocking and collision trajectories by GOBIBI.
+No noncommercial-only (NC) models included.
 
-직접 제작 3D 표현 / Original procedural anatomical studies:
-- 참고래 / Fin whale / Balaenoptera physalus
-- 귀신고래 / Gray whale / Eschrichtius robustus
-- 밍크고래 / Common minke whale / Balaenoptera acutorostrata
-- 일각고래 / Narwhal / Monodon monoceros
-- 흰고래 / Beluga / Delphinapterus leucas
-Original geometry and procedural skin by GOBIBI × SANG#MUNG production.
-Separate hand-authored body profiles, pectoral fins, flukes, dorsal structures, pigmentation and continuous tail/body deformation. These are original 3D interpretations, not reused third-party scans and not one model recoloured to claim different species.
+5. 상괭이 / East Asian narrow-ridged finless porpoise
+Neophocaena asiaeorientalis — marine subspecies N. a. sunameri.
+Original geometry, five-bone swimming rig, procedural grey skin and fine facial details by GOBIBI × SANG#MUNG production. No downloaded/recoloured whale mesh or photographic texture was used. This is an original anatomical interpretation, not a scanned specimen.
+Taxonomic convention: Society for Marine Mammalogy, April 2026 list. Some other sources use Neophocaena sunameri as a species; this production explicitly follows the SMM subspecies treatment.
+Anatomical references checked 2026-09-09:
+https://marinemammalscience.org/science-and-publications/list-marine-mammal-species-subspecies/
+https://tb.plazi.org/GgServer/xhtml/03B887D96B2EFFB8FAA27A34FD7D8FF6
+https://porpoise.org/about-porpoises/narrow-ridged-finless-porpoise/
+No triangular dorsal fin or dolphin-like projecting beak; narrow dorsal ridge, rounded forehead, subdued mouth crease, grey body and paler underside. Sculpted proportions are an interpretation, not measured proportions of an identified Korean specimen.
 
-크기 비교 및 소개순 / Size and editorial order:
-대왕고래24m / 참고래21m / 향고래16m(수컷) / 혹등고래14.5m / 귀신고래14m / 밍크고래8.5m / 범고래7m(수컷) / 일각고래4.5m / 흰고래4m / 큰돌고래3m.
-These lengths are chosen representative individuals for the visual comparison, not population means, species maximum records, or a universal adult size distribution. Actual size varies by sex, population and region. Narwhal body length excludes the additional tusk.
-Comparison mode uses a common scale and equal camera distance; flight mode uses perspective and close approaches. "Familiar first" is a curated introduction order, not a measured global popularity ranking.
-Size references, checked 2026-09-08:
-https://www.acsonline.org/blue-whale
-https://www.firmm.org/en/whales-dolphins/fin-whale
-https://www.acsonline.org/sperm-whale
-https://www.acsonline.org/humpback-whale
-https://www.acsonline.org/gray-whale
-https://uk.whales.org/whales-dolphins/species-guide/common-minke-whale/
-https://wdfw.wa.gov/sites/default/files/2024-03/10-orca-psr-31524.pdf
-https://www.arcticwwf.org/wildlife/narwhal/
-https://www.arcticwwf.org/wildlife/beluga-whale/
-https://www.acsonline.org/bottlenose-dolphin
+Movement and collision simulation:
+100 independent bodies, twenty per species, including mobile. Bodies share a consistent world scale, with representative visual lengths rather than population averages or maximum records.
+School alignment, independent wandering and short sprints use changing velocities and inertia. Predictive avoidance is followed by actual mass-weighted collision impulses and restitution when conservative 3D capsule proxies meet. Collision capsules enclose the animated body/fin/tail envelope; they are simplified safety volumes, not exact deformable tissue or fluid-dynamics simulation. Bodies are not intentionally allowed to pass through one another. Perspective/camera movement, not per-frame whale size changes, creates close and distant views.
+Animation update rate and pixel resolution may be reduced on slow devices without silently reducing the scene's population. Animals outside the camera view remain simulated.
 
 GOBIBI environment: original reference-based image created for this site.
 Sound: browser-synthesized ambient audio, muted by default.
-Experience rendered live by Three.js (MIT license), not prerecorded footage or a paid generative-video API service.
+Experience rendered by Three.js (MIT license). No customer data, generation, payment or printing actions are part of this scene.

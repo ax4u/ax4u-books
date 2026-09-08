@@ -1,33 +1,64 @@
 import { chromium } from '/home/hermes/.hermes/profiles/sejongchief/workspace/imageclass_flipbook/browser-runtime/node_modules/playwright/index.mjs';
-import fs from 'node:fs/promises';
+import * as THREE from 'three';
+import { PodSimulation, capsuleSeparation } from '../src/app/whale-flight/pod-physics.ts';
 import assert from 'node:assert/strict';
-const base=process.env.BASE||'http://127.0.0.1:3220';const out=process.env.QA_OUTPUT||'/home/hermes/.hermes/profiles/sejongchief/cache/whale-ten-qa/species';await fs.mkdir(out,{recursive:true});
-const ids=['blue','fin','sperm','humpback','gray','minke','orca','narwhal','beluga','bottlenose'];const lengths=[24,21,16,14.5,14,8.5,7,4.5,4,3];
+import fs from 'node:fs/promises';
+const base=process.env.BASE||'http://127.0.0.1:3224';
+const output=process.env.QA_OUTPUT||'/home/hermes/.hermes/profiles/sejongchief/cache/sky100-qa/final-pod';
+await fs.mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/home/hermes/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome',headless:true,args:['--no-sandbox','--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const errors=[];const reports=[];
+const results=[],errors=[],requests=[],snapshots=[];
+const expected={blue:20,humpback:20,sperm:20,orca:20,porpoise:20};
+async function sample(page){return page.locator('canvas').evaluate(c=>({...c.dataset}));}
+function check(d){
+ const a=JSON.parse(d.whaleModels),depth=JSON.parse(d.depthRange),counts=JSON.parse(d.whaleCounts);
+ assert.equal(a.length,100);assert.deepEqual(counts,expected);assert.equal(d.speciesCount,'5');assert.equal(new Set(a.map(x=>x.modeluuid)).size,100);assert.equal(new Set(a.map(x=>x.rootuuid)).size,100);
+ assert.ok(depth[1]-depth[0]>350,'deep spatial volume');
+ for(const x of a){assert.ok(x.motionSample.length>0);assert.ok(x.activitySamples>=10);assert.ok(x.colliderLength>=x.visualExtent+2*x.radius-.00001);assert.ok([...x.position,...x.quaternion,...x.velocity,x.animationTime].every(Number.isFinite));}
+ const bodies=a.map(x=>({spec:{id:x.id,species:x.species,length:x.colliderLength,radius:x.radius,mass:x.mass,speed:x.baseSpeed},position:new THREE.Vector3(...x.position),velocity:new THREE.Vector3(...x.velocity),quaternion:new THREE.Quaternion(...x.quaternion).normalize()}));
+ let separation=Infinity;
+ for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++)separation=Math.min(separation,capsuleSeparation(bodies[i],bodies[j]).distance);
+ assert.ok(separation>-.005,`rendered pose capsules overlap ${separation}`);
+ return{animals:a,bodies,separation,visible:a.filter(x=>x.visible).length};
+}
 try{
- for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:844,height:390}]){
-  const context=await browser.newContext({viewport});if(base.includes('127.0.0.1'))await context.route('**/_vercel/insights/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
-  await context.route('**/api/**',r=>{errors.push('Unexpected API '+r.request().url());return r.abort()});
-  const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});p.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())});
-  await p.goto(base+'/whale-flight');await p.waitForFunction(()=>document.querySelector('canvas')?.dataset.flightReady==='true',{},{timeout:45000});
-  const stats=()=>p.locator('canvas').evaluate(c=>JSON.parse(c.dataset.whaleModels));
-  const a=await stats();await p.waitForFunction(()=>Number(document.querySelector('canvas').dataset.flightTime)>1.5,{},{timeout:30000});const b=await stats();
-  assert.deepEqual(a.map(w=>w.id),ids);assert.equal(new Set(a.map(w=>w.model)).size,10);
-  const motion=b.map((w,i)=>{assert.ok(Math.abs(w.bodyLength-lengths[i])<.01);assert.ok(w.animationTime>a[i].animationTime);assert.notDeepEqual(w.motionSample,a[i].motionSample,w.id+' actual bones/vertices must animate');return{id:w.id,length:w.bodyLength,animated:true,model:w.model}});
-  const prefix=viewport.width+'x'+viewport.height;
-  await p.getByRole('button',{name:'크기 비교',exact:true}).click();await p.waitForFunction(()=>document.querySelector('canvas').dataset.viewMode==='compare');const frame=Number(await p.locator('canvas').getAttribute('data-flight-frames'));await p.waitForFunction(f=>Number(document.querySelector('canvas').dataset.flightFrames)>f+1,frame,{timeout:20000});
-  await p.screenshot({path:out+'/'+prefix+'-compare.png'});
-  const compared=await stats();const comparisonWidth=Number(await p.locator('canvas').getAttribute('data-comparison-width'));
-  for(const whale of compared){const ratio=(whale.renderBox.max[0]-whale.renderBox.min[0])*comparisonWidth/(2*whale.bodyLength);assert.ok(ratio>(whale.id==='narwhal'?1.25:.72)&&ratio<(whale.id==='narwhal'?1.9:1.2),`${whale.id}: visible animated body must retain reference scale (${ratio})`);assert.ok(whale.renderBox.min[0]>-1&&whale.renderBox.max[0]<1,whale.id+' comparison horizontal clipping');}
-  const labels=await p.locator('[data-whale-labels] [data-species]').evaluateAll(es=>es.map(e=>({id:e.dataset.species,text:e.textContent,y:e.getBoundingClientRect().y,left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right,bottom:e.getBoundingClientRect().bottom})));
-  assert.equal(labels.length,10);for(const l of labels)assert.ok(l.y>=0 && l.bottom<=viewport.height && l.left>=0 && l.right<=viewport.width,'comparison label fits '+l.id);
-  await p.getByRole('button',{name:'유명한 종 먼저',exact:true}).click();const familiar=await p.locator('button[data-species]').evaluateAll(es=>es.map(e=>e.dataset.species));assert.deepEqual(familiar,['blue','humpback','sperm','orca','beluga','narwhal','bottlenose','fin','gray','minke']);
-  await p.getByRole('button',{name:'크기순',exact:true}).click();assert.deepEqual(await p.locator('button[data-species]').evaluateAll(es=>es.map(e=>e.dataset.species)),ids);
-  await p.getByRole('button',{name:'자유비행',exact:true}).click();
-  for(const id of ids){const button=p.locator(`button[data-species="${id}"]`);await button.scrollIntoViewIfNeeded();await button.click();await p.waitForFunction(id=>document.querySelector('canvas').dataset.activeSpecies===id,id);assert.equal(await p.locator('[data-active-card]').getAttribute('data-active-card'),id);const frame=Number(await p.locator('canvas').getAttribute('data-flight-frames'));await p.waitForFunction(f=>Number(document.querySelector('canvas').dataset.flightFrames)>f+1,frame,{timeout:20000});if(viewport.width===1440 || ['orca','beluga','humpback'].includes(id))await p.screenshot({path:out+'/'+prefix+'-'+id+'.png'});}
-  if(viewport.width===1440 && !process.env.SKIP_AUTOPLAY){await p.locator('button[data-species="blue"]').click();try{await p.waitForFunction(()=>document.querySelector('canvas').dataset.activeSpecies==='fin',{},{timeout:45000});}catch(e){await fs.writeFile(out+'/autoplay-debug.json',JSON.stringify(await p.locator('canvas').evaluate(c=>({...c.dataset})),null,2));throw e;}}
-  reports.push({viewport,motion,labels,selection:'10/10',sizeOrder:true,familiarOrder:true});await context.close();
+ for(const viewport of[{width:1440,height:900},{width:390,height:844},{width:844,height:390}]){
+  const context=await browser.newContext({viewport,reducedMotion:'reduce'});if(base.includes('127.0.0.1'))await context.route('**/_vercel/insights/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
+  context.on('request',r=>{if(r.url().endsWith('.glb'))requests.push({width:viewport.width,url:r.url()})});
+  await context.route('**/api/**',r=>{errors.push('UNEXPECTED_API '+r.request().url());return r.abort()});
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+  await page.goto(base+'/whale-flight',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.flightReady==='true',{},{timeout:60000});
+  await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('canvas')).opacity)>.999,{},{timeout:10000});
+  assert.equal(await page.locator('[data-species], [data-view="compare"], [data-whale-label]').count(),0);assert.doesNotMatch(await page.locator('main').innerText(),/크기 비교|유명한 종|자동 소개|대왕고래|상괭이/);
+  const before=await sample(page),start=check(before);assert.ok(start.visible>=75,'initial wide view uses the full depth');
+  await page.screenshot({path:`${output}/${viewport.width}x${viewport.height}-wide.png`});
+  snapshots.push({viewport,phase:'wide',dataset:before});
+  await page.getByRole('button',{name:'비행 시작',exact:true}).click();
+  const wall=Date.now();await page.waitForFunction(()=>Number(document.querySelector('canvas').dataset.flightTime)>10,{},{timeout:75000});
+  const during=await sample(page),mid=check(during),eye=JSON.parse(during.heroEye);
+  await fs.writeFile(output+`/${viewport.width}x${viewport.height}-close-diagnostic.json`,JSON.stringify({viewport,eye,dataset:during},null,2));
+  await page.screenshot({path:`${output}/${viewport.width}x${viewport.height}-close-diagnostic.png`});
+  assert.ok(Number(during.cameraBlend)>.95);assert.ok(eye.diameterPixels>viewport.height*.12,'actual eye fills a substantial fraction of this viewport');assert.ok(Math.abs(eye.point[0])<.08&&Math.abs(eye.point[1])<.08,'actual eye at lens center');
+  assert.ok(mid.animals.every((x,i)=>JSON.stringify(x.position)!==JSON.stringify(start.animals[i].position)),'all 100 positions advanced');
+  assert.ok(mid.animals.every((x,i)=>x.animationTime>start.animals[i].animationTime),'all 100 animations advanced');
+  for(const species of Object.keys(expected))assert.ok(mid.animals.filter(x=>x.species===species).some(x=>JSON.stringify(x.motionSample)!==JSON.stringify(start.animals.find(y=>y.id===x.id).motionSample)),species+' bone deforms');
+  await page.getByRole('button',{name:'비행 일시정지',exact:true}).click();await page.screenshot({path:`${output}/${viewport.width}x${viewport.height}-eye.png`});
+  snapshots.push({viewport,phase:'eye',dataset:await sample(page)});
+  const fps=(Number(during.flightFrames)-Number(before.flightFrames))/((Date.now()-wall)/1000);
+  if(viewport.width===1440){
+   const sim=new PodSimulation(start.bodies.map(x=>x.spec),42721);let minSeparation=Infinity;const modes=new Set(),t0=performance.now();
+   for(let tick=0;tick<60*120;tick++){
+    sim.step(1/60);for(const x of sim.bodies)modes.add(x.mode);
+    if(tick%60===0)for(let i=0;i<100;i++)for(let j=i+1;j<100;j++)minSeparation=Math.min(minSeparation,capsuleSeparation(sim.bodies[i],sim.bodies[j]).distance);
+   }
+   assert.ok(minSeparation>-.005);assert.ok(sim.stats.avoidances>0);assert.ok(sim.stats.collisions>0);assert.ok(sim.stats.impulse>0);assert.deepEqual([...modes].sort(),['school','solo','sprint']);
+   const physics={status:'PASS',simulationSeconds:sim.time,wallMilliseconds:performance.now()-t0,actualRenderedModelSpecs:true,minSeparation,stats:sim.stats,modes:[...modes]};
+   await fs.writeFile(output+'/actual-specs-120s-physics.json',JSON.stringify(physics,null,2));
+   console.log(JSON.stringify({physics}));
+  }
+  results.push({viewport,count:100,counts:expected,all100Move:true,all100Animate:true,all5SpeciesDeform:true,initialVisible:start.visible,depth:JSON.parse(before.depthRange),separationWide:start.separation,separationClose:mid.separation,eyePixels:eye.diameterPixels,softwareWebGLFps:fps,drawCalls:Number(before.drawCalls),triangles:Number(before.triangles),textures:Number(before.textures),geometries:Number(before.geometries)});
+  await fs.writeFile(output+'/snapshots.json',JSON.stringify(snapshots));await context.close();
  }
- assert.deepEqual(errors,[]);const report={status:'PASS',base,reports,errors};await fs.writeFile(out+'/result.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
-}catch(error){await fs.writeFile(out+'/failure.json',JSON.stringify({error:String(error),errors,reports},null,2));console.error(error);process.exitCode=1}finally{await browser.close()}
+ for(const width of[1440,390,844]){const req=requests.filter(r=>r.width===width);assert.equal(req.length,4);assert.equal(new Set(req.map(r=>r.url)).size,4);assert.ok(req.every(r=>/\/(blue-whale|humpback-whale|sperm-whale|orca)\.glb$/.test(r.url)));}
+ assert.deepEqual(errors,[]);const report={status:'PASS',base,results,requests,errors};await fs.writeFile(output+'/result.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+}catch(error){await fs.writeFile(output+'/failure.json',JSON.stringify({base,error:String(error),stack:error.stack,results,errors,requests},null,2));console.error(error);process.exitCode=1;}finally{await browser.close()}

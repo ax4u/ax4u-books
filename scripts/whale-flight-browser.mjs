@@ -14,9 +14,9 @@ async function contextFor(viewport,extra={}){
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
  page.on('response',r=>{if(r.status()>=400)failures.push(r.status()+' '+r.url())});return{context,page};
 }
-async function ready(page){await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.flightReady==='true',{},{timeout:45000});}
+async function ready(page){await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.flightReady==='true',{},{timeout:45000});await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('canvas')).opacity)>.999,{},{timeout:10000});}
 async function time(page){return Number(await page.locator('canvas').getAttribute('data-flight-time'));}
-async function image(page){return createHash('sha256').update(await page.locator('canvas').evaluate(c=>c.toDataURL())).digest('hex');}
+async function image(page){return createHash('sha256').update(await page.locator('canvas').screenshot()).digest('hex');}
 async function noOverflow(page,w){assert.ok(await page.evaluate(w=>document.documentElement.scrollWidth<=w+1,w),'page overflow '+w);const outside=await page.locator('main button:not([data-species]),main header a').evaluateAll(els=>els.filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&(r.left<0||r.right>innerWidth+1||r.top<0||r.bottom>innerHeight+1)}).map(e=>e.textContent));assert.deepEqual(outside,[],'controls outside viewport');}
 try{
  for(const viewport of [{width:1440,height:900},{width:1920,height:1080},{width:390,height:844},{width:320,height:740},{width:844,height:390},{width:1024,height:768}]){
@@ -26,7 +26,7 @@ try{
    assert.equal(await page.getByRole('heading',{name:'고래들의 비상',exact:true}).count(),1);
    await noOverflow(page,viewport.width);
    assert.equal(await page.locator('[data-wink]').count(),0);assert.doesNotMatch(await page.locator('canvas').getAttribute('aria-label'),/상멍|윙크/);assert.doesNotMatch(await page.locator('main').innerText(),/상멍|윙크/);
-   const count=Number(await page.locator('canvas').getAttribute('data-whale-count'));assert.equal(count,10);assert.equal(Number(await page.locator('canvas').getAttribute('data-species-count')),10);
+   const count=Number(await page.locator('canvas').getAttribute('data-whale-count'));assert.equal(count,100);assert.equal(Number(await page.locator('canvas').getAttribute('data-species-count')),5);
    await page.screenshot({path:`${output}/${viewport.width}x${viewport.height}.png`});
    await page.getByRole('button',{name:'비행 일시정지',exact:true}).click();await page.waitForFunction(()=>document.querySelector('canvas').dataset.flightPaused==='true');
    const pausedTime=await time(page), a=await image(page);await page.waitForTimeout(450);assert.equal(await time(page),pausedTime);assert.equal(await image(page),a);
