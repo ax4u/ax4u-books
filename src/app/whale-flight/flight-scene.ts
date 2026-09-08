@@ -313,9 +313,9 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       // Track the actual licensed eye mesh, not an anatomical guess or a staged copy.
       // A telephoto lens stays OUTSIDE the full fin capsule while showing a giant eye.
       if (hero.eyeMesh) {
-        hero.eyeMesh.geometry.computeBoundingBox();
-        hero.eyeMesh.geometry.boundingBox!.getCenter(eye);
-        hero.eyeMesh.localToWorld(eye);
+        // Use the same precise world-space eye bounds as the framing diagnostic.
+        // Transform(local AABB center) need not equal the rotated world AABB center.
+        new THREE.Box3().setFromObject(hero.eyeMesh, true).getCenter(eye);
       } else eye.set(hero.bodyLength * .09, hero.bodyLength * .043, hero.bodyLength * .26)
         .applyQuaternion(hero.body.quaternion).add(hero.body.position);
       closeCamera.copy(eye).sub(hero.body.position).applyQuaternion(hero.body.quaternion.clone().invert());
