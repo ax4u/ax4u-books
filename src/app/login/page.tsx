@@ -4,6 +4,8 @@ import GobibiShell from "@/app/components/gobibi/GobibiShell";
 import GobibiArt from "@/app/components/gobibi/GobibiArt";
 import LoginForm from "./LoginForm";
 import { getSessionUser } from "@/lib/auth";
+import { isGoogleAuthEnabled } from "@/lib/google-auth";
+import { authCallbackMessage } from "@/lib/auth-messages";
 import { isSupabaseConfigured } from "@/lib/env";
 import { pageSocialMetadata } from "@/lib/site-metadata";
 import ui from "@/app/studio.module.css";
@@ -19,6 +21,7 @@ export default async function LoginPage({
   if (user) redirect("/dashboard");
 
   const { error } = await searchParams;
+  const googleEnabled = await isGoogleAuthEnabled();
 
   return (
     <GobibiShell theme="sky" className={ui.brand}>
@@ -46,8 +49,8 @@ export default async function LoginPage({
           </div>
           <p className={ui.passportBrand}>Hello, storyteller.</p>
           <p className={ui.passportIntro}>나만의 책장으로 들어가는 작은 초대장.</p>
-          {error && <p className={ui.errorNotice} role="alert">{error}</p>}
-          <LoginForm mockMode={!isSupabaseConfigured} />
+          {error && <p className={ui.errorNotice} role="alert">{authCallbackMessage(error)}</p>}
+          <LoginForm authAvailable={isSupabaseConfigured} googleEnabled={googleEnabled} />
           <p className={ui.passportBottom}>GOBIBI × SANG#MUNG <span aria-hidden="true">✳</span> 상상의 첫 장에서</p>
         </section>
       </main>

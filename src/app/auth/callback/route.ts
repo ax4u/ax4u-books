@@ -1,35 +1,27 @@
-import { safeAuthNext } from "@/lib/auth-redirect";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { env } from "@/lib/env";
+import { trustedAuthOrigin } from "@/lib/auth-origin";
 
-/** Supabase auth redirect target — exchanges the OAuth/PKCE code for a session. */
+/** Exchange only PKCE codes with the browser's verifier cookie. Never trust
+ * request Host, next, access_token, or provider error_description parameters. */
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
-  const next = safeAuthNext(url.searchParams.get("next"));
-
-  if (error) {
-    return NextResponse.redirect(
-      `${env.appUrl}/login?error=${encodeURIComponent(error)}`,
-    );
+  const requestUrl = new URL(request.url);
+  const origin = trustedAuthOrigin(requestUrl.origin);
+  if (!origin) return NextResponse.redirect("https://gobibi.art/login?error=auth_failed");
+  const params = requestUrl.searchParams;
+  const failure = (reason: string) => NextResponse.redirect(new URL(`/login?error=${reason}`, origin));
+  if (params.has("error") || params.has("error_description")) {
+    return failure(params.get("error") === "access_denied" ? "oauth_cancelled" : "auth_failed");
   }
-
-  if (code) {
+  const code = params.get("code");
+  if (!code) return failure("auth_failed");
+  try {
     const supabase = await createSupabaseServerClient();
-    if (supabase) {
-      const { error: exchangeError } =
-        await supabase.auth.exchangeCodeForSession(code);
-      if (exchangeError) {
-        return NextResponse.redirect(
-          `${env.appUrl}/login?error=${encodeURIComponent(exchangeError.message)}`,
-        );
-      }
-      return NextResponse.redirect(new URL(next, env.appUrl));
-    }
+    if (!supabase) return failure("auth_unavailable");
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) return failure("auth_failed");
+  } catch {
+    return failure("auth_failed");
   }
-  return NextResponse.redirect(
-    `${env.appUrl}/login?error=${encodeURIComponent("인증 링크가 올바르지 않거나 만료되었습니다.")}`,
-  );
+  return NextResponse.redirect(new URL("/dashboard", origin));
 }
