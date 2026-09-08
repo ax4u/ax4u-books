@@ -64,7 +64,20 @@ test('subpages inherit the brand image without a conflicting cover override', ()
   for (const file of walk(join(root, 'src/app'))) {
     assert.doesNotMatch(file, /(?:opengraph-image|twitter-image)\./);
     if (/\.(tsx?|jsx?)$/.test(file)) {
-      assert.doesNotMatch(readFileSync(file, 'utf8'), /\b(?:openGraph|twitter)\s*:/, file);
+      const source = readFileSync(file, 'utf8');
+      if (file === join(root, 'src/app/whale-flight/page.tsx')) {
+        // The separately approved flight preview intentionally uses its own
+        // dedicated artwork. Keep that exception narrow; all other routes inherit.
+        assert.match(source, /pageSocialMetadata\("\/whale-flight"\)/);
+        assert.match(source, /whale-flight-close-v2\.jpg/);
+        assert.match(source, /images: \[image\]/);
+        assert.match(source, /images: \[\{ url: image\.url, alt: image\.alt \}\]/);
+      } else if (file === join(root, 'src/app/exhibition/page.tsx')) {
+        assert.match(source, /pageSocialMetadata\("\/exhibition"\)/);
+        assert.match(source, /https:\/\/gobibi\.art\/social\/exhibition-library-v1\.jpg/);
+        assert.match(source, /images: \[image\]/);
+        assert.match(source, /images: \[\{ url: image\.url, alt: image\.alt \}\]/);
+      } else assert.doesNotMatch(source, /\b(?:openGraph|twitter)\s*:/, file);
     }
   }
 });

@@ -8,7 +8,7 @@ import * as THREE from 'three';
 export type PodSpec = { id: string; species: string; length: number; radius: number; mass: number; speed: number };
 export type PodBody = {
   spec: PodSpec; position: THREE.Vector3; velocity: THREE.Vector3; quaternion: THREE.Quaternion;
-  mode: 'school' | 'solo' | 'sprint'; school: number; phase: number;
+  mode: 'school' | 'solo'; school: number; phase: number;
   nextMode: number; wander: THREE.Vector3; nextWander: number;
 };
 export type CapsuleContact = { distance: number; normal: THREE.Vector3; pointA: THREE.Vector3; pointB: THREE.Vector3 };
@@ -81,36 +81,59 @@ export class PodSimulation {
   time = 0;
   stats = { collisions: 0, avoidances: 0, maxPenetration: 0, steps: 0, modeTransitions: 0, sweptCandidates: 0, impulse: 0 };
   private seed: number;
-  private centers = [new THREE.Vector3(0, 0, -52), new THREE.Vector3(-48, 15, -158), new THREE.Vector3(70, -35, -252), new THREE.Vector3(-85, 42, -420), new THREE.Vector3(115, -62, -585)];
-  private targets: THREE.Vector3[];
-  private nextMigration = 0;
-  constructor(specs: PodSpec[], seed = 12345) {
+  private aspect: number;
+  private tanHalfFov: number;
+  private motion = new WeakMap<PodBody, { yaw: number; pitch: number; turnRate: number; frequency: number }>();
+  constructor(specs: PodSpec[], seed = 12345, options: { aspect?: number; fov?: number } = {}) {
     this.seed = seed >>> 0;
-    this.targets = this.centers.map(c => c.clone());
+    this.aspect = options.aspect ?? 16 / 9;
+    const fov = options.fov ?? 52;
+    if (!Number.isFinite(this.aspect) || this.aspect <= 0 || !Number.isFinite(fov) || fov <= 0 || fov >= 170)
+      throw new Error('Invalid observation frustum');
+    this.tanHalfFov = Math.tan(THREE.MathUtils.degToRad(fov / 2));
+    // Independent depth and screen strata: no school centers or near-camera hero.
+    const cells = specs.map((_, i) => i), depths = [...cells];
+    for (const order of [cells, depths]) for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(this.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]];
+    }
+    const columns = Math.ceil(Math.sqrt(Math.max(1, specs.length)));
+    const rows = Math.ceil(specs.length / columns);
     for (let i = 0; i < specs.length; i++) {
       const spec = { ...specs[i] };
       for (const key of ['length', 'radius', 'mass', 'speed'] as const)
         if (!Number.isFinite(spec[key]) || spec[key] <= 0) throw new Error(`Invalid ${key} for ${spec.id}`);
-      const ratio = i / Math.max(1, specs.length);
-      const school = ratio < .1 ? 0 : ratio < .3 ? 1 : ratio < .5 ? 2 : ratio < .75 ? 3 : 4;
-      const b: PodBody = { spec, school, mode: 'school', phase: this.random() * Math.PI * 2,
+      const b: PodBody = { spec, school: i % 5, mode: i % 2 ? 'solo' : 'school', phase: this.random() * Math.PI * 2,
         position: new THREE.Vector3(), velocity: new THREE.Vector3(), quaternion: new THREE.Quaternion(),
-        nextMode: 2 + this.random() * 15, wander: new THREE.Vector3(), nextWander: 0 };
-      b.velocity.set(this.random() - .5, (this.random() - .5) * .5, this.random() - .5).normalize().multiplyScalar(spec.speed);
-      b.quaternion.setFromUnitVectors(Z, b.velocity.clone().normalize());
+        nextMode: 25 + this.random() * 45, wander: new THREE.Vector3(), nextWander: Infinity };
+      const yaw = (i % 2 ? -1 : 1) * (Math.PI / 3 + this.random() * Math.PI / 3);
+      const pitch = (this.random() - .5) * .2;
+      this.motion.set(b, { yaw, pitch, turnRate: .03 + this.random() * .04, frequency: .012 + this.random() * .016 });
+      this.orient(b, yaw, pitch);
+      b.velocity.copy(Z).applyQuaternion(b.quaternion).multiplyScalar(spec.speed * (.95 + .2 * Math.sin(b.phase)));
       let placed = false;
       for (let attempt = 0; attempt < 10000; attempt++) {
-        const c = this.centers[school], spread = 1 + attempt / 1500;
-        b.position.set(c.x + (this.random() - .5) * (school ? 115 : 50) * spread,
-          c.y + (this.random() - .5) * (school ? 80 : 40) * spread,
-          c.z + (this.random() - .5) * (school ? 70 : 34) * spread);
-        if (b.position.z + bound(b) > -8 || b.position.z - bound(b) < -700) continue;
-        if (this.bodies.every(a => a.position.distanceToSquared(b.position) > (bound(a) + bound(b) + 1) ** 2 || capsuleSeparation(a, b).distance > .3)) { placed = true; break; }
+        // A conservative large capsule can exhaust a narrow portrait depth cell;
+        // after local retries keep its screen cell but search the full safe depth.
+        const depthFraction = attempt < 128 ? (depths[i] + this.random()) / Math.max(1, specs.length) : this.random();
+        const z = -100 - 440 * depthFraction;
+        const hh = (28 - z) * this.tanHalfFov;
+        // Keep the assigned screen cell on retries, varying actual depth within its stratum.
+        const nx = ((cells[i] % columns + .1 + this.random() * .8) / columns - .5) * 1.6;
+        const ny = ((Math.floor(cells[i] / columns) + .1 + this.random() * .8) / rows - .5) * 1.6;
+        b.position.set(nx * hh * this.aspect, ny * hh, z);
+        if (this.bodies.every(a => a.position.distanceToSquared(b.position) > (bound(a) + bound(b) + 1) ** 2 || capsuleSeparation(a, b).distance > .5)) { placed = true; break; }
       }
-      if (!placed) throw new Error('Capsules cannot fit initial school; reduce envelope/count');
+      if (!placed) throw new Error('Capsules cannot fit observation frustum; reduce envelope/count');
       this.bodies.push(b);
     }
     this.measurePenetration();
+  }
+  /** +Z swims forward; constructing an upright basis avoids reverse-heading roll. */
+  private orient(b: PodBody, yaw: number, pitch: number) {
+    const forward = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const up = new THREE.Vector3().crossVectors(forward, right);
+    b.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, forward)).normalize();
   }
   private random() {
     this.seed += 0x6d2b79f5;
@@ -128,12 +151,12 @@ export class PodSimulation {
     let remaining = dt;
     while (remaining > 1e-10) {
       let h = Math.min(1 / 60, remaining);
-      for (const b of this.bodies) h = Math.min(h, .22 * b.spec.radius / Math.max(b.velocity.length() + (steering ? b.spec.speed * 3 : 0), .01));
+      for (const b of this.bodies) h = Math.min(h, .22 * b.spec.radius / Math.max(b.velocity.length() + (steering ? b.spec.speed * 1.15 : 0), .01));
       if (steering) this.steer(h);
       // Rotating a long capsule can create new contacts: resolve BEFORE movement.
       this.solve();
       const previous = this.bodies.map(b => b.position.clone());
-      for (const b of this.bodies) { b.position.addScaledVector(b.velocity, h); b.velocity.multiplyScalar(Math.exp(-.035 * h)); }
+      for (const b of this.bodies) { b.position.addScaledVector(b.velocity, h); if (!steering) b.velocity.multiplyScalar(Math.exp(-.035 * h)); }
       // Swept enclosing-sphere segments are a conservative capsule broad phase.
       // Exact capsule narrow phase follows at travel-bounded intermediate poses.
       for (let i = 0; i < this.bodies.length; i++) for (let j = i + 1; j < this.bodies.length; j++) {
@@ -145,70 +168,87 @@ export class PodSimulation {
         const t = den > 0 ? clamp(-(rx * dx + ry * dy + rz * dz) / den, 0, 1) : 0;
         if ((rx + dx * t) ** 2 + (ry + dy * t) ** 2 + (rz + dz * t) ** 2 < rr * rr) this.stats.sweptCandidates++;
       }
-      this.solve(); this.time += h; this.stats.steps++; remaining -= h;
+      this.solve();
+      // In the swimming scene an encounter may deflect or slow an animal, but
+      // cannot launch a light animal into a sprint. Free collision tests retain
+      // the full physical impulse (steering=false).
+      if (steering) for (const b of this.bodies) b.velocity.clampLength(0, b.spec.speed * 1.15);
+      this.time += h; this.stats.steps++; remaining -= h;
     }
     this.measurePenetration();
   }
   private steer(h: number) {
-    if (this.time >= this.nextMigration) {
-      this.nextMigration = this.time + 12 + this.random() * 16;
-      this.targets = this.centers.map((c, i) => new THREE.Vector3((this.random() - .5) * (i ? -c.z * .48 : 35), (this.random() - .5) * (i ? -c.z * .23 : 24), [-52, -158, -252, -420, -585][i] + (this.random() - .5) * (i ? 55 : 15)));
-    }
-    this.centers.forEach((c, i) => c.lerp(this.targets[i], 1 - Math.exp(-h * .045)));
-    const sums = this.centers.map(() => ({ p: new THREE.Vector3(), v: new THREE.Vector3(), n: 0 }));
-    for (const b of this.bodies) { const s = sums[b.school]; s.p.add(b.position); s.v.add(b.velocity); s.n++; }
-    const forces = this.bodies.map(b => {
+    const targets = this.bodies.map(b => {
+      const m = this.motion.get(b)!;
+      // These labels are observational only; neither attracts a school nor sprints.
       if (this.time >= b.nextMode) {
-        b.mode = b.mode === 'school' ? (this.random() < .55 ? 'solo' : 'sprint') : 'school';
-        b.nextMode = this.time + (b.mode === 'school' ? 9 + this.random() * 18 : b.mode === 'solo' ? 5 + this.random() * 10 : 2 + this.random() * 4);
+        b.mode = b.mode === 'school' ? 'solo' : 'school';
+        b.nextMode = this.time + 30 + 20 * (1 + Math.sin(b.phase + this.time * m.frequency));
         this.stats.modeTransitions++;
       }
-      if (this.time >= b.nextWander) {
-        b.nextWander = this.time + 3 + this.random() * 7;
-        b.wander.set(this.random() - .5, (this.random() - .5) * .7, this.random() - .5).normalize();
-      }
-      const speed = b.spec.speed * (b.mode === 'sprint' ? 1.8 : b.mode === 'solo' ? 1.12 : .85 + .15 * Math.sin(this.time * .11 + b.phase));
-      const target = this.centers[b.school].clone().sub(b.position).multiplyScalar(b.mode === 'solo' ? .015 : .04);
-      target.addScaledVector(b.wander, b.mode === 'solo' ? 1.8 : .8);
-      const s = sums[b.school];
-      if (s.n > 1 && b.mode === 'school') {
-        target.addScaledVector(s.v, .35 / (s.n * Math.max(b.spec.speed, 1)));
-        target.addScaledVector(s.p.clone().multiplyScalar(1 / s.n).sub(b.position), .002);
-      }
-      const margin = bound(b) + 12, depth = -b.position.z;
-      const wx = 22 + depth * .58, wy = 18 + depth * .32;
-      target.x -= Math.sign(b.position.x) * Math.max(0, Math.abs(b.position.x) - wx + margin) * .12;
-      target.y -= Math.sign(b.position.y) * Math.max(0, Math.abs(b.position.y) - wy + margin) * .12;
-      target.z -= Math.max(0, b.position.z + 8 + margin) * .16;
-      target.z += Math.max(0, -700 + margin - b.position.z) * .16;
-      if (target.lengthSq() < 1e-8) target.copy(b.wander);
-      return target.normalize().multiplyScalar(speed).sub(b.velocity).multiplyScalar(.65);
+      const wanderYaw = m.yaw + .85 * Math.sin(this.time * m.frequency + b.phase)
+        + .3 * Math.sin(this.time * m.frequency * .43 + b.phase * 2.7);
+      const pitch = .14 * Math.sin(this.time * m.frequency * .71 + b.phase * 1.9);
+      const target = new THREE.Vector3(Math.sin(wanderYaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(wanderYaw) * Math.cos(pitch));
+      // Anticipate the edge by a turning-radius-sized distance. These are walls,
+      // not a home/center spring: the whole interior has exactly zero attraction.
+      const future = b.position.clone().addScaledVector(b.velocity, 65);
+      const hh = (28 - Math.max(b.position.z, future.z)) * this.tanHalfFov;
+      const padding = bound(b) + 10;
+      const px = clamp((Math.abs(future.x) + padding - hh * this.aspect * .92) / Math.max(30, hh * this.aspect * .3), 0, 1);
+      const py = clamp((Math.abs(future.y) + padding - hh * .9) / Math.max(25, hh * .3), 0, 1);
+      target.x -= Math.sign(future.x) * px * 3;
+      target.y -= Math.sign(future.y) * py;
+      target.z -= 3 * clamp((future.z + padding + 100) / 75, 0, 1);
+      // Depth safety takes priority over a portrait side-wall turn: begin well
+      // before the near plane, leaving even the slowest yaw ample turning room.
+      target.z -= 4 * clamp((b.position.z + padding + 180) / 80, 0, 1);
+      target.z += 3 * clamp((-550 + padding - future.z) / 75, 0, 1);
+      b.wander.copy(target).normalize();
+      return target;
     });
+    // Bounding spheres only reject distant pairs. The actual, translated capsule
+    // gap controls avoidance, so long silhouettes do not repel unrelated whales.
     for (let i = 0; i < this.bodies.length; i++) for (let j = i + 1; j < this.bodies.length; j++) {
       const a = this.bodies[i], b = this.bodies[j];
-      const rel = b.position.clone().sub(a.position), v = b.velocity.clone().sub(a.velocity);
-      const limit = bound(a) + bound(b) + 5;
-      if (rel.lengthSq() > (limit + v.length() * 2.5) ** 2) continue;
-      const t = clamp(-rel.dot(v) / Math.max(v.lengthSq(), 1e-8), 0, 2.5);
-      const future = rel.clone().addScaledVector(v, t), d = future.length();
-      if (d < limit) {
-        if (d < 1e-6) future.copy(rel);
-        if (future.lengthSq() < 1e-8) future.set(1, 0, 0);
-        future.normalize();
-        const f = Math.min(12, (limit - d) * .6) / (1 + t);
-        forces[i].addScaledVector(future, -f); forces[j].addScaledVector(future, f);
+      const relative = b.velocity.clone().sub(a.velocity);
+      const range = bound(a) + bound(b) + 10 + relative.length() * 10;
+      if (a.position.distanceToSquared(b.position) > range * range) continue;
+      const rel = b.position.clone().sub(a.position);
+      const t = clamp(-rel.dot(relative) / Math.max(relative.lengthSq(), 1e-8), 0, 10);
+      const current = capsuleSeparation(a, b);
+      const future = capsuleSeparation({ ...a, position: a.position.clone().addScaledVector(a.velocity, t) },
+        { ...b, position: b.position.clone().addScaledVector(b.velocity, t) });
+      const contact = future.distance < current.distance ? future : current;
+      if (contact.distance < 10) {
+        const strength = .65 * clamp((10 - contact.distance) / 15, 0, 1);
+        targets[i].addScaledVector(contact.normal, -strength);
+        targets[j].addScaledVector(contact.normal, strength);
         this.stats.avoidances++;
       }
     }
     this.bodies.forEach((b, i) => {
-      const maxAccel = Math.max(2, b.spec.speed * 1.3);
-      forces[i].clampLength(0, maxAccel); b.velocity.addScaledVector(forces[i], h);
-      if (b.velocity.lengthSq() > 1e-10) {
-        const q = new THREE.Quaternion().setFromUnitVectors(Z, b.velocity.clone().normalize());
-        // Tip displacement is also bounded to prevent rotation tunnelling.
-        const maxTurn = Math.min(.7 * h, .15 * b.spec.radius / Math.max(half(b), .01));
-        b.quaternion.rotateTowards(q, maxTurn).normalize();
+      const m = this.motion.get(b)!, target = targets[i];
+      const desiredYaw = Math.atan2(target.x, target.z);
+      const delta = Math.atan2(Math.sin(desiredYaw - m.yaw), Math.cos(desiredYaw - m.yaw));
+      // Limit angular velocity AND capsule-tip travel. No quaternion shortest-arc roll.
+      const limit = Math.min(m.turnRate * h, .15 * b.spec.radius / Math.max(half(b), .01));
+      m.yaw += clamp(delta * (1 - Math.exp(-.065 * h)), -limit, limit);
+      const desiredPitch = clamp(Math.atan2(target.y, Math.hypot(target.x, target.z)), -.25, .25);
+      m.pitch += clamp((desiredPitch - m.pitch) * (1 - Math.exp(-.07 * h)), -.012 * h, .012 * h);
+      this.orient(b, m.yaw, m.pitch);
+      const pace = .95 + .2 * Math.sin(this.time * m.frequency * .63 + b.phase);
+      let speed = THREE.MathUtils.lerp(b.velocity.length(), b.spec.speed * pace, 1 - Math.exp(-.12 * h));
+      // A gentle personal stand-off, not a camera push or position clamp. Slow
+      // forward travel exponentially as the observation margin approaches, giving
+      // even a portrait U-turn time to finish without an accidental close fly-by.
+      const towardCamera = Math.cos(m.yaw) * Math.cos(m.pitch);
+      if (towardCamera > 0) {
+        const room = Math.max(0, -85 - b.position.z - bound(b));
+        speed = Math.min(speed, room * .035 / towardCamera);
       }
+      // Propulsion follows the already-limited body pose, never a faster sideways target.
+      b.velocity.copy(Z).applyQuaternion(b.quaternion).multiplyScalar(speed);
     });
   }
   private solve() {

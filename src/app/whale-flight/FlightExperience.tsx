@@ -110,9 +110,7 @@ export default function FlightExperience() {
 
   return <main className={styles.experience} data-ready={ready} data-paused={paused} data-edition="living-pod" aria-label="고래들의 비상 — 고비비 실시간 3D 체험">
     <div className={styles.poster} aria-hidden="true" />
-    <canvas key={attempt} ref={canvas} className={styles.canvas} role="img" aria-label="다섯 종 백 마리 고래가 서로를 피하며 깊은 고비비 하늘을 자유롭게 헤엄치는 실시간 3D 장면" onPointerMove={event => {
-      if (!paused && event.pointerType !== "touch") { const bounds = event.currentTarget.getBoundingClientRect(); controller.current?.setPointer((event.clientX - bounds.left) / bounds.width * 2 - 1, (event.clientY - bounds.top) / bounds.height * 2 - 1); }
-    }} onPointerLeave={() => controller.current?.setPointer(0, 0)} />
+    <canvas key={attempt} ref={canvas} className={styles.canvas} role="img" aria-label="다섯 종 백 마리 고래가 서로를 피하며 깊은 고비비 하늘을 자유롭게 헤엄치는 실시간 3D 장면" />
     <div className={styles.shade} aria-hidden="true" />
     <header className={styles.header}>
       <Link href="/" className={styles.brand} aria-label="GOBIBI 홈페이지로 나가기">GOBIBI <small>× SANG#MUNG</small></Link>

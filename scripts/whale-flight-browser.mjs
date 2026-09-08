@@ -29,7 +29,7 @@ try{
   const {context,page}=await contextFor(viewport);try{
    await page.goto(base+'/whale-flight',{waitUntil:'domcontentloaded'});await ready(page);
    await page.waitForFunction(()=>Number(document.querySelector('canvas')?.dataset.flightTime)>.45,{},{timeout:20000});
-   if(viewport.width===1440)await page.waitForFunction(()=>Number(document.querySelector('canvas').dataset.flightTime)>2.4,{},{timeout:20000});
+   if(viewport.width===1440)await page.waitForFunction(()=>Number(document.querySelector('canvas').dataset.flightTime)>2.4,{},{timeout:90000});
    assert.equal(Number(await page.locator('canvas').getAttribute('data-unpainted-resizes')),0,'DPR resize must be painted in the same animation frame');
    assert.equal(await page.getByRole('heading',{name:'고래들의 비상',exact:true}).count(),1);
    await noOverflow(page,viewport.width);

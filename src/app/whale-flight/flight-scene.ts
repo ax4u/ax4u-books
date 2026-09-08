@@ -11,7 +11,7 @@ type Animal = {
   id: string; species: WhaleSpecies; root: THREE.Group; model: THREE.Object3D;
   mixer?: THREE.AnimationMixer; original?: Original; bones: THREE.Bone[];
   body?: PodBody; bodyLength: number; envelope: Envelope; animationTime: number;
-  animationPending: number; animationSpeed: number; phase: number; eyeMesh?: THREE.Mesh;
+  animationPending: number; animationSpeed: number; phase: number;
 };
 type FlightStats = {
   time: number; frames: number; whales: number; drawCalls: number; species: string[];
@@ -21,7 +21,6 @@ type FlightStats = {
 export type FlightController = {
   setPaused(paused: boolean): void;
   setReducedMotion(reduced: boolean): void;
-  setPointer(x: number, y: number): void;
   dispose(): void;
   getStats(): FlightStats;
 };
@@ -30,10 +29,9 @@ const COUNT = 20;
 const IDS = ["blue", "humpback", "sperm", "orca", "porpoise"];
 // Relative inertial weights, not a claim that the integrator uses SI units.
 const MASS: Record<string, number> = { blue: 80000, humpback: 30000, sperm: 40000, orca: 5000, porpoise: 80 };
-const SPEED: Record<string, number> = { blue: 1.6, humpback: 1.9, sperm: 1.5, orca: 2.8, porpoise: 2.2 };
+const SPEED: Record<string, number> = { blue: 1.2, humpback: 1.35, sperm: 1.15, orca: 1.7, porpoise: 1.3 };
 const FIXED_STEP = 1 / 60;
 const SKY_DEPTH = 1100;
-const FORWARD = new THREE.Vector3(0, 0, 1);
 const rounded = (n: number) => Number(n.toFixed(5));
 
 /** A real 100-body pod: the simulation owns every animal's world transform. */
@@ -55,13 +53,12 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   const sourceRoots = new Set<THREE.Object3D>();
   const mixers = new Set<THREE.AnimationMixer>();
   const animals: Animal[] = [];
-  const pointer = new THREE.Vector2(), easedPointer = new THREE.Vector2();
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#90b7b7");
   scene.fog = new THREE.FogExp2("#aac8c6", .00155);
   const camera = new THREE.PerspectiveCamera(52, 1, .02, 1500);
-  camera.position.set(0, 3, 18);
-  camera.lookAt(0, 2, -90);
+  camera.position.set(0, 0, 28);
+  camera.lookAt(0, 0, -140);
   scene.add(camera);
   const skyMaterial = new THREE.MeshBasicMaterial({ depthWrite: false, depthTest: false, fog: false, toneMapped: false });
   const skyGeometry = new THREE.PlaneGeometry(1, 1);
@@ -73,11 +70,8 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   scene.add(new THREE.HemisphereLight("#e8faf4", "#456673", 2.1));
   const sun = new THREE.DirectionalLight("#fff0ce", 2.8); sun.position.set(-45, 80, 25); scene.add(sun);
   const rim = new THREE.DirectionalLight("#a2d9ec", 1.6); rim.position.set(50, 20, -100); scene.add(rim);
-  const aim = new THREE.Vector3(0, 2, -90), wideAim = new THREE.Vector3(), desiredCamera = new THREE.Vector3();
-  const eye = new THREE.Vector3(), closeCamera = new THREE.Vector3(), local = new THREE.Vector3();
-  const cameraAxis = new THREE.Vector3(), nearestPoint = new THREE.Vector3(), escape = new THREE.Vector3();
+  const local = new THREE.Vector3();
   const frustum = new THREE.Frustum(), projection = new THREE.Matrix4();
-  let cameraBlend = 0;
 
   function registerModel(root: THREE.Object3D, own = true) {
     root.traverse(object => {
@@ -265,8 +259,9 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
         const id = `${species.id}-${String(index + 1).padStart(2, "0")}`;
         const root = new THREE.Group(); root.name = id; root.userData.species = species.id; root.userData.animalId = id; root.add(instance);
         const animal: Animal = { id, species, root, model, mixer, original, bones: representativeBones(instance, clips), bodyLength,
-          envelope: envelope!, animationTime: mixer?.time ?? phase * 6.28, animationPending: 0, animationSpeed: .72 + phase * .48, phase,
-          eyeMesh: species.id === "blue" ? instance.getObjectByName("polySurface2_lambert1_0") as THREE.Mesh | undefined : undefined };
+          envelope: envelope!, animationTime: mixer?.time ?? phase * 6.28, animationPending: 0,
+          // Native fluke cycles stay slow and independent; no synchronized flapping.
+          animationSpeed: swimming ? swimming.duration / (species.id === "orca" ? 4.8 : 7.5) * (.88 + phase * .24) : .34 + phase * .08, phase };
         animals.push(animal); scene.add(root);
       }
     }));
@@ -276,7 +271,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     if (animals.length !== 100 || new Set(animals.map(animal => animal.id)).size !== 100 || new Set(animals.map(animal => animal.model.uuid)).size !== 100) throw new Error("고래 100개체를 모두 준비하지 못했습니다.");
     const specs: PodSpec[] = animals.map(animal => ({ id: animal.id, species: animal.species.id, length: animal.envelope.length,
       radius: animal.envelope.radius, mass: MASS[animal.species.id], speed: SPEED[animal.species.id] * (.9 + animal.phase * .2) }));
-    simulation = new PhysicsPodSimulation(specs, 42721);
+    simulation = new PhysicsPodSimulation(specs, 42721, { aspect: width / height, fov: mobile ? 68 : 52 });
     const bodies = new Map(simulation.bodies.map(body => [body.spec.id, body]));
     for (const animal of animals) {
       animal.body = bodies.get(animal.id);
@@ -285,62 +280,18 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     updateWorld(0);
   }
 
-  function cameraSafety() {
-    // Stay outside every conservative capsule; modify CAMERA only, never bodies.
-    for (let pass = 0; pass < 2; pass++) for (const animal of animals) {
-      const body = animal.body; if (!body) continue;
-      cameraAxis.copy(FORWARD).applyQuaternion(body.quaternion);
-      local.copy(camera.position).sub(body.position);
-      const half = body.spec.length / 2 - body.spec.radius;
-      nearestPoint.copy(body.position).addScaledVector(cameraAxis, THREE.MathUtils.clamp(local.dot(cameraAxis), -half, half));
-      escape.copy(camera.position).sub(nearestPoint);
-      const safe = body.spec.radius + .16;
-      if (escape.lengthSq() < safe * safe) {
-        if (escape.lengthSq() < .00001) escape.set(1, .2, 0).applyQuaternion(body.quaternion);
-        camera.position.copy(nearestPoint).add(escape.setLength(safe));
-      }
-    }
-  }
-  function updateCamera(delta: number) {
-    easedPointer.lerp(pointer, 1 - Math.exp(-delta * 1.5));
-    const hero = animals.find(animal => String(animal.species.id) === "blue" && animal.id.endsWith("01"));
-    wideAim.set(easedPointer.x * 5, 2 + easedPointer.y * 3, -100);
-    desiredCamera.set(easedPointer.x * 2.5, 3 + easedPointer.y * 1.3, 18);
-    let targetBlend = 0;
-    if (hero?.body && !reduced) {
-      const cycle = elapsed % 20;
-      targetBlend = THREE.MathUtils.smoothstep(cycle, 4, 9) * (1 - THREE.MathUtils.smoothstep(cycle, 13, 19));
-      // Track the actual licensed eye mesh, not an anatomical guess or a staged copy.
-      // A telephoto lens stays OUTSIDE the full fin capsule while showing a giant eye.
-      if (hero.eyeMesh) {
-        // Use the same precise world-space eye bounds as the framing diagnostic.
-        // Transform(local AABB center) need not equal the rotated world AABB center.
-        new THREE.Box3().setFromObject(hero.eyeMesh, true).getCenter(eye);
-      } else eye.set(hero.bodyLength * .09, hero.bodyLength * .043, hero.bodyLength * .26)
-        .applyQuaternion(hero.body.quaternion).add(hero.body.position);
-      closeCamera.copy(eye).sub(hero.body.position).applyQuaternion(hero.body.quaternion.clone().invert());
-      closeCamera.x = hero.envelope.radius + .32;
-      closeCamera.applyQuaternion(hero.body.quaternion).add(hero.body.position);
-      desiredCamera.lerp(closeCamera, targetBlend);
-      wideAim.lerp(eye, targetBlend);
-    }
-    cameraBlend = targetBlend;
-    const smoothing = delta ? 1 - Math.exp(-delta * .85) : 1;
-    camera.position.lerp(desiredCamera, smoothing); aim.lerp(wideAim, smoothing);
-    cameraSafety();
-    // Lock the last portion to the moving eye so body motion cannot lag outside the lens.
-    if (targetBlend > .8) aim.lerp(eye, THREE.MathUtils.smoothstep(targetBlend, .8, 1));
-    camera.lookAt(aim); camera.updateMatrixWorld(true);
-    camera.fov = THREE.MathUtils.lerp(mobile ? 60 : 52, mobile ? 15 : 9, THREE.MathUtils.smoothstep(targetBlend, .5, 1));
-    camera.updateProjectionMatrix();
-    const vh = 2 * SKY_DEPTH * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const cover = Math.max(vh, vh * camera.aspect / skyAspect);
-    sky.scale.set(cover * skyAspect * 1.015, cover * 1.015, 1);
-    projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(projection);
+  function updateCamera() {
+    // An unchanging observer: no actor tracking, dolly, pointer drift or lens zoom.
+    // The animals alone move through the sky, at an ordinary viewing distance.
+    camera.position.set(0, 0, 28);
+    camera.lookAt(0, 0, -140);
+    camera.updateMatrixWorld(true);
+    projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(projection);
   }
   function updateWorld(animationDelta: number) {
-    // Fixed CPU budget; animation has its own accumulated, non-frozen clock.
-    accumulator += Math.min(animationDelta, .1);
+    // Match the fluke clock to actual travelled time on slow renderers as well.
+    accumulator += animationDelta;
     while (simulation && accumulator >= FIXED_STEP) { simulation.step(FIXED_STEP); accumulator -= FIXED_STEP; }
     for (const animal of animals) {
       const body = animal.body; if (!body) continue;
@@ -351,15 +302,15 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       animal.animationPending += animationDelta;
       const near = camera.position.distanceToSquared(animal.body.position) < 100 * 100;
       if (animal.animationPending > 0 && (near || animal.animationPending >= .1)) {
-        const advance = animal.animationPending * animal.animationSpeed;
+        const pace = THREE.MathUtils.clamp(animal.body.velocity.length() / animal.body.spec.speed, .8, 1.15);
+        const advance = animal.animationPending * animal.animationSpeed * pace;
         animal.animationTime += advance;
         animal.mixer?.update(advance); animal.original?.update(animal.animationTime, animal.animationSpeed);
         animal.animationPending = 0;
       }
       animal.root.updateMatrixWorld(true);
     }
-    // Camera must follow this frame's animated eye, not the previous head pose.
-    updateCamera(animationDelta);
+    updateCamera();
     for (const animal of animals) {
       if (!animal.body) continue;
       // Object-level culling is conservative and preserves 100 live dynamic roots.
@@ -395,20 +346,13 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     canvas.dataset.whaleSpecies = JSON.stringify(stats.species); canvas.dataset.whaleCounts = JSON.stringify(stats.counts);
     canvas.dataset.physics = JSON.stringify(stats.physics); canvas.dataset.depthRange = JSON.stringify(stats.depthRange);
     canvas.dataset.nearestDistance = String(stats.nearestDistance); canvas.dataset.sceneKind = "living-pod";
-    canvas.dataset.pixelRatio = String(pixelRatio); canvas.dataset.cameraBlend = String(rounded(cameraBlend));
+    canvas.dataset.pixelRatio = String(pixelRatio);
+    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "graceful-v2";
     canvas.dataset.cameraPosition = JSON.stringify(camera.position.toArray());
     canvas.dataset.cameraFov = String(camera.fov); canvas.dataset.drawCalls = String(stats.drawCalls);
     canvas.dataset.triangles = String(renderer?.info.render.triangles ?? 0);
     canvas.dataset.textures = String(renderer?.info.memory.textures ?? 0);
     canvas.dataset.geometries = String(renderer?.info.memory.geometries ?? 0);
-    const hero = animals.find(animal => animal.eyeMesh);
-    if (hero?.eyeMesh) {
-      const eyeBox = new THREE.Box3().setFromObject(hero.eyeMesh, true);
-      const center = eyeBox.getCenter(new THREE.Vector3()), dimension = eyeBox.getSize(new THREE.Vector3());
-      const eyeDistance = camera.position.distanceTo(center);
-      canvas.dataset.heroEye = JSON.stringify({ point: center.clone().project(camera).toArray(), distance: eyeDistance,
-        diameterPixels: Math.max(dimension.x, dimension.y, dimension.z) / (2 * eyeDistance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * height });
-    }
     canvas.dataset.whaleModels = JSON.stringify(animals.map(animal => ({ id: animal.id, species: animal.species.id,
       model: animal.species.asset ?? "original:finless-porpoise", modeluuid: animal.model.uuid, rootuuid: animal.root.uuid,
       bodyLength: animal.bodyLength, colliderlength: animal.envelope.length, colliderLength: animal.envelope.length, radius: animal.envelope.radius,
@@ -417,7 +361,8 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       velocity: animal.body?.velocity.toArray().map(rounded), mass: animal.body?.spec.mass, baseSpeed: animal.body?.spec.speed,
       mode: animal.body?.mode, school: animal.body?.school,
       mixertime: animal.mixer?.time ?? animal.animationTime, animationTime: animal.animationTime, animationSpeed: animal.animationSpeed,
-      visible: animal.root.visible, motionSample: animal.bones.map(bone => ({ name: bone.name, position: bone.position.toArray().map(rounded), quaternion: bone.quaternion.toArray().map(rounded) }))
+      visible: animal.root.visible, screenCenter: animal.root.position.clone().project(camera).toArray().map(rounded),
+      motionSample: animal.bones.map(bone => ({ name: bone.name, position: bone.position.toArray().map(rounded), quaternion: bone.quaternion.toArray().map(rounded) }))
     })));
   }
   function render() {
@@ -430,7 +375,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     const box = canvas.getBoundingClientRect(); width = Math.max(1, box.width); height = Math.max(1, box.height); mobile = width < 720;
     pixelRatio = Math.max(.65, Math.min(pixelRatio, mobile ? 1.1 : 1.5));
     renderer.setPixelRatio(pixelRatio); renderer.setSize(width, height, false);
-    camera.aspect = width / height; camera.fov = mobile ? 60 : 52; camera.updateProjectionMatrix();
+    camera.aspect = width / height; camera.fov = mobile ? 68 : 52; camera.updateProjectionMatrix();
     const viewHeight = 2 * SKY_DEPTH * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const coverHeight = Math.max(viewHeight, viewHeight * camera.aspect / skyAspect);
     sky.scale.set(coverHeight * skyAspect * 1.015, coverHeight * 1.015, 1);
@@ -440,7 +385,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     raf = 0;
     if (disposed || failed || paused || reduced || document.hidden || !ready) return;
     const rawDelta = previousStamp ? Math.max(0, (stamp - previousStamp) / 1000) : 0; previousStamp = stamp;
-    const animationDelta = Math.min(rawDelta, .65); elapsed += animationDelta;
+    const animationDelta = Math.min(rawDelta, .2); elapsed += animationDelta;
     if (rawDelta > 0) {
       // Extremely slow software frames need adaptation most; do not exclude them.
       fpsSeconds += Math.min(rawDelta, 10); fpsFrames++;
@@ -486,7 +431,6 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   const controller: FlightController = {
     setPaused(value) { if (disposed || value === paused) return; paused = value; synchronizePlayback(); },
     setReducedMotion(value) { if (disposed || value === reduced) return; reduced = value; synchronizePlayback(); },
-    setPointer(x, y) { if (!disposed && Number.isFinite(x) && Number.isFinite(y)) pointer.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1)); },
     getStats,
     dispose() {
       if (disposed) return; disposed = true; ready = false; abort.abort(); stopLoop(); removeListeners();
