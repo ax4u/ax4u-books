@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import localFont from "next/font/local";
+import { brandSocialMetadata } from "@/lib/site-metadata";
 import "./globals.css";
 
 const nanumGothic = localFont({
@@ -16,6 +17,7 @@ const gobibiFont = localFont({
 });
 
 export const metadata: Metadata = {
+  ...brandSocialMetadata,
   title: "GOBIBI × 상멍이 — 작은 상상이 머무는 세계",
   description: "고래가 나는 세계 고비비. 상멍이와 나만의 이야기를 만들고, 그림책을 펼쳐 보세요.",
 };
