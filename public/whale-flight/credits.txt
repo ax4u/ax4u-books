@@ -1,0 +1,17 @@
+"고래들의 비상" / GOBIBI × SANG#MUNG
+
+3D whale model:
+"Blue Whale - Textured" by Bohdan Lvov (ostapblendercg).
+Original: https://sketchfab.com/3d-models/blue-whale-textured-d24d19021c724c3a9134eebcb76b0e0f
+Author: https://sketchfab.com/ostapblendercg
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+License text: https://creativecommons.org/licenses/by/4.0/legalcode
+Redistribution source (unchanged model file):
+https://github.com/bob6664569/open-water/blob/bc8e763b47602d90e9a69cc2ea3a93d3a1d41c81/site/assets/animals/blue_whale_-_textured.glb
+The GLB is unmodified. Runtime changes: scaled and independently animated instances, flight paths, scene lighting and camera choreography.
+Only blue whales are represented; multiple instances do not represent different species.
+
+GOBIBI environment: original reference-based image created for this site.
+SANG#MUNG mascot: the site's existing approved original art, with a local eye-only wink animation. Character silhouette and other markings preserved.
+Whales are real skeletal 3D meshes. SANG#MUNG uses original 2D art in the 3D scene; it is not a new 3D character model.
+Experience rendered live by Three.js (MIT license). This is not prerecorded footage, a nature documentary, or a paid generative-video API service.

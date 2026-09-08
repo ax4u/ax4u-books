@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import FlightLink from "./FlightLink";
 import styles from "./gobibi.module.css";
 export default function BrandNavigation({ authenticated, children }: { authenticated: boolean; children?: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function BrandNavigation({ authenticated, children }: { authentic
     <button type="button" className={styles.menuToggle} aria-expanded={open} aria-controls="gobibi-navigation" aria-label={open ? "메뉴 닫기" : "메뉴 열기"} onClick={() => setOpen(!open)}>{open ? "닫기 ×" : "메뉴 +"}</button>
     <nav id="gobibi-navigation" className={styles.navigation} data-open={open} aria-label="주 메뉴" onClick={() => setOpen(false)}>
       {links.map(link => <Link key={link.href} href={link.href} prefetch={link.href === "/create" || link.href === "/dashboard" ? false : undefined} aria-current={pathname === link.href || (link.href === "/exhibition" && pathname.startsWith("/exhibition/")) ? "page" : undefined}>{link.label}</Link>)}
+      <FlightLink>고래들의 비상 ↗</FlightLink>
       {authenticated ? <div className={styles.account}>{children}</div> : <Link href="/login" className={styles.loginLink} aria-current={pathname === "/login" ? "page" : undefined}>시작하기 <span aria-hidden="true">↗</span></Link>}
     </nav>
   </header>;
