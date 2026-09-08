@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import Link from 'next/link';
 import styles from '../../home.module.css';
+import FlightLink from '../gobibi/FlightLink';
+import balloonStyles from './WhaleFlightBalloon.module.css';
 
 const lines = ['고비비에 잘 왔어. 무슨 이야기를 가져왔어?', '첫 장이 어렵다면, 나랑 한 줄부터 써보자.', '네 이야기 옆에서 같이 날아갈게.'];
 export default function GobibiWorld() {
@@ -32,6 +34,7 @@ export default function GobibiWorld() {
     <div className={`${styles.skyWhale} ${styles.whaleTwo}`} aria-hidden="true"><img src="/home/gobibi/whale.webp" alt="" width="1375" height="555" onError={e=>{e.currentTarget.style.visibility='hidden';}}/></div>
     <span className={`${styles.cloud} ${styles.cloudOne}`} aria-hidden="true"/><span className={`${styles.cloud} ${styles.cloudTwo}`} aria-hidden="true"/>
     <nav className={styles.mapPlaces} aria-label="고비비 지도 속 장소">
+      <FlightLink className={`${styles.hotspot} ${balloonStyles.balloon}`} data-whale-balloon aria-label="고래들의 비상 체험 열기"><span className={styles.mapDot} aria-hidden="true"/>고래들의 비상 <span aria-hidden="true">↗</span></FlightLink>
       <Link href="#sangmung" className={`${styles.hotspot} ${styles.house}`}><span className={styles.mapDot} aria-hidden="true"/>상멍이의 집 <span aria-hidden="true">↗</span></Link>
       <Link href="#studio" className={`${styles.hotspot} ${styles.studioPin}`}><span className={styles.mapDot} aria-hidden="true"/>이야기 작업실 <span aria-hidden="true">↗</span></Link>
       <Link href="/exhibition" className={`${styles.hotspot} ${styles.galleryPin}`}><span className={styles.mapDot} aria-hidden="true"/>그림책 전시관 <span aria-hidden="true">↗</span></Link>

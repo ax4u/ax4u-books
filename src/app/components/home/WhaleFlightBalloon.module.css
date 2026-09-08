@@ -1,0 +1,38 @@
+/* A speech balloon next to the large sky whale, without moving any existing map pins. */
+.balloon.balloon {
+  top: 6%;
+  right: 13%;
+  z-index: 3;
+  background: var(--butter);
+}
+.balloon::after {
+  content: "";
+  position: absolute;
+  right: 26px;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  background: var(--butter);
+  border-right: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.balloon.balloon:hover {
+  background: #fff1b6;
+}
+.balloon:hover::after {
+  background: #fff1b6;
+}
+@media (max-width: 760px) {
+  .balloon.balloon {
+    top: 35.6%;
+    right: calc(33% + 10px);
+  }
+  .balloon::after {
+    right: -7px;
+    top: 15px;
+    bottom: auto;
+    transform: rotate(-45deg);
+  }
+}
