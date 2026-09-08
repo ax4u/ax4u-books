@@ -8,10 +8,23 @@ import { publishedBooks } from "@/lib/exhibition/catalog";
 import { pageSocialMetadata } from "@/lib/site-metadata";
 import styles from "./gallery.module.css";
 
+const social = pageSocialMetadata("/exhibition");
+const title = "그림책 전시회 | GOBIBI 고비비";
+const description = "고비비의 작은 독서실. 공개가 승인된 그림책을 로그인 없이, 표지부터 마지막 장까지 천천히 펼쳐 보세요.";
+const image = {
+  url: "https://gobibi.art/social/exhibition-library-v1.jpg",
+  width: 1200,
+  height: 630,
+  type: "image/jpeg",
+  alt: "고비비 그림책 전시회 — 하늘을 나는 고래와 구름 위 책으로 가득한 작은 도서관",
+};
+
 export const metadata: Metadata = {
-  ...pageSocialMetadata("/exhibition"),
-  title: "그림책 전시회 | GOBIBI 고비비",
-  description: "고비비의 작은 독서실. 공개가 승인된 그림책을 로그인 없이, 표지부터 마지막 장까지 천천히 펼쳐 보세요.",
+  ...social,
+  title,
+  description,
+  openGraph: { ...social.openGraph, title, description, images: [image] },
+  twitter: { ...social.twitter, title, description, images: [{ url: image.url, alt: image.alt }] },
 };
 
 export default function ExhibitionPage() {
