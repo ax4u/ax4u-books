@@ -7,7 +7,7 @@ export const SITE_DESCRIPTION = "고래들의 이상향 고비비. 상멍이를 
 // A versioned JPEG built from the existing homepage world + Sangmung assets.
 // All domains and subpages inherit this brand visual, never a reader's book cover.
 export const SHARE_IMAGE = {
-  url: `${SITE_ORIGIN}/social/gobibi-keyvisual-v1.jpg`,
+  url: `${SITE_ORIGIN}/social/gobibi-keyvisual-v2.jpg`,
   width: 1200,
   height: 630,
   type: "image/jpeg",

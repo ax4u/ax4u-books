@@ -83,7 +83,7 @@ export default function ExhibitionPage() {
           </ol>
           <div className={styles.sangmungNote}>
             <Image src="/home/gobibi/sangmung.webp" alt="종이 선원 모자를 쓴 고비비의 친구, 상멍이" width={787} height={1267} sizes="110px" className={styles.sangmung} />
-            <div><p className={styles.eyebrow}>A LITTLE NOTE FROM SANGMUNG</p><p>마음에 드는 장면에서는,<br /><strong>조금 더 머물러도 좋아.</strong></p><span>이야기 옆에서 함께하는 친구, 상멍이</span></div>
+            <div><p className={styles.eyebrow}>A LITTLE NOTE FROM SANG#MUNG</p><p>마음에 드는 장면에서는,<br /><strong>조금 더 머물러도 좋아.</strong></p><span>이야기 옆에서 함께하는 친구, 상멍이</span></div>
           </div>
         </section>
 

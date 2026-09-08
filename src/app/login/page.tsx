@@ -47,7 +47,7 @@ export default async function LoginPage({
           <p className={ui.passportIntro}>나만의 책장으로 들어가는 작은 초대장.</p>
           {error && <p className={ui.errorNotice} role="alert">{error}</p>}
           <LoginForm mockMode={!isSupabaseConfigured} />
-          <p className={ui.passportBottom}>GOBIBI × SANGMUNG <span aria-hidden="true">✳</span> 상상의 첫 장에서</p>
+          <p className={ui.passportBottom}>GOBIBI × SANG#MUNG <span aria-hidden="true">✳</span> 상상의 첫 장에서</p>
         </section>
       </main>
     </GobibiShell>

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 const bases = (process.env.SHARE_BASES || '').split(',').filter(Boolean);
 assert.ok(bases.length, 'SHARE_BASES is required; e.g. http://127.0.0.1:3131');
 for (const base of bases) assert.match(base, /^https?:\/\/[^/]+$/);
-const assetPath = '/social/gobibi-keyvisual-v1.jpg';
+const assetPath = '/social/gobibi-keyvisual-v2.jpg';
 const expectedImage = 'https://gobibi.art' + assetPath;
 const expectedHash = createHash('sha256').update(readFileSync(new URL('../public' + assetPath, import.meta.url))).digest('hex');
 const paths = ['/', '/exhibition', '/exhibition/planet-friends', '/login'];

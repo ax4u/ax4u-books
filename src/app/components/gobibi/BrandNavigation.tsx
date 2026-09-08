@@ -9,7 +9,7 @@ export default function BrandNavigation({ authenticated, children }: { authentic
   const pathname = usePathname();
   const links = [{href:"/#world",label:"고비비 세계관"},{href:"/exhibition",label:"오픈 그림책 전시회"},{href:"/create",label:"이야기 작업실"},...(authenticated ? [{href:"/dashboard",label:"내 그림책"}] : [])];
   return <header className={styles.header} onKeyDown={event => { if(event.key === "Escape") setOpen(false); }}>
-    <Link href="/" className={styles.brand} aria-label="GOBIBI 홈">GOBIBI <small>× SANGMUNG<br />상상이 머무는 섬</small></Link>
+    <Link href="/" className={styles.brand} aria-label="GOBIBI 홈">GOBIBI <small>× SANG#MUNG<br />상상이 머무는 섬</small></Link>
     <button type="button" className={styles.menuToggle} aria-expanded={open} aria-controls="gobibi-navigation" aria-label={open ? "메뉴 닫기" : "메뉴 열기"} onClick={() => setOpen(!open)}>{open ? "닫기 ×" : "메뉴 +"}</button>
     <nav id="gobibi-navigation" className={styles.navigation} data-open={open} aria-label="주 메뉴" onClick={() => setOpen(false)}>
       {links.map(link => <Link key={link.href} href={link.href} prefetch={link.href === "/create" || link.href === "/dashboard" ? false : undefined} aria-current={pathname === link.href || (link.href === "/exhibition" && pathname.startsWith("/exhibition/")) ? "page" : undefined}>{link.label}</Link>)}
