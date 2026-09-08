@@ -441,9 +441,9 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     if (disposed || failed || paused || reduced || document.hidden || !ready) return;
     const rawDelta = previousStamp ? Math.max(0, (stamp - previousStamp) / 1000) : 0; previousStamp = stamp;
     const animationDelta = Math.min(rawDelta, .65); elapsed += animationDelta;
-    updateWorld(animationDelta); render();
-    if (rawDelta > 0 && rawDelta < 5) {
-      fpsSeconds += rawDelta; fpsFrames++;
+    if (rawDelta > 0) {
+      // Extremely slow software frames need adaptation most; do not exclude them.
+      fpsSeconds += Math.min(rawDelta, 10); fpsFrames++;
       if (fpsSeconds > 2) {
         if (fpsFrames / fpsSeconds < 28 && pixelRatio > .65 && renderer) {
           pixelRatio = Math.max(.65, pixelRatio * .82); renderer.setPixelRatio(pixelRatio); renderer.setSize(width, height, false);
@@ -451,6 +451,9 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
         fpsSeconds = 0; fpsFrames = 0;
       }
     }
+    // Resizing a WebGL drawing buffer clears it. Always paint AFTER DPR adaptation
+    // in the same frame, otherwise slow devices show the empty poster until next RAF.
+    updateWorld(animationDelta); render();
     if (!disposed && !failed && !paused && !reduced && !document.hidden) raf = requestAnimationFrame(tick);
   }
   function synchronizePlayback() {

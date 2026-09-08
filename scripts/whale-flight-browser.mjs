@@ -12,9 +12,15 @@ async function contextFor(viewport,extra={}){
  if(base.includes('127.0.0.1'))await context.route('**/_vercel/insights/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
  await context.route('**/api/**',r=>{failures.push('UNEXPECTED_API '+r.request().method()+' '+r.request().url());return r.abort();});
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+ await page.addInitScript(()=>{
+  const states=new WeakMap();const state=c=>{if(!states.has(c))states.set(c,{revision:0,draw:-1});return states.get(c)};
+  for(const key of ['width','height']){const d=Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype,key);Object.defineProperty(HTMLCanvasElement.prototype,key,{...d,set(value){d.set.call(this,value);state(this).revision++}})}
+  for(const Class of [window.WebGLRenderingContext,window.WebGL2RenderingContext])if(Class)for(const key of ['drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced']){const original=Class.prototype[key];if(original)Class.prototype[key]=function(...args){const result=original.apply(this,args);state(this.canvas).draw=state(this.canvas).revision;return result}}
+  const raf=requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>raf(time=>{cb(time);const c=document.querySelector('canvas');if(c?.dataset.flightReady==='true'){const s=state(c);if(s.draw!==s.revision)c.dataset.unpaintedResizes=String(Number(c.dataset.unpaintedResizes||0)+1)}});
+ });
  page.on('response',r=>{if(r.status()>=400)failures.push(r.status()+' '+r.url())});return{context,page};
 }
-async function ready(page){await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.flightReady==='true',{},{timeout:45000});await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('canvas')).opacity)>.999,{},{timeout:10000});}
+async function ready(page){await page.waitForFunction(()=>document.querySelector('canvas')?.dataset.flightReady==='true',{},{timeout:45000});await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('canvas')).opacity)>.999,{},{timeout:45000});}
 async function time(page){return Number(await page.locator('canvas').getAttribute('data-flight-time'));}
 async function image(page){return createHash('sha256').update(await page.locator('canvas').screenshot()).digest('hex');}
 async function noOverflow(page,w){assert.ok(await page.evaluate(w=>document.documentElement.scrollWidth<=w+1,w),'page overflow '+w);const outside=await page.locator('main button:not([data-species]),main header a').evaluateAll(els=>els.filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&(r.left<0||r.right>innerWidth+1||r.top<0||r.bottom>innerHeight+1)}).map(e=>e.textContent));assert.deepEqual(outside,[],'controls outside viewport');}
@@ -23,6 +29,8 @@ try{
   const {context,page}=await contextFor(viewport);try{
    await page.goto(base+'/whale-flight',{waitUntil:'domcontentloaded'});await ready(page);
    await page.waitForFunction(()=>Number(document.querySelector('canvas')?.dataset.flightTime)>.45,{},{timeout:20000});
+   if(viewport.width===1440)await page.waitForFunction(()=>Number(document.querySelector('canvas').dataset.flightTime)>2.4,{},{timeout:20000});
+   assert.equal(Number(await page.locator('canvas').getAttribute('data-unpainted-resizes')),0,'DPR resize must be painted in the same animation frame');
    assert.equal(await page.getByRole('heading',{name:'고래들의 비상',exact:true}).count(),1);
    await noOverflow(page,viewport.width);
    assert.equal(await page.locator('[data-wink]').count(),0);assert.doesNotMatch(await page.locator('canvas').getAttribute('aria-label'),/상멍|윙크/);assert.doesNotMatch(await page.locator('main').innerText(),/상멍|윙크/);
