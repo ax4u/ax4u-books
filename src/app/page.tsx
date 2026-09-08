@@ -5,13 +5,14 @@ import localFont from 'next/font/local';
 const gobibiFont = localFont({src:'../../public/fonts/gobibi/BagelFatOne-korean.ttf',variable:'--font-gobibi',display:'swap'});
 import {publishedBooks} from '@/lib/exhibition/catalog';
 import {pageSocialMetadata} from '@/lib/site-metadata';
+import MyWhaleInvitation from './components/home/MyWhaleInvitation';
 import GobibiWorld from './components/home/GobibiWorld';
 import HomeNavigation from './components/home/HomeNavigation';
 import CharacterDraft from './components/home/CharacterDraft';
 import styles from './home.module.css';
 export const metadata: Metadata = {...pageSocialMetadata('/'),title:'GOBIBI × 상멍이 — 고래가 나는 곳, 이야기가 태어나는 곳',description:'고래들의 이상향 고비비. 상멍이를 만나고, 나만의 캐릭터와 그림책 이야기를 펼쳐보세요.'};
 export default function Home(){
- return <div className={`${styles.home} ${gobibiFont.variable}`}><a href="#main" className={styles.skipLink}>본문 바로가기</a><HomeNavigation/><main id="main"><GobibiWorld/>
+ return <div className={`${styles.home} ${gobibiFont.variable}`}><a href="#main" className={styles.skipLink}>본문 바로가기</a><HomeNavigation/><main id="main"><GobibiWorld/><MyWhaleInvitation/>
  <section className={styles.manifesto} aria-labelledby="manifesto-title"><div className={styles.sectionMeta}><span>01 — OUR WORLD</span><span>상상이 머무는 섬, 고비비</span></div><h2 id="manifesto-title">조금 엉뚱해도,<br/>끝없이 <em>다정한 세계.</em></h2><div className={styles.manifestoBottom}><span className={styles.bigAsterisk} aria-hidden="true">✳</span><p>하늘을 헤엄치는 고래들, 마음껏 꿈꿀 수 있는 작은 섬.<br/>고비비는 저마다의 이야기를 품은 고래들의 이상향이에요.<br/><br/>여기서는 작은 낙서도 모험의 시작이 되고,<br/>이름 없는 친구도 한 권의 주인공이 됩니다.<br/>당신의 상상이 잠시 쉬어 갈 자리를 비워 두었어요.</p><a href="#sangmung" className={styles.roundLink} aria-label="상멍이 만나러 가기">MEET<br/>SANG#MUNG <span aria-hidden="true">↘</span></a></div></section>
  <section id="sangmung" className={styles.character} aria-labelledby="sangmung-title"><div className={styles.characterArt}><span className={styles.characterWord} aria-hidden="true">HELLO,<br/>FRIEND!</span><img src="/home/gobibi/sangmung.webp" alt="흰 종이 선원 모자, 이마의 작은 흉터, 분홍 하트와 회색 몸의 상멍이 전체 모습" width="787" height="1267" loading="lazy"/><span className={styles.characterSignature}>고비비에 사는, 상멍이</span></div><div className={styles.characterCopy}><p className={styles.eyebrow}>02 — MEET SANG#MUNG</p><h2 id="sangmung-title">안녕,<br/>나는 <em>상멍이.</em></h2><p className={styles.characterLead}>네 이야기 옆에서<br/>같이 날아갈게.</p><p>고비비에 사는 상멍이는 사람들의 그림책 만들기를 돕는 친구예요. 멋진 문장보다, 당신이 정말 하고 싶은 이야기가 궁금하대요.</p><dl className={styles.profileFacts}><div><dt>사는 곳</dt><dd>고래들의 이상향, 고비비</dd></div><div><dt>좋아하는 일</dt><dd>작은 상상이 한 권의 책이 되는 순간</dd></div><div><dt>너에게 하고 싶은 말</dt><dd>“첫 장은, 한 줄이면 충분해.”</dd></div></dl><a href="#studio" className={styles.textLink}>상멍이와 첫 이야기 시작하기 <span aria-hidden="true">↗</span></a></div></section>
  <CharacterDraft/>
