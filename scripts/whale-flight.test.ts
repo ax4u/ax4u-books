@@ -17,7 +17,7 @@ test('self hosted art and explicit source/derivative attribution are present', (
  for(const file of ['sky.webp','sangmung.webp','sangmung-wink.webp']) {
   const bytes=readFileSync('public/whale-flight/'+file); assert.equal(bytes.toString('ascii',0,4),'RIFF'); assert.equal(bytes.toString('ascii',8,12),'WEBP');
  }
- const credit=read('public/whale-flight/credits.txt'); assert.match(credit,/creativecommons.org\/licenses\/by\/4.0/);assert.match(credit,/Bohdan Lvov/);assert.match(credit,/Only blue whales/);
+ const credit=read('public/whale-flight/credits.txt'); assert.match(credit,/creativecommons.org\/licenses\/by\/4.0/);assert.match(credit,/Bohdan Lvov/);assert.match(credit,/TEN CETACEAN SPECIES/);
 });
 test('both navigation systems link to the public flight route with a fullscreen click handler', () => {
  for(const file of ['src/app/components/home/HomeNavigation.tsx','src/app/components/gobibi/BrandNavigation.tsx'])assert.match(read(file),/<FlightLink>고래들의 비상/);
@@ -28,7 +28,7 @@ test('flight identity uses its own OG URL but preserves the shared homepage key 
  assert.ok(existsSync('src/app/whale-flight/page.tsx'));
 });
 test('runtime has disposal, independent skeletons, real animations and no video-generation endpoints', () => {
- const scene=read('src/app/whale-flight/flight-scene.ts');assert.match(scene,/cloneSkeleton/);assert.match(scene,/AnimationMixer/);assert.match(scene,/Swimming/);assert.match(scene,/cancelAnimationFrame/);assert.match(scene,/webglcontextlost/);assert.match(scene,/ResizeObserver/);
+ const scene=read('src/app/whale-flight/flight-scene.ts');assert.match(scene,/AnimationMixer/);assert.match(read('src/app/whale-flight/species.ts'),/Swimming/);assert.match(scene,/cancelAnimationFrame/);assert.match(scene,/webglcontextlost/);assert.match(scene,/ResizeObserver/);
  assert.doesNotMatch(scene,/api\.openai|api\.fal|generativelanguage\.googleapis|\/api\//);
  const ui=read('src/app/whale-flight/FlightExperience.tsx');assert.match(ui,/prefers-reduced-motion/);assert.match(ui,/visibilitychange/);assert.match(ui,/document.exitFullscreen/);assert.match(ui,/고래들의 비상/);
 });

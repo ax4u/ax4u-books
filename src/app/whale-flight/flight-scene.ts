@@ -1,13 +1,18 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { clone as cloneSkeleton } from "three/addons/utils/SkeletonUtils.js";
+import { createOriginalCetacean, type SpeciesId } from "./original-cetaceans";
+import { WHALE_SPECIES, orderedSpecies, type FlightView, type SpeciesOrder, type WhaleSpecies, type WhaleSpeciesId } from "./species";
 
+export type { FlightView, SpeciesOrder, WhaleSpeciesId } from "./species";
 export type FlightController = {
   setPaused(paused: boolean): void;
   setReducedMotion(reduced: boolean): void;
   setPointer(x: number, y: number): void;
+  setViewMode(mode: FlightView): void;
+  setSpeciesOrder(order: SpeciesOrder): void;
+  focusSpecies(id: WhaleSpeciesId): void;
   dispose(): void;
-  getStats(): { time: number; frames: number; whales: number; drawCalls: number };
+  getStats(): { time: number; frames: number; whales: number; drawCalls: number; species: string[]; mode: FlightView; activeSpecies: WhaleSpeciesId };
 };
 
 type FlightOptions = {
@@ -15,18 +20,30 @@ type FlightOptions = {
   onReady: () => void;
   onError: (message: string) => void;
   onStage: (stage: number) => void;
+  onSpecies: (id: WhaleSpeciesId) => void;
 };
 
 type Whale = {
+  species: WhaleSpecies;
   root: THREE.Group;
-  mixer: THREE.AnimationMixer;
+  model: THREE.Object3D;
+  mixer?: THREE.AnimationMixer;
+  original?: ReturnType<typeof createOriginalCetacean>;
+  probes: { mesh: THREE.Mesh; indices: number[] }[];
+  label: HTMLDivElement;
+  bodyLength: number;
+  bodyHeight: number;
+  animationTime: number;
   phase: number;
-  radius: number;
-  depth: number;
-  reach: number;
-  altitude: number;
-  speed: number;
+  focus: number;
+  position: THREE.Vector3;
+  orientation: THREE.Quaternion;
 };
+
+// One metre is one world unit in BOTH cameras. Never scale a selected animal.
+const COMPARE_WIDTH = 64;
+const FOCUS_INTERVAL = 13;
+const FOCUS_SECONDS = 1.7;
 
 const TAU = Math.PI * 2;
 const CYCLE = 40;
@@ -41,9 +58,17 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   let raf = 0;
   let previousStamp = 0;
   let elapsed = 0;
+  // Keep editorial pacing independent of the clamped animation step on slow GPUs.
+  let presentationTime = 0;
   let frames = 0;
   let stage = -1;
   let lastSample = -1;
+  let mode: FlightView = "flight";
+  let order: SpeciesOrder = "size";
+  let activeSpecies: WhaleSpeciesId = "blue";
+  let focusTarget: WhaleSpeciesId = "blue";
+  let nextFocusTime = FOCUS_INTERVAL;
+  let snapPlacement = true;
   let fpsSeconds = 0;
   let fpsFrames = 0;
   let width = 1;
@@ -63,7 +88,17 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#90b7b7");
   scene.fog = new THREE.FogExp2("#a5c6c5", 0.0072);
-  const camera = new THREE.PerspectiveCamera(48, 1, 0.2, 300);
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.2, 400);
+  const compareCamera = new THREE.OrthographicCamera(-32, 32, 32, -32, 0.1, 400);
+  compareCamera.position.set(0, 0, 100);
+  compareCamera.lookAt(0, 0, 0);
+  scene.add(compareCamera);
+  const flightFog = scene.fog;
+  const labels = document.createElement("div");
+  labels.dataset.whaleLabels = "true";
+  labels.setAttribute("aria-hidden", "true");
+  Object.assign(labels.style, { position: "absolute", inset: "0", pointerEvents: "none", overflow: "hidden", display: "none" });
+  canvas.parentElement?.appendChild(labels);
   camera.position.set(0, 2.4, 14);
   scene.add(camera);
   const lookTarget = new THREE.Vector3();
@@ -92,7 +127,14 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   function reportError(message: string) {
     if (disposed || failed) return;
     failed = true;
+    ready = false;
+    abort.abort();
     stopLoop();
+    resizeObserver?.disconnect();
+    window.removeEventListener("resize", layout);
+    labels.remove();
+    disposeResources();
+    renderer?.dispose();
     canvas.dataset.flightReady = "false";
     options.onError(message);
   }
@@ -129,8 +171,11 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
 
   function disposeResources() {
     for (const whale of whales) {
-      whale.mixer.stopAllAction();
-      whale.mixer.uncacheRoot(whale.mixer.getRoot());
+      whale.mixer?.stopAllAction();
+      if (whale.mixer) whale.mixer.uncacheRoot(whale.mixer.getRoot());
+      whale.original?.dispose();
+      whale.root.removeFromParent();
+      whale.label.remove();
     }
     for (const skeleton of skeletons) skeleton.dispose();
     for (const geometry of geometries) geometry.dispose();
@@ -140,6 +185,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       const image: unknown = texture.image;
       if (typeof ImageBitmap !== "undefined" && image instanceof ImageBitmap) image.close();
     }
+    whales.length = 0;
     skeletons.clear();
     geometries.clear();
     materials.clear();
@@ -150,14 +196,35 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     if (!force && elapsed - lastSample < 0.3) return;
     lastSample = elapsed;
     canvas.dataset.flightTime = elapsed.toFixed(2);
+    canvas.dataset.presentationTime = presentationTime.toFixed(2);
+    canvas.dataset.flightFrames = String(frames);
+    canvas.dataset.pixelRatio = String(pixelRatio);
+    const ids = [...new Set(whales.map(whale => whale.species.id))];
     canvas.dataset.whaleCount = String(whales.length);
+    canvas.dataset.whaleSpecies = JSON.stringify(ids);
+    canvas.dataset.speciesCount = String(ids.length);
+    canvas.dataset.viewMode = mode;
+    canvas.dataset.comparisonWidth = String(compareCamera.right-compareCamera.left);
+    canvas.dataset.activeSpecies = activeSpecies;
+    canvas.dataset.whaleModels = JSON.stringify(whales.map(whale => ({
+      id: whale.species.id,
+      model: whale.species.asset ?? `original:${whale.species.id}`,
+      bodyLength: whale.bodyLength,
+      animationTime: whale.mixer?.time ?? whale.animationTime,
+      bodyHeight: whale.bodyHeight,
+      position: whale.root.position.toArray(),
+      rotation: whale.root.quaternion.toArray(),
+      focus: whale.focus,
+      motionSample: motionSample(whale),
+      renderBox: (() => {const box = new THREE.Box3().setFromObject(whale.root,true);const min=box.min.clone().project(mode === "compare" ? compareCamera : camera);const max=box.max.clone().project(mode === "compare" ? compareCamera : camera);return {min:min.toArray(),max:max.toArray()};})(),
+    })));
     canvas.dataset.flightPaused = String(paused || reduced);
   }
 
   function render() {
     if (disposed || failed || !renderer) return;
     try {
-      renderer.render(scene, camera);
+      renderer.render(scene, mode === "compare" ? compareCamera : camera);
       frames += 1;
       sample();
     } catch (error: unknown) {
@@ -177,6 +244,11 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     camera.aspect = width / height;
     camera.fov = mobile ? 55 : 48;
     camera.updateProjectionMatrix();
+    compareCamera.left = -COMPARE_WIDTH / 2;
+    compareCamera.right = COMPARE_WIDTH / 2;
+    compareCamera.top = COMPARE_WIDTH * height / width / 2;
+    compareCamera.bottom = -compareCamera.top;
+    compareCamera.updateProjectionMatrix();
     // A single distant painting, covered without distorting its aspect ratio.
     const viewHeight = 2 * 240 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const coverHeight = Math.max(viewHeight, (viewHeight * camera.aspect) / skyAspect);
@@ -196,26 +268,89 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     );
     lookTarget.set(easedPointer.x * 0.65, 3.3 + easedPointer.y * 0.5, -38);
     camera.lookAt(lookTarget);
+    camera.updateMatrixWorld(true);
+    if (mode === "flight" && ready && presentationTime >= nextFocusTime) {
+      const sequence = orderedSpecies(order);
+      const current = sequence.findIndex(species => species.id === activeSpecies);
+      selectSpecies(sequence[(current + 1) % sequence.length].id, false);
+    }
+    const sequence = orderedSpecies(order);
+    // Reserve the actual navigator/title regions; compact landscape prioritises fit.
+    const topInset = height < 500 ? 75 : mobile ? 176 : 220;
+    const bottomInset = height < 500 ? 155 : mobile ? 244 : 254;
+    const usableHeight = Math.max(1, height - topInset - bottomInset);
+    const columns = width >= 720 ? 2 : 1;
+    const rows = new Map<WhaleSpeciesId, { y:number; column:number }>();
+    const rowWeights = sequence.map(species => Math.max(1.5, (whales.find(w => w.species.id === species.id)?.bodyHeight ?? 1) + 0.9));
+    const groups = Array.from({length:columns},(_,column) => sequence.slice(column * (10/columns),(column+1)*(10/columns)));
+    const groupWeights = groups.map(group => group.reduce((sum,species) => sum+rowWeights[sequence.indexOf(species)],0));
+    const comparisonWidth = Math.max(columns === 2 ? 74 : 38, width * Math.max(...groupWeights) / usableHeight * 1.15);
+    compareCamera.left = -comparisonWidth/2; compareCamera.right=comparisonWidth/2;
+    compareCamera.top=comparisonWidth*height/width/2; compareCamera.bottom=-compareCamera.top;
+    compareCamera.updateProjectionMatrix();
+    groups.forEach((group,column) => {
+      let cumulative=0;
+      for(const species of group){const weight=rowWeights[sequence.indexOf(species)];
+        rows.set(species.id,{y:topInset+usableHeight*(cumulative+weight/2)/groupWeights[column],column});cumulative+=weight;
+      }
+    });
+    scene.fog = mode === "compare" ? null : flightFog;
+    sky.visible = mode === "flight" && !!skyMaterial.map;
+    labels.style.display = mode === "compare" ? "block" : "none";
     for (let index = 0; index < whales.length; index += 1) {
       const whale = whales[index];
-      const a = whale.phase + t * TAU / CYCLE * whale.speed;
-      const horizontal = mobile ? 0.56 : 1;
-      whale.root.position.set(
-        Math.sin(a) * whale.radius * horizontal,
-        whale.altitude + Math.sin(a * 2 + index * 0.7) * (index === 0 ? 3.5 : 2),
-        whale.depth + Math.cos(a) * whale.reach,
-      );
-      // Tangent-aligned, closed paths: approach, bank overhead, return behind fog.
-      direction.set(
-        Math.cos(a) * whale.radius * horizontal,
-        Math.cos(a * 2 + index * 0.7) * (index === 0 ? 7 : 4),
-        -Math.sin(a) * whale.reach,
-      ).normalize();
-      whale.root.quaternion.setFromUnitVectors(forward, direction);
-      roll.setFromAxisAngle(forward, Math.sin(a + index) * 0.1);
-      whale.root.quaternion.multiply(roll);
-      whale.mixer.update(delta);
+      if (delta > 0) {
+        whale.animationTime += delta;
+        whale.mixer?.update(delta);
+        whale.original?.update(whale.animationTime);
+      }
+      if (mode === "compare") {
+        const row = rows.get(whale.species.id)!;
+        // Every column shares the SAME orthographic metre scale. Left-align noses.
+        const headFraction = row.column/columns + (columns===2 ? .17 : .32);
+        whale.root.position.set((-0.5+headFraction)*comparisonWidth+whale.bodyLength/2, (height/2-row.y)*comparisonWidth/width, 0);
+        whale.root.rotation.set(0, -Math.PI / 2, 0);
+        whale.label.style.top = `${canvas.offsetTop + row.y}px`;
+        whale.label.style.left = `${canvas.offsetLeft+width*(row.column/columns+0.025)}px`;
+        whale.label.style.color = whale.species.id === activeSpecies ? "#062d3a" : "#204551";
+        whale.label.style.fontWeight = whale.species.id === activeSpecies ? "800" : "600";
+      } else {
+        const a = whale.phase + t * TAU / (70 + index * 4);
+        // Separate depth bands remain separate even where projected paths cross.
+        whale.position.set(Math.sin(a) * (20 + index * 2) * (mobile ? 0.65 : 1),
+          5 + Math.sin(a * 1.7 + index) * 7, -43 - index * 13 + Math.cos(a) * 5);
+        direction.set(Math.cos(a) * (20 + index * 2), Math.cos(a * 1.7 + index) * 7, -Math.sin(a) * 5).normalize();
+        whale.orientation.setFromUnitVectors(forward, direction);
+        roll.setFromAxisAngle(forward, Math.sin(a + index) * 0.08);
+        whale.orientation.multiply(roll);
+        const target = whale.species.id === focusTarget ? 1 : 0;
+        whale.focus = snapPlacement ? target : THREE.MathUtils.clamp(whale.focus + Math.sign(target - whale.focus) * delta / FOCUS_SECONDS, 0, 1);
+        const blend = whale.focus * whale.focus * (3 - 2 * whale.focus);
+        if (blend > 0) {
+          // Small animals are physically nearer, NOT enlarged. Same camera occupancy.
+          const distance = Math.max(6, whale.bodyLength / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * 0.66));
+          const close = new THREE.Vector3(Math.sin(t * 0.14) * whale.bodyLength * 0.07,
+            distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 0.15 + Math.sin(t * 0.21) * whale.bodyLength * 0.035, -distance);
+          camera.localToWorld(close);
+          whale.position.lerp(close, blend);
+          const side = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 0.15) * 0.045, -Math.PI / 2 + Math.sin(t * 0.12) * 0.16, Math.sin(t * 0.17) * 0.025));
+          side.premultiply(camera.quaternion);
+          whale.orientation.slerp(side, blend);
+        }
+        whale.root.position.copy(whale.position);
+        whale.root.quaternion.copy(whale.orientation);
+      }
     }
+    if (mode === "flight" && whales.length) {
+      const nearest = whales.reduce((a, b) => a.focus >= b.focus ? a : b);
+      if (nearest.focus > 0 && activeSpecies !== nearest.species.id) {
+        activeSpecies = nearest.species.id;
+        if (ready) options.onSpecies(activeSpecies);
+      }
+    }
+    snapPlacement = false;
+    for (const cloud of cloudLayers) cloud.sprite.visible = mode === "flight";
+    if (dust) dust.visible = mode === "flight";
     for (const cloud of cloudLayers) {
       cloud.sprite.position.x = cloud.x + Math.sin(t * 0.027 + cloud.phase) * 3;
       cloud.sprite.position.y = cloud.y + Math.sin(t * 0.039 + cloud.phase) * 0.5;
@@ -237,16 +372,17 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     if (disposed || failed || paused || reduced || !ready) return;
     const rawDelta = previousStamp ? (stamp - previousStamp) / 1000 : 0;
     previousStamp = stamp;
-    const delta = Math.min(rawDelta, 0.05);
+    const delta = Math.min(rawDelta, 0.1);
     elapsed += delta;
+    presentationTime += Math.min(rawDelta, 2);
     updateWorld(delta);
     render();
-    if (rawDelta > 0 && rawDelta < 0.3) {
+    if (rawDelta > 0 && rawDelta < 5) {
       fpsSeconds += rawDelta;
       fpsFrames += 1;
-      if (fpsSeconds > 4) {
-        if (fpsFrames / fpsSeconds < 35 && pixelRatio > 0.85 && renderer) {
-          pixelRatio = Math.max(0.85, pixelRatio * 0.83);
+      if (fpsSeconds > 2) {
+        if (fpsFrames / fpsSeconds < 28 && pixelRatio > 0.65 && renderer) {
+          pixelRatio = Math.max(0.65, pixelRatio * 0.8);
           renderer.setPixelRatio(pixelRatio);
           renderer.setSize(width, height, false);
         }
@@ -261,11 +397,62 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     stopLoop();
     sample(true);
     if (!ready || disposed || failed) return;
-    if (paused || reduced) render();
-    else raf = requestAnimationFrame(tick);
+    if (!paused && !reduced) raf = requestAnimationFrame(tick);
+  }
+
+  function selectSpecies(id: WhaleSpeciesId, immediate: boolean) {
+    if (disposed || failed || !WHALE_SPECIES.some(species => species.id === id)) return;
+    focusTarget = id;
+    nextFocusTime = presentationTime + FOCUS_INTERVAL;
+    if (immediate) snapPlacement = true;
+    if (mode === "compare") {
+      activeSpecies = id;
+      if (ready) options.onSpecies(activeSpecies);
+    }
+  }
+
+  function motionSample(whale: Whale): number[] {
+    const values: number[] = [];
+    const vertex = new THREE.Vector3();
+    whale.model.updateMatrixWorld(true);
+    whale.model.traverse(object => {
+      if (object instanceof THREE.SkinnedMesh) object.skeleton.update();
+      if (object instanceof THREE.Bone) values.push(...object.quaternion.toArray().map(value => Number(value.toFixed(6))));
+    });
+    for (const probe of whale.probes) {
+      for (const index of probe.indices) {
+        probe.mesh.getVertexPosition(index, vertex);
+        values.push(...vertex.toArray().map(value => Number(value.toFixed(6))));
+      }
+    }
+    return values;
   }
 
   const controller: FlightController = {
+    setViewMode(value) {
+      if (disposed || failed || (value !== "flight" && value !== "compare") || value === mode) return;
+      mode = value;
+      snapPlacement = true;
+      nextFocusTime = presentationTime + FOCUS_INTERVAL;
+      updateWorld(0);
+      render();
+      sample(true);
+    },
+    setSpeciesOrder(value) {
+      if (disposed || failed || (value !== "size" && value !== "familiar")) return;
+      order = value;
+      nextFocusTime = presentationTime + FOCUS_INTERVAL;
+      updateWorld(0);
+      render();
+      sample(true);
+    },
+    focusSpecies(id) {
+      selectSpecies(id, true);
+      if (disposed || failed) return;
+      updateWorld(0);
+      render();
+      sample(true);
+    },
     setPaused(value) {
       if (disposed || paused === value) return;
       paused = value;
@@ -281,7 +468,8 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       pointer.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1));
     },
     getStats() {
-      return { time: elapsed, frames, whales: whales.length, drawCalls: renderer?.info.render.calls ?? 0 };
+      return { time: elapsed, frames, whales: whales.length, drawCalls: renderer?.info.render.calls ?? 0,
+        species: [...new Set(whales.map(whale => whale.species.id))], mode, activeSpecies };
     },
     dispose() {
       if (disposed) return;
@@ -292,6 +480,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       window.removeEventListener("resize", layout);
       canvas.removeEventListener("webglcontextlost", contextLost);
       disposeResources();
+      labels.remove();
       scene.clear();
       renderer?.dispose();
       // Do not forceContextLoss: a React strict-mode remount may reuse this canvas.
@@ -376,64 +565,121 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   }
 
   async function loadWhales() {
-    const response = await fetch("/whale-flight/blue-whale.glb", { signal: abort.signal });
-    if (!response.ok) throw new Error("고래 모델을 불러오지 못했습니다.");
-    const bytes = await response.arrayBuffer();
-    if (disposed || failed) return;
-    const gltf = await new GLTFLoader().parseAsync(bytes, "/whale-flight/");
-    registerModel(gltf.scene);
-    if (disposed || failed) {
-      disposeResources();
-      return;
-    }
-    const swimming = gltf.animations.find((clip) => clip.name === "Swimming");
-    if (!swimming) throw new Error("고래의 수영 애니메이션이 없습니다.");
-    gltf.scene.updateMatrixWorld(true);
-    const bounds = new THREE.Box3().setFromObject(gltf.scene);
-    const size = bounds.getSize(new THREE.Vector3());
-    const center = bounds.getCenter(new THREE.Vector3());
-    const length = Math.max(size.x, size.y, size.z);
-    if (!Number.isFinite(length) || length <= 0) throw new Error("고래 모델의 크기를 확인할 수 없습니다.");
-    gltf.scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      const list = Array.isArray(object.material) ? object.material : [object.material];
-      for (const material of list) {
-        if (material instanceof THREE.MeshStandardMaterial) {
-          material.metalness = 0.02;
-          material.roughness = 0.67;
-          material.envMapIntensity = 0.4;
-          material.normalScale.setScalar(0.72);
-        }
+    await Promise.all(WHALE_SPECIES.map(async (species, index) => {
+      let model: THREE.Object3D;
+      let original: ReturnType<typeof createOriginalCetacean> | undefined;
+      let mixer: THREE.AnimationMixer | undefined;
+      const normalized = new THREE.Group();
+      let bodyLength: number;
+      let bodyHeight: number;
+      if (species.model === "gltf") {
+        if (!species.asset || !species.clip) throw new Error(`${species.name}: 모델 정보가 없습니다.`);
+        const response = await fetch(species.asset, { signal: abort.signal });
+        if (!response.ok) throw new Error(`${species.name} 모델을 불러오지 못했습니다 (${response.status}).`);
+        const bytes = await response.arrayBuffer();
+        if (disposed || failed) return;
+        // A separate source scene and mixer per species. No cloning/recolour fallback.
+        const gltf = await new GLTFLoader().parseAsync(bytes, species.asset.slice(0, species.asset.lastIndexOf("/") + 1));
+        model = gltf.scene;
+        registerModel(model);
+        if (disposed || failed) { disposeResources(); return; }
+        const swimming = gltf.animations.find(clip => clip.name === species.clip);
+        if (!swimming || !swimming.tracks.length) throw new Error(`${species.name}의 ${species.clip} 애니메이션이 없습니다.`);
+        // Keep GLTFLoader's authored local transforms. Skeleton.pose() rebuilds
+        // them from inverse binds (including synthetic identity-bind joints),
+        // not this FBX hierarchy's authored rest pose. Partial clips retain a
+        // 90-degree fold; dolphin bounds inflate ~100x before its clip resets.
+        model.updateMatrixWorld(true);
+        model.traverse(object => { if (object instanceof THREE.SkinnedMesh) object.skeleton.update(); });
+        // precise=true measures the intact authored reference-pose skin vertices.
+        const bounds = new THREE.Box3().setFromObject(model, true);
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const axis = size.x >= size.y && size.x >= size.z ? 0 : size.y >= size.z ? 1 : 2;
+        const length = size.getComponent(axis);
+        if (!Number.isFinite(length) || length <= 0) throw new Error(`${species.name}: 유효한 몸길이가 없습니다.`);
+        const translation = new THREE.Group();
+        translation.position.copy(center).negate();
+        translation.add(model);
+        const alignment = new THREE.Group();
+        alignment.add(translation);
+        // Imported coordinates are normalised to nose +Z. Named head bones resolve sign.
+        let headCoordinate: number | undefined;
+        model.traverse(object => {
+          if (object instanceof THREE.Bone && /head|snout|rostrum/i.test(object.name) && headCoordinate === undefined) {
+            headCoordinate = object.getWorldPosition(new THREE.Vector3()).getComponent(axis);
+          }
+        });
+        const sign = headCoordinate !== undefined && headCoordinate < 0 ? -1 : 1;
+        const sourceForward = new THREE.Vector3().setComponent(axis, sign);
+        // Z-up exporters (longitudinal Y) need a full orthonormal basis, not
+        // shortest-arc rotation: the latter flips their dorsum upside down.
+        const sourceUp = axis === 1 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0);
+        const sourceRight = new THREE.Vector3().crossVectors(sourceUp, sourceForward).normalize();
+        const correctedUp = new THREE.Vector3().crossVectors(sourceForward, sourceRight).normalize();
+        alignment.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(sourceRight, correctedUp, sourceForward).invert());
+        normalized.add(alignment);
+        normalized.scale.setScalar(species.length / length);
+        normalized.updateMatrixWorld(true);
+        const measured = new THREE.Box3().setFromObject(normalized, true).getSize(new THREE.Vector3());
+        bodyLength = measured.z;
+        bodyHeight = measured.y;
+        normalized.userData.bindPoseExtent = size.toArray();
+        normalized.userData.lengthAxis = axis;
+        normalized.userData.headSign = sign;
+        mixer = new THREE.AnimationMixer(model);
+        const action = mixer.clipAction(swimming);
+        action.setLoop(THREE.LoopRepeat, Infinity).play();
+        action.timeScale = 0.8;
+        mixer.update(0);
+      } else {
+        original = createOriginalCetacean(species.id as SpeciesId);
+        model = original.root;
+        normalized.add(model);
+        normalized.scale.setScalar(species.length);
+        normalized.updateMatrixWorld(true);
+        const bodyBounds = new THREE.Box3();
+        model.traverse(object => {
+          if (object instanceof THREE.Mesh && !/tusk/i.test(object.name)) bodyBounds.union(new THREE.Box3().setFromObject(object, true));
+        });
+        const measured = bodyBounds.getSize(new THREE.Vector3());
+        bodyLength = measured.z;
+        bodyHeight = measured.y;
       }
-    });
-    const count = mobile ? 6 : 10;
-    for (let i = 0; i < count; i += 1) {
-      const model = cloneSkeleton(gltf.scene);
-      registerModel(model);
-      const centered = new THREE.Group();
-      centered.add(model);
-      model.position.sub(center);
-      // Keep every imported bone transform; scale only the enclosing group.
-      const targetLength = i === 0 ? (mobile ? 18 : 29) : 16 + (i % 4) * 3.5;
-      centered.scale.setScalar(targetLength / length);
       const root = new THREE.Group();
-      root.add(centered);
-      scene.add(root);
-      const mixer = new THREE.AnimationMixer(model);
-      const action = mixer.clipAction(swimming);
-      action.setLoop(THREE.LoopRepeat, Infinity).play();
-      action.timeScale = 0.65 + (i % 4) * 0.1;
-      mixer.update((i * 0.73) % Math.max(swimming.duration, 0.01));
-      whales.push({
-        root, mixer,
-        phase: i === 0 ? -0.38 : i * 1.13,
-        radius: i === 0 ? 22 : 25 + (i % 4) * 10,
-        depth: i === 0 ? -27 : -48 - i * 8,
-        reach: i === 0 ? 14 : 13 + (i % 3) * 6,
-        altitude: i === 0 ? 6 : 1 + (i % 4) * 5,
-        speed: i === 0 ? 1 : 0.6 + (i % 3) * 0.2,
+      root.name = `species-${species.id}`;
+      root.userData.species = species.id;
+      root.add(normalized);
+      const label = document.createElement("div");
+      label.dataset.species = species.id;
+      label.textContent = `${species.name} · ${species.length}m`;
+      Object.assign(label.style, { position: "absolute", transform: "translateY(-50%)", font: "600 clamp(10px, 1.1vw, 14px) system-ui, sans-serif", whiteSpace: "nowrap", textShadow: "0 1px 3px #dcefed" });
+      labels.appendChild(label);
+      const probes: Whale["probes"] = [];
+      model.traverse(object => {
+        if (!(object instanceof THREE.Mesh)) return;
+        const count = object.geometry.getAttribute("position")?.count ?? 0;
+        if (count) probes.push({ mesh: object, indices: [0, Math.floor(count * 0.19), Math.floor(count * 0.63), count - 1] });
       });
+      if (!probes.length || !Number.isFinite(bodyLength) || Math.abs(bodyLength - species.length) > 0.01) {
+        original?.dispose();
+        mixer?.stopAllAction();
+        if (mixer) mixer.uncacheRoot(model);
+        label.remove();
+        throw new Error(`${species.name}: 실제 모델 몸길이 검증에 실패했습니다.`);
+      }
+      const whale: Whale = { species, root, model, mixer, original, probes, label, bodyLength, bodyHeight,
+        animationTime: 0, phase: index * 1.13, focus: species.id === focusTarget ? 1 : 0,
+        position: new THREE.Vector3(), orientation: new THREE.Quaternion() };
+      if (disposed || failed) { original?.dispose(); mixer?.stopAllAction(); if (mixer) mixer.uncacheRoot(model); label.remove(); return; }
+      scene.add(root);
+      whales.push(whale);
+    }));
+    whales.sort((a, b) => WHALE_SPECIES.indexOf(a.species) - WHALE_SPECIES.indexOf(b.species));
+    if (!disposed && !failed && (whales.length !== 10 || new Set(whales.map(whale => whale.species.id)).size !== 10 || new Set(whales.map(whale => whale.model.uuid)).size !== 10)) {
+      throw new Error("서로 다른 고래 10종을 모두 준비하지 못했습니다.");
     }
+    snapPlacement = true;
   }
 
   async function initialize() {
@@ -467,6 +713,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       canvas.dataset.flightReady = "true";
       sample(true);
       options.onReady();
+      options.onSpecies(activeSpecies);
       synchronizePlayback();
     } catch (error: unknown) {
       if (disposed) return;

@@ -5,7 +5,7 @@ import FlightExperience from "./FlightExperience";
 export const metadata: Metadata = {
   ...pageSocialMetadata("/whale-flight"),
   title: "고래들의 비상 — GOBIBI × SANG#MUNG",
-  description: "고비비의 하늘에서 흰수염고래 무리가 자유롭게 날아오릅니다. 실시간 3D 고래 비행 체험.",
+  description: "대왕고래부터 큰돌고래까지, 서로 다른 고래류 10종이 고비비 하늘을 헤엄칩니다. 실시간 3D 비행과 동일 축척 크기 비교.",
 };
 
 export default function WhaleFlightPage() {
