@@ -5,9 +5,11 @@ import GobibiShell from "@/app/components/gobibi/GobibiShell";
 import PageHero from "@/app/components/gobibi/PageHero";
 import GobibiArt from "@/app/components/gobibi/GobibiArt";
 import { publishedBooks } from "@/lib/exhibition/catalog";
+import { pageSocialMetadata } from "@/lib/site-metadata";
 import styles from "./gallery.module.css";
 
 export const metadata: Metadata = {
+  ...pageSocialMetadata("/exhibition"),
   title: "그림책 전시회 | GOBIBI 고비비",
   description: "고비비의 작은 독서실. 공개가 승인된 그림책을 로그인 없이, 표지부터 마지막 장까지 천천히 펼쳐 보세요.",
 };

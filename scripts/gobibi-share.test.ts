@@ -2,9 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { brandSocialMetadata, SHARE_IMAGE, SITE_TITLE } from '../src/lib/site-metadata';
+import { brandSocialMetadata, pageSocialMetadata, SHARE_IMAGE, SITE_TITLE } from '../src/lib/site-metadata';
 
 const root = process.cwd();
+test('each public page has all four basic OG properties and its own stable URL', () => {
+  for (const pathname of ['/', '/exhibition', '/exhibition/planet-friends', '/login']) {
+    const metadata = pageSocialMetadata(pathname);
+    assert.equal(metadata.openGraph.url, `https://gobibi.art${pathname}`);
+    assert.ok(metadata.openGraph.title);
+    assert.equal(metadata.openGraph.type, 'website');
+    assert.deepEqual(metadata.openGraph.images, [SHARE_IMAGE]);
+    assert.equal('alternates' in metadata, false);
+  }
+});
+test('page identity refuses external URLs, query strings, fragments and backslashes', () => {
+  for (const pathname of ['https://example.com', '//example.com', '/?tracking=1', '/#sangmung', '/\\example.com']) {
+    assert.throws(() => pageSocialMetadata(pathname));
+  }
+});
 test('one absolute, versioned homepage key visual is the only Open Graph image', () => {
   assert.deepEqual(brandSocialMetadata.openGraph.images, [SHARE_IMAGE]);
   assert.match(SHARE_IMAGE.url, /^https:\/\/gobibi\.art\/social\/gobibi-keyvisual-v\d+\.jpg$/);

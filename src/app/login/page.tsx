@@ -5,9 +5,10 @@ import GobibiArt from "@/app/components/gobibi/GobibiArt";
 import LoginForm from "./LoginForm";
 import { getSessionUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
+import { pageSocialMetadata } from "@/lib/site-metadata";
 import ui from "@/app/studio.module.css";
 
-export const metadata = { title: "로그인 · 구름 도착 부두 | GOBIBI" };
+export const metadata = { ...pageSocialMetadata("/login"), title: "로그인 · 구름 도착 부두 | GOBIBI" };
 
 export default async function LoginPage({
   searchParams,

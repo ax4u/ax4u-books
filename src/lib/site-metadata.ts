@@ -31,3 +31,18 @@ export const brandSocialMetadata = {
     images: [{ url: SHARE_IMAGE.url, alt: SHARE_IMAGE.alt }],
   },
 } satisfies Metadata;
+
+// Public pages set their own stable OG identity instead of inheriting the homepage URL.
+// This does not add redirects or change the existing browser/canonical-link behavior.
+export function pageSocialMetadata(pathname: string) {
+  if (!pathname.startsWith("/") || pathname.startsWith("//") || /[?#\\]/.test(pathname)) {
+    throw new Error("Social metadata requires an internal pathname without query or fragment");
+  }
+  return {
+    ...brandSocialMetadata,
+    openGraph: {
+      ...brandSocialMetadata.openGraph,
+      url: new URL(pathname, SITE_ORIGIN).toString(),
+    },
+  } satisfies Metadata;
+}

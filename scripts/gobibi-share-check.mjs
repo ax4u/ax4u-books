@@ -38,6 +38,10 @@ for (const base of bases) {
     await Promise.all(paths.map(async path => {
       const response = await get(base + path, ua);
       const tags = metadata(await response.text());
+      assert.equal(tags['og:url']?.length, 1, base + path + ' must have one OG URL');
+      assert.match(tags['og:url'][0], /^https:\/\/gobibi\.art(?:\/[^?#]*)?$/);
+      // Next normalizes the root to the origin without a trailing slash; both are the same URL.
+      assert.equal(new URL(tags['og:url'][0]).href, new URL(path, 'https://gobibi.art').href, base + path + ' page identity');
       assert.deepEqual(tags['og:image'], [expectedImage], base + path + ' ' + agent);
       assert.deepEqual(tags['twitter:image'], [expectedImage]);
       assert.deepEqual(tags['og:image:width'], ['1200']);
@@ -46,7 +50,7 @@ for (const base of bases) {
       assert.deepEqual(tags['twitter:card'], ['summary_large_image']);
       assert.ok(tags['og:title']?.[0]?.includes('GOBIBI'));
       assert.ok(tags['og:description']?.[0]);
-      results.push({base, path, agent, image:expectedImage, pass:true});
+      results.push({base, path, agent, ogUrl:tags['og:url'][0], image:expectedImage, pass:true});
     }));
   }
   const response = await get(base + assetPath, agents.kakao);

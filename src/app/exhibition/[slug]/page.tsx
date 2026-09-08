@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import GobibiShell from "@/app/components/gobibi/GobibiShell";
 import GobibiArt from "@/app/components/gobibi/GobibiArt";
 import { getPublishedBook, publishedBooks } from "@/lib/exhibition/catalog";
+import { pageSocialMetadata } from "@/lib/site-metadata";
 import Reader from "./Reader";
 import styles from "./reader.module.css";
 
@@ -12,7 +13,7 @@ export function generateStaticParams() { return publishedBooks.map(({ slug }) =>
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const book = getPublishedBook((await params).slug);
   if (!book) notFound();
-  return { title: `${book.title} | GOBIBI 고비비 독서실`, description: book.description };
+  return { ...pageSocialMetadata(`/exhibition/${book.slug}`), title: `${book.title} | GOBIBI 고비비 독서실`, description: book.description };
 }
 
 export default async function ExhibitionReader({ params }: { params: Promise<{ slug: string }> }) {

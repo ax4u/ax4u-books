@@ -4,11 +4,12 @@ import Link from 'next/link';
 import localFont from 'next/font/local';
 const gobibiFont = localFont({src:'../../public/fonts/gobibi/BagelFatOne-korean.ttf',variable:'--font-gobibi',display:'swap'});
 import {publishedBooks} from '@/lib/exhibition/catalog';
+import {pageSocialMetadata} from '@/lib/site-metadata';
 import GobibiWorld from './components/home/GobibiWorld';
 import HomeNavigation from './components/home/HomeNavigation';
 import CharacterDraft from './components/home/CharacterDraft';
 import styles from './home.module.css';
-export const metadata: Metadata = {title:'GOBIBI × 상멍이 — 고래가 나는 곳, 이야기가 태어나는 곳',description:'고래들의 이상향 고비비. 상멍이를 만나고, 나만의 캐릭터와 그림책 이야기를 펼쳐보세요.'};
+export const metadata: Metadata = {...pageSocialMetadata('/'),title:'GOBIBI × 상멍이 — 고래가 나는 곳, 이야기가 태어나는 곳',description:'고래들의 이상향 고비비. 상멍이를 만나고, 나만의 캐릭터와 그림책 이야기를 펼쳐보세요.'};
 export default function Home(){
  return <div className={`${styles.home} ${gobibiFont.variable}`}><a href="#main" className={styles.skipLink}>본문 바로가기</a><HomeNavigation/><main id="main"><GobibiWorld/>
  <section className={styles.manifesto} aria-labelledby="manifesto-title"><div className={styles.sectionMeta}><span>01 — OUR WORLD</span><span>상상이 머무는 섬, 고비비</span></div><h2 id="manifesto-title">조금 엉뚱해도,<br/>끝없이 <em>다정한 세계.</em></h2><div className={styles.manifestoBottom}><span className={styles.bigAsterisk} aria-hidden="true">✳</span><p>하늘을 헤엄치는 고래들, 마음껏 꿈꿀 수 있는 작은 섬.<br/>고비비는 저마다의 이야기를 품은 고래들의 이상향이에요.<br/><br/>여기서는 작은 낙서도 모험의 시작이 되고,<br/>이름 없는 친구도 한 권의 주인공이 됩니다.<br/>당신의 상상이 잠시 쉬어 갈 자리를 비워 두었어요.</p><a href="#sangmung" className={styles.roundLink} aria-label="상멍이 만나러 가기">MEET<br/>SANG#MUNG <span aria-hidden="true">↘</span></a></div></section>
