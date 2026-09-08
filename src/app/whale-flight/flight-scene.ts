@@ -2,8 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/addons/utils/SkeletonUtils.js";
 import { createFinlessPorpoise } from "./finless-porpoise";
-import { PodSimulation as PhysicsPodSimulation, type PodBody, type PodSpec } from "./pod-physics";
-import { WHALE_SPECIES, type WhaleSpecies } from "./species";
+import { type PodBody, type PodSpec } from "./pod-physics";
+import { MajesticSimulation as PhysicsPodSimulation } from "./majestic-physics";
+import { WHALE_SPECIES, SCENE_POPULATION, ANIMAL_COUNT, type WhaleSpecies } from "./species";
 
 type Original = ReturnType<typeof createFinlessPorpoise>;
 type Envelope = { radius: number; length: number; visualExtent: number; maxX: number; maxY: number; maxZ: number; samples: number };
@@ -25,22 +26,22 @@ export type FlightController = {
   getStats(): FlightStats;
 };
 type FlightOptions = { reducedMotion: boolean; onReady: () => void; onError: (message: string) => void };
-const COUNT = 20;
-const IDS = ["blue", "humpback", "sperm", "orca", "porpoise"];
+const IDS = ["blue", "humpback", "sperm", "orca"];
+const COMPOSITION = ["humpback-01", "blue-01", "orca-01", "sperm-01", "humpback-02", "blue-02", "orca-02", "sperm-02", "blue-03", "humpback-03"];
 // Relative inertial weights, not a claim that the integrator uses SI units.
 const MASS: Record<string, number> = { blue: 80000, humpback: 30000, sperm: 40000, orca: 5000, porpoise: 80 };
-const SPEED: Record<string, number> = { blue: 1.2, humpback: 1.35, sperm: 1.15, orca: 1.7, porpoise: 1.3 };
+const SPEED: Record<string, number> = { blue: .65, humpback: .55, sperm: .6, orca: .85, porpoise: .7 };
 const FIXED_STEP = 1 / 60;
 const SKY_DEPTH = 1100;
 const rounded = (n: number) => Number(n.toFixed(5));
 
-/** A real 100-body pod: the simulation owns every animal's world transform. */
+/** Ten individually staged whales, with live physics and responsive swimming bounds. */
 export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOptions): FlightController {
   let disposed = false, failed = false, ready = false, paused = false, reduced = options.reducedMotion;
   let raf = 0, previousStamp = 0, elapsed = 0, frames = 0, accumulator = 0, lastSample = -1;
   let fpsSeconds = 0, fpsFrames = 0, width = 1, height = 1;
   let mobile = canvas.clientWidth < 720;
-  let pixelRatio = Math.max(.65, Math.min(window.devicePixelRatio || 1, mobile ? 1.1 : 1.5));
+  let pixelRatio = Math.max(1, Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
   let renderer: THREE.WebGLRenderer | undefined;
   let resizeObserver: ResizeObserver | undefined;
   let simulation: PhysicsPodSimulation | undefined;
@@ -55,7 +56,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   const animals: Animal[] = [];
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#90b7b7");
-  scene.fog = new THREE.FogExp2("#aac8c6", .00155);
+  scene.fog = new THREE.FogExp2("#c9d8df", .0018);
   const camera = new THREE.PerspectiveCamera(52, 1, .02, 1500);
   camera.position.set(0, 0, 28);
   camera.lookAt(0, 0, -140);
@@ -152,7 +153,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
 
   async function loadWhales() {
     const speciesList = IDS.map(id => WHALE_SPECIES.find(species => String(species.id) === id));
-    if (speciesList.some(species => !species)) throw new Error("5종 고래 메타데이터가 준비되지 않았습니다.");
+    if (speciesList.some(species => !species)) throw new Error("고래 메타데이터가 준비되지 않았습니다.");
     await Promise.all(speciesList.map(async entry => {
       const species = entry!;
       let normalized = new THREE.Group();
@@ -223,7 +224,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
         envelope = envelopeFromBounds(activity, samples);
         sourceRoots.add(normalized);
       }
-      for (let index = 0; index < COUNT; index++) {
+      for (let index = 0; index < SCENE_POPULATION[species.id]; index++) {
         if (disposed || failed) return;
         const phase = (index * .61803398875 + IDS.indexOf(String(species.id)) * .173) % 1;
         let model: THREE.Object3D, mixer: THREE.AnimationMixer | undefined, original: Original | undefined;
@@ -261,16 +262,16 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
         const animal: Animal = { id, species, root, model, mixer, original, bones: representativeBones(instance, clips), bodyLength,
           envelope: envelope!, animationTime: mixer?.time ?? phase * 6.28, animationPending: 0,
           // Native fluke cycles stay slow and independent; no synchronized flapping.
-          animationSpeed: swimming ? swimming.duration / (species.id === "orca" ? 4.8 : 7.5) * (.88 + phase * .24) : .34 + phase * .08, phase };
+          animationSpeed: swimming ? swimming.duration / (species.id === "orca" ? 6 : 9) * (.88 + phase * .24) : .34 + phase * .08, phase };
         animals.push(animal); scene.add(root);
       }
     }));
     if (disposed || failed) return;
-    // Interleave species: the physics constructor assigns depth schools by index.
-    animals.sort((a, b) => a.id.slice(-2).localeCompare(b.id.slice(-2)) || IDS.indexOf(String(a.species.id)) - IDS.indexOf(String(b.species.id)));
-    if (animals.length !== 100 || new Set(animals.map(animal => animal.id)).size !== 100 || new Set(animals.map(animal => animal.model.uuid)).size !== 100) throw new Error("고래 100개체를 모두 준비하지 못했습니다.");
-    const specs: PodSpec[] = animals.map(animal => ({ id: animal.id, species: animal.species.id, length: animal.envelope.length,
-      radius: animal.envelope.radius, mass: MASS[animal.species.id], speed: SPEED[animal.species.id] * (.9 + animal.phase * .2) }));
+    // Art-directed foreground / midground / distance, not a dense uniform grid.
+    animals.sort((a, b) => COMPOSITION.indexOf(a.id) - COMPOSITION.indexOf(b.id));
+    if (animals.length !== ANIMAL_COUNT || new Set(animals.map(animal => animal.id)).size !== ANIMAL_COUNT || new Set(animals.map(animal => animal.model.uuid)).size !== ANIMAL_COUNT) throw new Error("고래 열 마리를 모두 준비하지 못했습니다.");
+    const specs: (PodSpec & { visualLength: number })[] = animals.map(animal => ({ id: animal.id, species: animal.species.id, length: animal.envelope.length,
+      radius: animal.envelope.radius, visualLength: animal.bodyLength, mass: MASS[animal.species.id], speed: SPEED[animal.species.id] * (.9 + animal.phase * .2) }));
     simulation = new PhysicsPodSimulation(specs, 42721, { aspect: width / height, fov: mobile ? 68 : 52 });
     const bodies = new Map(simulation.bodies.map(body => [body.spec.id, body]));
     for (const animal of animals) {
@@ -282,7 +283,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
 
   function updateCamera() {
     // An unchanging observer: no actor tracking, dolly, pointer drift or lens zoom.
-    // The animals alone move through the sky, at an ordinary viewing distance.
+    // Broadside foreground whales cross the view; the camera never hunts an eye.
     camera.position.set(0, 0, 28);
     camera.lookAt(0, 0, -140);
     camera.updateMatrixWorld(true);
@@ -313,7 +314,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     updateCamera();
     for (const animal of animals) {
       if (!animal.body) continue;
-      // Object-level culling is conservative and preserves 100 live dynamic roots.
+      // Object-level culling is conservative and preserves all ten live dynamic roots.
       // Every imported SkinnedMesh keeps frustumCulled=false to avoid stale bind boxes.
       const sphereRadius = animal.envelope.length / 2;
       animal.root.visible = frustum.intersectsSphere(new THREE.Sphere(animal.body.position, sphereRadius));
@@ -347,7 +348,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     canvas.dataset.physics = JSON.stringify(stats.physics); canvas.dataset.depthRange = JSON.stringify(stats.depthRange);
     canvas.dataset.nearestDistance = String(stats.nearestDistance); canvas.dataset.sceneKind = "living-pod";
     canvas.dataset.pixelRatio = String(pixelRatio);
-    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "graceful-v2";
+    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "majestic-ten-v1";
     canvas.dataset.cameraPosition = JSON.stringify(camera.position.toArray());
     canvas.dataset.cameraFov = String(camera.fov); canvas.dataset.drawCalls = String(stats.drawCalls);
     canvas.dataset.triangles = String(renderer?.info.render.triangles ?? 0);
@@ -373,9 +374,11 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   function layout() {
     if (disposed || failed || !renderer) return;
     const box = canvas.getBoundingClientRect(); width = Math.max(1, box.width); height = Math.max(1, box.height); mobile = width < 720;
-    pixelRatio = Math.max(.65, Math.min(pixelRatio, mobile ? 1.1 : 1.5));
+    pixelRatio = Math.max(1, Math.min(pixelRatio, mobile ? 1.5 : 2));
     renderer.setPixelRatio(pixelRatio); renderer.setSize(width, height, false);
     camera.aspect = width / height; camera.fov = mobile ? 68 : 52; camera.updateProjectionMatrix();
+    simulation?.updateViewport({ aspect: camera.aspect, fov: camera.fov });
+    updateWorld(0);
     const viewHeight = 2 * SKY_DEPTH * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const coverHeight = Math.max(viewHeight, viewHeight * camera.aspect / skyAspect);
     sky.scale.set(coverHeight * skyAspect * 1.015, coverHeight * 1.015, 1);
@@ -390,8 +393,8 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       // Extremely slow software frames need adaptation most; do not exclude them.
       fpsSeconds += Math.min(rawDelta, 10); fpsFrames++;
       if (fpsSeconds > 2) {
-        if (fpsFrames / fpsSeconds < 28 && pixelRatio > .65 && renderer) {
-          pixelRatio = Math.max(.65, pixelRatio * .82); renderer.setPixelRatio(pixelRatio); renderer.setSize(width, height, false);
+        if (fpsFrames / fpsSeconds < 28 && pixelRatio > 1 && renderer) {
+          pixelRatio = Math.max(1, pixelRatio * .82); renderer.setPixelRatio(pixelRatio); renderer.setSize(width, height, false);
         }
         fpsSeconds = 0; fpsFrames = 0;
       }

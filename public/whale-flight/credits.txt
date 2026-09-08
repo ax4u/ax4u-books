@@ -1,10 +1,10 @@
 "고래들의 비상" / GOBIBI × SANG#MUNG
-LIVING POD — FIVE SPECIES / 100 INDEPENDENT ANIMALS
+MAJESTIC SKY — FOUR SPECIES / 10 INDEPENDENT ANIMALS
 
-대왕고래·혹등고래·향고래·범고래·상괭이, 각 20개체의 실시간 3D 작품입니다.
+대왕고래 3마리·혹등고래 3마리·향고래 2마리·범고래 2마리의 실시간 3D 작품입니다.
 종별 정보 카드·선택·크기 비교 기능은 제공하지 않습니다.
 This experience presents whales only; no 2D character overlay is rendered.
-Four licensed animated models and an original finless-porpoise anatomical study.
+Four licensed animated models. The original finless-porpoise study remains archived in source, not instantiated in this ten-whale scene.
 This is live 3D rendering, not filmed wildlife or a paid generative-video service.
 
 1. 대왕고래 / Blue whale / Balaenoptera musculus
@@ -36,7 +36,7 @@ https://creativecommons.org/licenses/by/4.0/legalcode
 Changes to models 2–4: texture images resized/recompressed for web delivery. Anatomical geometry, skin weights, inverse binds and native animation clips retained. All four models are independently instanced and animated, with runtime scale, lighting, camera, flocking and collision trajectories by GOBIBI.
 No noncommercial-only (NC) models included.
 
-5. 상괭이 / East Asian narrow-ridged finless porpoise
+Archived study (not in this scene): 상괭이 / East Asian narrow-ridged finless porpoise
 Neophocaena asiaeorientalis — marine subspecies N. a. sunameri.
 Original geometry, five-bone swimming rig, procedural grey skin and fine facial details by GOBIBI × SANG#MUNG production. No downloaded/recoloured whale mesh or photographic texture was used. This is an original anatomical interpretation, not a scanned specimen.
 Taxonomic convention: Society for Marine Mammalogy, April 2026 list. Some other sources use Neophocaena sunameri as a species; this production explicitly follows the SMM subspecies treatment.
@@ -47,8 +47,8 @@ https://porpoise.org/about-porpoises/narrow-ridged-finless-porpoise/
 No triangular dorsal fin or dolphin-like projecting beak; narrow dorsal ridge, rounded forehead, subdued mouth crease, grey body and paler underside. Sculpted proportions are an interpretation, not measured proportions of an identified Korean specimen.
 
 Movement and collision simulation:
-100 independent bodies, twenty per species, including mobile. Bodies share a consistent world scale, with representative visual lengths rather than population averages or maximum records.
-School alignment, independent wandering and short sprints use changing velocities and inertia. Predictive avoidance is followed by actual mass-weighted collision impulses and restitution when conservative 3D capsule proxies meet. Collision capsules enclose the animated body/fin/tail envelope; they are simplified safety volumes, not exact deformable tissue or fluid-dynamics simulation. Bodies are not intentionally allowed to pass through one another. Perspective/camera movement, not per-frame whale size changes, creates close and distant views.
+10 independent bodies, including mobile. Bodies share a consistent world scale, with representative visual lengths rather than population averages or maximum records.
+Independent broadside cruising and gradual offscreen turns use changing velocities and inertia. There are no synchronized sprints or automatic eye closeups. Predictive avoidance is followed by actual mass-weighted collision impulses and restitution when conservative 3D capsule proxies meet. Collision capsules enclose the animated body/fin/tail envelope; they are simplified safety volumes, not exact deformable tissue or fluid-dynamics simulation. Bodies are not intentionally allowed to pass through one another. A fixed observer and different physical depths create close and distant views. On viewport changes the swimming bounds and projected composition are reflowed together; model geometry is never stretched.
 Animation update rate and pixel resolution may be reduced on slow devices without silently reducing the scene's population. Animals outside the camera view remain simulated.
 
 GOBIBI environment: original reference-based image created for this site.

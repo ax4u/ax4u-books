@@ -8,15 +8,15 @@ const output = process.env.QA_OUTPUT || '/home/hermes/.hermes/profiles/sejongchi
 await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch({ executablePath: '/home/hermes/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome', headless: true,
   args: ['--no-sandbox', '--enable-webgl', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const expected = { blue: 20, humpback: 20, sperm: 20, orca: 20, porpoise: 20 };
+const expected = { blue: 3, humpback: 3, sperm: 2, orca: 2 };
 const results = [], errors = [], snapshots = [];
 async function sample(page) { return page.locator('canvas').evaluate(c => ({ ...c.dataset })); }
 function check(d) {
   const animals = JSON.parse(d.whaleModels);
-  assert.equal(animals.length, 100); assert.deepEqual(JSON.parse(d.whaleCounts), expected);
-  assert.equal(new Set(animals.map(x => x.modeluuid)).size, 100);
-  assert.equal(new Set(animals.map(x => x.rootuuid)).size, 100);
-  assert.equal(d.cameraMode, 'quiet-observer'); assert.equal(d.motionEdition, 'graceful-v2');
+  assert.equal(animals.length, 10); assert.deepEqual(JSON.parse(d.whaleCounts), expected);
+  assert.equal(new Set(animals.map(x => x.modeluuid)).size, 10);
+  assert.equal(new Set(animals.map(x => x.rootuuid)).size, 10);
+  assert.equal(d.cameraMode, 'quiet-observer'); assert.equal(d.motionEdition, 'majestic-ten-v1');
   assert.equal(d.heroEye, undefined); assert.equal(d.cameraBlend, undefined);
   assert.deepEqual(JSON.parse(d.cameraPosition), [0, 0, 28]);
   assert.ok(Number(d.cameraFov) >= 52, 'no telephoto lens');
@@ -33,7 +33,7 @@ function check(d) {
     assert.ok(x.activitySamples >= 10); assert.ok(x.colliderLength >= x.visualExtent + 2 * x.radius - .00001);
     assert.ok(x.motionSample.length > 0); assert.notEqual(x.mode, 'sprint');
     assert.ok(new THREE.Vector3(0, 1, 0).applyQuaternion(b.quaternion).y > .92, 'upright whale, no tumbling');
-    assert.ok(-x.position[2] > 70, 'normal viewing distance, no fly-into-camera');
+    assert.ok(28-x.position[2] > x.radius * 2 + 2, 'large broadside view stays outside the whale, no eye fly-in');
   }
   return { animals, minSeparation, visible: animals.filter(x => x.visible).length };
 }
@@ -54,7 +54,7 @@ try {
     await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('canvas')).opacity) > .999, {}, { timeout: 10000 });
     assert.equal(await page.locator('[data-species], [data-view="compare"], [data-whale-label]').count(), 0);
     const before = await sample(page), start = check(before);
-    assert.ok(start.visible >= 75, `wide view should have distributed whales: ${start.visible}`);
+    assert.ok(start.visible >= 8, `sparse scene should show near/mid/far whales: ${start.visible}`);
     await page.screenshot({ path: `${output}/${viewport.width}x${viewport.height}-start.png` });
     snapshots.push({ viewport, phase: 'start', dataset: before });
     await page.getByRole('button', { name: '비행 시작', exact: true }).click();
@@ -66,8 +66,8 @@ try {
       const d = await sample(page), current = check(d); latest = d;
       assert.equal(d.cameraFov, before.cameraFov, 'field of view stays unchanged throughout the old zoom cycle');
       assert.deepEqual(JSON.parse(d.cameraPosition), JSON.parse(before.cameraPosition));
-      assert.ok(current.animals.every((x, i) => JSON.stringify(x.position) !== JSON.stringify(start.animals[i].position)), 'all 100 move independently');
-      assert.ok(current.animals.every((x, i) => x.animationTime > start.animals[i].animationTime), 'all 100 fluke animations advance');
+      assert.ok(current.animals.every((x, i) => JSON.stringify(x.position) !== JSON.stringify(start.animals[i].position)), 'all ten move independently');
+      assert.ok(current.animals.every((x, i) => x.animationTime > start.animals[i].animationTime), 'all ten fluke animations advance');
       for (const species of Object.keys(expected)) assert.ok(current.animals.filter(x => x.species === species).some(x =>
         JSON.stringify(x.motionSample) !== JSON.stringify(start.animals.find(y => y.id === x.id).motionSample)), species + ' native bone deformation');
       snapshots.push({ viewport, phase: seconds, dataset: d });
@@ -80,7 +80,7 @@ try {
     const paused = await sample(page); await page.waitForTimeout(400);
     assert.equal((await sample(page)).flightTime, paused.flightTime);
     assert.equal(requests.length, 4); assert.equal(new Set(requests).size, 4);
-    results.push({ viewport, counts: expected, all100Move: true, all100Animate: true, all5Deform: true,
+    results.push({ viewport, counts: expected, all10Move: true, all10Animate: true, all4Deform: true,
       cameraMode: latest.cameraMode, cameraFov: latest.cameraFov, cameraConstant: true, noEyeZoom: true,
       visible: start.visible, depthRange: JSON.parse(before.depthRange), minSeparation: check(latest).minSeparation,
       activeSeconds: Number(latest.flightTime), wallSeconds: (Date.now() - wallStart) / 1000,

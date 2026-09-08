@@ -10,16 +10,17 @@ test('quiet observer completely replaces the automatic eye / fly-in camera', () 
   assert.match(scene, /camera\.lookAt\(0, 0, -140\)/);
   assert.match(scene, /camera\.fov = mobile \? 68 : 52/);
   assert.match(scene, /cameraMode = "quiet-observer"/);
-  assert.match(scene, /motionEdition = "graceful-v2"/);
+  assert.match(scene, /motionEdition = "majestic-ten-v1"/);
   assert.doesNotMatch(scene, /camera\.position\.lerp|camera\.fov\s*=\s*THREE/);
   assert.doesNotMatch(ui, /onPointerMove|onPointerLeave|setPointer/);
 });
 test('all original bodies and independent native animation cycles are retained', () => {
   assert.match(scene, /cloneSkeleton\(normalized\)/);
-  assert.match(scene, /swimming\.duration \/ \(species\.id === "orca" \? 4\.8 : 7\.5\)/);
+  assert.match(scene, /swimming\.duration \/ \(species\.id === "orca" \? 6 : 9\)/);
   assert.match(scene, /animal\.root\.position\.copy\(body\.position\)/);
   assert.match(scene, /animal\.root\.quaternion\.copy\(body\.quaternion\)/);
-  assert.match(scene, /animals\.length !== 100/);
+  assert.match(scene, /animals\.length !== ANIMAL_COUNT/);
+  assert.match(scene, /simulation\?\.updateViewport\(\{ aspect: camera\.aspect, fov: camera\.fov \}\)/);
   assert.doesNotMatch(scene, /skeleton\.pose\(/);
   assert.match(scene, /updateWorld\(animationDelta\); render\(\)/);
 });

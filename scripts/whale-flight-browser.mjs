@@ -34,7 +34,7 @@ try{
    assert.equal(await page.getByRole('heading',{name:'고래들의 비상',exact:true}).count(),1);
    await noOverflow(page,viewport.width);
    assert.equal(await page.locator('[data-wink]').count(),0);assert.doesNotMatch(await page.locator('canvas').getAttribute('aria-label'),/상멍|윙크/);assert.doesNotMatch(await page.locator('main').innerText(),/상멍|윙크/);
-   const count=Number(await page.locator('canvas').getAttribute('data-whale-count'));assert.equal(count,100);assert.equal(Number(await page.locator('canvas').getAttribute('data-species-count')),5);
+   const count=Number(await page.locator('canvas').getAttribute('data-whale-count'));assert.equal(count,10);assert.equal(Number(await page.locator('canvas').getAttribute('data-species-count')),4);
    await page.screenshot({path:`${output}/${viewport.width}x${viewport.height}.png`});
    await page.getByRole('button',{name:'비행 일시정지',exact:true}).click();await page.waitForFunction(()=>document.querySelector('canvas').dataset.flightPaused==='true');
    const pausedTime=await time(page), a=await image(page);await page.waitForTimeout(450);assert.equal(await time(page),pausedTime);assert.equal(await image(page),a);
