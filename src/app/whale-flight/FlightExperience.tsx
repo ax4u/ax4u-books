@@ -7,7 +7,7 @@ import styles from "./flight.module.css";
 const chapters = [
   { number: "01", title: "구름 너머, 고비비", line: "하늘이 바다가 되는 순간." },
   { number: "02", title: "거대한 숨결 사이로", line: "고래들의 길을 따라 날아보세요." },
-  { number: "03", title: "상멍이가 건네는 인사", line: "눈이 마주치면, 작은 윙크." },
+  { number: "03", title: "햇살을 가르는 지느러미", line: "구름 사이로, 거대한 날갯짓." },
   { number: "04", title: "우리의 비상은 계속된다", line: "이곳에서는 상상도 함께 헤엄칩니다." },
 ];
 
@@ -43,7 +43,6 @@ export default function FlightExperience() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [stage, setStage] = useState(0);
-  const [wink, setWink] = useState(false);
   const [credits, setCredits] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const chapter = chapters[stage] || chapters[0];
@@ -67,7 +66,6 @@ export default function FlightExperience() {
           },
           onError: () => { if (!disposed) { window.clearTimeout(timeout); setError("이 환경에서 3D 하늘을 열지 못했습니다. 최신 브라우저에서 하드웨어 가속을 켜거나 다시 시도해 주세요."); setPaused(true); } },
           onStage: value => { if (!disposed) setStage(value); },
-          onWink: value => { if (!disposed) setWink(value); },
         });
       } catch { if (!disposed) { window.clearTimeout(timeout); setError("3D 화면을 시작하지 못했습니다. 최신 브라우저에서 다시 시도해 주세요."); } }
     };
@@ -120,9 +118,9 @@ export default function FlightExperience() {
   }
   function retry() { setReady(false); setError(""); setPaused(true); setSound(false); setAttempt(value => value + 1); }
 
-  return <main className={styles.experience} data-ready={ready} data-paused={paused} data-wink={wink} aria-label="고래들의 비상 — 고비비 실시간 3D 체험">
+  return <main className={styles.experience} data-ready={ready} data-paused={paused} aria-label="고래들의 비상 — 고비비 실시간 3D 체험">
     <div className={styles.poster} aria-hidden="true" />
-    <canvas key={attempt} ref={canvas} className={styles.canvas} role="img" aria-label="고비비의 구름 위를 헤엄치는 3D 흰수염고래 무리와 함께 날며 윙크하는 상멍이" onPointerMove={event => {
+    <canvas key={attempt} ref={canvas} className={styles.canvas} role="img" aria-label="고비비의 구름 위를 자유롭게 헤엄치는 3D 흰수염고래 무리" onPointerMove={event => {
       if (!paused && event.pointerType !== "touch") { const bounds = event.currentTarget.getBoundingClientRect(); controller.current?.setPointer((event.clientX - bounds.left) / bounds.width * 2 - 1, (event.clientY - bounds.top) / bounds.height * 2 - 1); }
     }} onPointerLeave={() => controller.current?.setPointer(0, 0)} />
     <div className={styles.shade} aria-hidden="true" />
@@ -144,7 +142,7 @@ export default function FlightExperience() {
       </section>
       {paused && <div className={styles.pauseMessage}><button type="button" onClick={togglePlay} className={styles.resume} aria-label="비행 시작"><span aria-hidden="true">▷</span> {reduced ? "움직임 켜고 함께 날기" : "다시 함께 날기"}</button><p>{reduced ? "기기의 움직임 줄이기 설정을 존중해 멈춰 두었습니다." : "잠시 멈춘 하늘. 준비되면 다시 날아보세요."}</p></div>}
       <footer className={styles.footer}>
-        <div className={styles.hint}><span className={styles.dot} />실시간 3D 비행<small>흰수염고래 무리 · 상멍이와 함께</small></div>
+        <div className={styles.hint}><span className={styles.dot} />실시간 3D 비행<small>흰수염고래 무리 · 구름 위의 여행</small></div>
         <div className={styles.controls} aria-label="비행 재생 설정">
           <button type="button" onClick={togglePlay} aria-label={paused ? "비행 재생" : "비행 일시정지"} aria-pressed={paused}>{paused ? "▷ 재생" : "Ⅱ 일시정지"}</button>
           <button type="button" onClick={() => void toggleSound()} disabled={paused} aria-label={sound ? "소리 끄기" : "소리 켜기"} aria-pressed={sound}>{sound ? "♪ 소리 켜짐" : "♪ 소리 꺼짐"}</button>
@@ -155,9 +153,9 @@ export default function FlightExperience() {
     </>}
     {credits && <section id="flight-credits" className={styles.credits} aria-label="작품 정보">
       <button type="button" onClick={() => setCredits(false)} aria-label="작품 정보 닫기">닫기 ×</button><h2>고래들의 비상</h2>
-      <p>흰수염고래 3D 모델의 실제 수영 동작과 상멍이 정본 원화의 비행·윙크를 결합한 실시간 웹 작품입니다. 사전 녹화 영상이나 모든 고래 종을 재현한 자연 다큐멘터리는 아닙니다.</p>
+      <p>흰수염고래 3D 모델의 실제 수영 동작을 고비비의 하늘에 펼친 실시간 웹 작품입니다. 사전 녹화 영상이나 모든 고래 종을 재현한 자연 다큐멘터리는 아닙니다.</p>
       <p>3D 고래: <a href="https://sketchfab.com/3d-models/blue-whale-textured-d24d19021c724c3a9134eebcb76b0e0f" target="_blank" rel="noreferrer">Blue Whale – Textured / Bohdan Lvov</a><br /><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a> · 크기·비행 경로·조명 연출 적용</p>
-      <p>배경·상멍이 원화: GOBIBI × SANG#MUNG<br />사운드: 브라우저 합성 앰비언스 · 기본 음소거</p><a href="/whale-flight/credits.txt" target="_blank" rel="noreferrer">전체 제작·라이선스 정보 ↗</a>
+      <p>배경 원화: GOBIBI × SANG#MUNG<br />사운드: 브라우저 합성 앰비언스 · 기본 음소거</p><a href="/whale-flight/credits.txt" target="_blank" rel="noreferrer">전체 제작·라이선스 정보 ↗</a>
     </section>}
     <p role="status" className={notice ? styles.notice : styles.srOnly}>{notice}</p>
     <noscript><p className={styles.noScript}>3D 체험에는 JavaScript가 필요합니다. <Link href="/">고비비 홈으로 돌아가기</Link></p></noscript>

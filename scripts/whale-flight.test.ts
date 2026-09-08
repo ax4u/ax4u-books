@@ -32,3 +32,10 @@ test('runtime has disposal, independent skeletons, real animations and no video-
  assert.doesNotMatch(scene,/api\.openai|api\.fal|generativelanguage\.googleapis|\/api\//);
  const ui=read('src/app/whale-flight/FlightExperience.tsx');assert.match(ui,/prefers-reduced-motion/);assert.match(ui,/visibilitychange/);assert.match(ui,/document.exitFullscreen/);assert.match(ui,/고래들의 비상/);
 });
+test('flight renders whales only while retaining the homepage character and balloon', () => {
+ const scene=read('src/app/whale-flight/flight-scene.ts');assert.doesNotMatch(scene,/mascot|sangmung|wink/i);
+ const ui=read('src/app/whale-flight/FlightExperience.tsx');assert.doesNotMatch(ui,/상멍|윙크|onWink|data-wink/);assert.match(ui,/SANG#MUNG/);
+ assert.doesNotMatch(read('src/app/whale-flight/page.tsx'),/상멍|윙크/);
+ assert.match(read('public/whale-flight/credits.txt'),/whales only; no 2D character overlay/);
+ const home=read('src/app/components/home/GobibiWorld.tsx');assert.match(home,/sangmung.webp/);assert.match(home,/data-whale-balloon/);
+});

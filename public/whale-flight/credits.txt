@@ -12,6 +12,5 @@ The GLB is unmodified. Runtime changes: scaled and independently animated instan
 Only blue whales are represented; multiple instances do not represent different species.
 
 GOBIBI environment: original reference-based image created for this site.
-SANG#MUNG mascot: the site's existing approved original art, with a local eye-only wink animation. Character silhouette and other markings preserved.
-Whales are real skeletal 3D meshes. SANG#MUNG uses original 2D art in the 3D scene; it is not a new 3D character model.
+Whales are real skeletal 3D meshes. This experience presents whales only; no 2D character overlay is rendered.
 Experience rendered live by Three.js (MIT license). This is not prerecorded footage, a nature documentary, or a paid generative-video API service.

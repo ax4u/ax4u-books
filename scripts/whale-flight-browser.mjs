@@ -8,6 +8,7 @@ const browser=await chromium.launch({executablePath:'/home/hermes/.cache/ms-play
 const results=[];const errors=[];const failures=[];
 async function contextFor(viewport,extra={}){
  const context=await browser.newContext({viewport,...extra});
+ context.on('request',r=>{if(/\/whale-flight\/sangmung(?:-wink)?\.webp(?:$|\?)/.test(r.url()))failures.push('REMOVED_MASCOT_REQUEST '+r.url());});
  if(base.includes('127.0.0.1'))await context.route('**/_vercel/insights/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
  await context.route('**/api/**',r=>{failures.push('UNEXPECTED_API '+r.request().method()+' '+r.request().url());return r.abort();});
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
@@ -24,23 +25,21 @@ try{
    await page.waitForFunction(()=>Number(document.querySelector('canvas')?.dataset.flightTime)>.45,{},{timeout:20000});
    assert.equal(await page.getByRole('heading',{name:'고래들의 비상',exact:true}).count(),1);
    await noOverflow(page,viewport.width);
+   assert.equal(await page.locator('[data-wink]').count(),0);assert.doesNotMatch(await page.locator('canvas').getAttribute('aria-label'),/상멍|윙크/);assert.doesNotMatch(await page.locator('main').innerText(),/상멍|윙크/);
    const count=Number(await page.locator('canvas').getAttribute('data-whale-count'));assert.equal(count,viewport.width<720?6:10);
    await page.screenshot({path:`${output}/${viewport.width}x${viewport.height}.png`});
    await page.getByRole('button',{name:'비행 일시정지',exact:true}).click();await page.waitForFunction(()=>document.querySelector('canvas').dataset.flightPaused==='true');
    const pausedTime=await time(page), a=await image(page);await page.waitForTimeout(450);assert.equal(await time(page),pausedTime);assert.equal(await image(page),a);
    await page.getByRole('button',{name:'비행 재생',exact:true}).click();await page.waitForFunction(t=>Number(document.querySelector('canvas').dataset.flightTime)>t+.3,pausedTime,{timeout:10000});
    if(viewport.width===1440){
-    await page.waitForFunction(()=>document.querySelector('main').dataset.wink==='true',{},{timeout:35000});
-    await page.getByRole('button',{name:'비행 일시정지',exact:true}).click();assert.equal(await page.locator('main').getAttribute('data-wink'),'true');
-    await page.screenshot({path:output+'/wink.png'});
-    await page.getByRole('button',{name:'비행 재생',exact:true}).click();
+    assert.notEqual(await image(page),a,'whales continue animating without a mascot');
     await page.getByRole('button',{name:'소리 켜기',exact:true}).click();assert.equal(await page.getByRole('button',{name:'소리 끄기',exact:true}).getAttribute('aria-pressed'),'true');await page.getByRole('button',{name:'소리 끄기',exact:true}).click();
     await page.getByRole('button',{name:'전체화면',exact:true}).click();await page.waitForFunction(()=>Boolean(document.fullscreenElement));await page.getByRole('button',{name:'전체화면 해제',exact:true}).click();await page.waitForFunction(()=>!document.fullscreenElement);
-    await page.getByRole('button',{name:'작품 정보',exact:true}).click();assert.match(await page.locator('#flight-credits').innerText(),/Bohdan Lvov/);await page.getByRole('button',{name:'작품 정보 닫기',exact:true}).click();
+    await page.getByRole('button',{name:'작품 정보',exact:true}).click();assert.match(await page.locator('#flight-credits').innerText(),/Bohdan Lvov/);assert.doesNotMatch(await page.locator('#flight-credits').innerText(),/상멍|윙크/);await page.getByRole('button',{name:'작품 정보 닫기',exact:true}).click();
     await page.getByRole('link',{name:'체험 나가기',exact:true}).click();await page.waitForURL(base+'/');assert.equal(await page.locator('canvas').count(),0);assert.equal(await page.evaluate(()=>Boolean(document.fullscreenElement)),false);
-    await page.getByRole('link',{name:'고래들의 비상 ↗',exact:true}).click();await ready(page);await page.waitForFunction(()=>Boolean(document.fullscreenElement));await page.getByRole('link',{name:'체험 나가기',exact:true}).click();await page.waitForURL(base+'/');
+    await page.getByRole('link',{name:'고래들의 비상 체험 열기',exact:true}).click();await ready(page);await page.waitForFunction(()=>Boolean(document.fullscreenElement));await page.getByRole('link',{name:'체험 나가기',exact:true}).click();await page.waitForURL(base+'/');
    }
-   results.push({viewport,whales:count,pauseFreeze:true,resume:true,overflow:false});
+   results.push({viewport,whales:count,mascotAbsent:true,pauseFreeze:true,resume:true,overflow:false});
   }finally{await context.close()}
  }
  // Reduced motion is static until the visitor explicitly opts in.

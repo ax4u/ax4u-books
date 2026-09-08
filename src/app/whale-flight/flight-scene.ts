@@ -7,7 +7,7 @@ export type FlightController = {
   setReducedMotion(reduced: boolean): void;
   setPointer(x: number, y: number): void;
   dispose(): void;
-  getStats(): { time: number; frames: number; whales: number; wink: boolean; drawCalls: number };
+  getStats(): { time: number; frames: number; whales: number; drawCalls: number };
 };
 
 type FlightOptions = {
@@ -15,7 +15,6 @@ type FlightOptions = {
   onReady: () => void;
   onError: (message: string) => void;
   onStage: (stage: number) => void;
-  onWink: (wink: boolean) => void;
 };
 
 type Whale = {
@@ -43,7 +42,6 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   let previousStamp = 0;
   let elapsed = 0;
   let frames = 0;
-  let wink = false;
   let stage = -1;
   let lastSample = -1;
   let fpsSeconds = 0;
@@ -82,11 +80,6 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
   sky.visible = false;
   camera.add(sky);
   let skyAspect = 1.5;
-  let mascot: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | undefined;
-  let mascotBase: Float32Array | undefined;
-  let mascotOpen: THREE.Texture | undefined;
-  let mascotWink: THREE.Texture | undefined;
-  let mascotAspect = 787 / 1256;
   let dust: THREE.Points | undefined;
   const cloudLayers: { sprite: THREE.Sprite; x: number; y: number; phase: number }[] = [];
 
@@ -158,7 +151,6 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     lastSample = elapsed;
     canvas.dataset.flightTime = elapsed.toFixed(2);
     canvas.dataset.whaleCount = String(whales.length);
-    canvas.dataset.wink = String(wink);
     canvas.dataset.flightPaused = String(paused || reduced);
   }
 
@@ -232,34 +224,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       dust.rotation.y = t * 0.006;
       dust.position.y = Math.sin(t * 0.06) * 0.8;
     }
-    if (mascot && mascotBase) {
-      // Swim across the flock, approach for a wink, then recede through actual depth.
-      const flightArc = Math.sin(t * Math.PI / 9) ** 2;
-      const distance = 10 + flightArc * 14;
-      const viewHeight = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-      const mascotHeight = mobile ? 2.7 : 3.35;
-      mascot.scale.set(mascotHeight * mascotAspect, mascotHeight, 1);
-      mascot.position.set(
-        viewHeight * camera.aspect * (mobile ? 0.22 : 0.28) * Math.cos(t * TAU / 18),
-        viewHeight * (-0.09 + flightArc * 0.29) + Math.sin(t * 0.6) * 0.12,
-        -distance,
-      );
-      mascot.rotation.z = -0.15 * Math.cos(t * TAU / 18) + Math.sin(t * 0.62) * 0.075;
-      const positions = mascot.geometry.attributes.position;
-      for (let i = 0; i < positions.count; i += 1) {
-        const x = mascotBase[i * 3];
-        const y = mascotBase[i * 3 + 1];
-        positions.setXYZ(i, x + Math.sin(y * 5 + t * 2.4) * 0.016 * (0.5 - y), y, Math.sin(y * 6 + t * 2.4) * 0.022);
-      }
-      positions.needsUpdate = true;
-      const nextWink = (t + 6.8) % 9 > 8.52;
-      if (nextWink !== wink) {
-        wink = nextWink;
-        mascot.material.map = wink ? mascotWink ?? null : mascotOpen ?? null;
-        canvas.dataset.wink = String(wink);
-        options.onWink(wink);
-      }
-    }
+
     const nextStage = Math.floor((t % CYCLE) / 10);
     if (nextStage !== stage) {
       stage = nextStage;
@@ -316,7 +281,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       pointer.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1));
     },
     getStats() {
-      return { time: elapsed, frames, whales: whales.length, wink, drawCalls: renderer?.info.render.calls ?? 0 };
+      return { time: elapsed, frames, whales: whales.length, drawCalls: renderer?.info.render.calls ?? 0 };
     },
     dispose() {
       if (disposed) return;
@@ -485,11 +450,9 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
         resizeObserver.observe(canvas);
       } else window.addEventListener("resize", layout);
       layout();
-      const [, background, open, closed] = await Promise.all([
+      const [, background] = await Promise.all([
         loadWhales(),
         loadTexture("/whale-flight/sky.webp"),
-        loadTexture("/whale-flight/sangmung.webp"),
-        loadTexture("/whale-flight/sangmung-wink.webp"),
       ]);
       if (disposed || failed) return;
       skyMaterial.map = background;
@@ -497,24 +460,12 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       const skyImage = background.image as { width: number; height: number };
       skyAspect = skyImage.width / skyImage.height;
       sky.visible = true;
-      mascotOpen = open;
-      mascotWink = closed;
-      const mascotImage = open.image as { width: number; height: number };
-      mascotAspect = mascotImage.width / mascotImage.height;
-      const geometry = new THREE.PlaneGeometry(1, 1, 10, 18);
-      geometries.add(geometry);
-      mascotBase = new Float32Array(geometry.attributes.position.array);
-      const material = new THREE.MeshBasicMaterial({ map: open, transparent: true, depthWrite: false, depthTest: true, toneMapped: false, fog: false, side: THREE.DoubleSide });
-      materials.add(material);
-      mascot = new THREE.Mesh(geometry, material);
-      mascot.renderOrder = 100;
-      camera.add(mascot);
+
       ready = true;
       layout();
       if (disposed || failed) return;
       canvas.dataset.flightReady = "true";
       sample(true);
-      options.onWink(false);
       options.onReady();
       synchronizePlayback();
     } catch (error: unknown) {
