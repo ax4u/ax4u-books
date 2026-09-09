@@ -37,7 +37,10 @@ export class MajesticSimulation {
       for (const key of ['length', 'radius', 'mass', 'speed'] as const)
         if (!Number.isFinite(spec[key]) || spec[key] <= 0) throw new Error(`Invalid ${key} for ${spec.id}`);
       if (spec.visualLength !== undefined && (!Number.isFinite(spec.visualLength) || spec.visualLength <= 0)) throw new Error(`Invalid visualLength for ${spec.id}`);
-      const [nx, ny, width] = staging[i % staging.length];
+      // The 1.8m finless porpoise gets a clear near-field cell, not an enlarged mesh.
+      // Keep the ten-whale table/phase denominator unchanged. All actors use the
+      // same safe standoff, collision-aware placement and free-swimming integrator.
+      const [nx, ny, width] = spec.species === 'porpoise' ? [-.25, -.40, .20] : staging[i % staging.length];
       const direction = nx > 0 ? -1 : 1;
       const yaw = direction * Math.PI / 2 + (this.random() - .5) * .12;
       const pitch = (this.random() - .5) * .035;

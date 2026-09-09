@@ -8,15 +8,15 @@ const output = process.env.QA_OUTPUT || '/home/hermes/.hermes/profiles/sejongchi
 await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch({ executablePath: '/home/hermes/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome', headless: true,
   args: ['--no-sandbox', '--enable-webgl', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const expected = { blue: 3, humpback: 3, sperm: 2, orca: 2 };
+const expected = { blue: 3, humpback: 3, sperm: 2, orca: 2, porpoise: 1 };
 const results = [], errors = [], snapshots = [];
 async function sample(page) { return page.locator('canvas').evaluate(c => ({ ...c.dataset })); }
 function check(d) {
   const animals = JSON.parse(d.whaleModels);
-  assert.equal(animals.length, 10); assert.deepEqual(JSON.parse(d.whaleCounts), expected);
-  assert.equal(new Set(animals.map(x => x.modeluuid)).size, 10);
-  assert.equal(new Set(animals.map(x => x.rootuuid)).size, 10);
-  assert.equal(d.cameraMode, 'quiet-observer'); assert.equal(d.motionEdition, 'dynamic-ten-v2');
+  assert.equal(animals.length, 11); assert.deepEqual(JSON.parse(d.whaleCounts), expected);
+  assert.equal(new Set(animals.map(x => x.modeluuid)).size, 11);
+  assert.equal(new Set(animals.map(x => x.rootuuid)).size, 11);
+  assert.equal(d.cameraMode, 'quiet-observer'); assert.equal(d.motionEdition, 'dynamic-eleven-porpoise-v1');
   assert.equal(d.heroEye, undefined); assert.equal(d.cameraBlend, undefined);
   assert.deepEqual(JSON.parse(d.cameraPosition), [0, 0, 28]);
   assert.ok(Number(d.cameraFov) >= 52, 'no telephoto lens');
@@ -88,7 +88,7 @@ try {
     });
     const allSpeeds = dynamics.flatMap(d => [d.speedMin, d.speedMax]);
     assert.ok(Math.max(...allSpeeds) / Math.min(...allSpeeds) > 1.6, 'clearly different individual speeds');
-    assert.ok(dynamics.every(d => d.baseSpeed > 1.2), 'higher cruise speeds, not just a sped-up camera');
+    assert.ok(dynamics.filter(d => d.id !== 'porpoise-01').every(d => d.baseSpeed > 1.2), 'existing ten retain higher cruise speeds');
     assert.ok(dynamics.filter(d => d.speedRange > .12).length >= 8, 'independent cruise / glide changes');
     assert.ok(dynamics.filter(d => d.verticalRange > .2 && d.depthRange > .2 && d.turningRadians > .06).length >= 8,
       'curved three-dimensional travel, not only parallel horizontal lines: ' + JSON.stringify(dynamics));
@@ -100,7 +100,7 @@ try {
     const paused = await sample(page); await page.waitForTimeout(400);
     assert.equal((await sample(page)).flightTime, paused.flightTime);
     assert.equal(requests.length, 4); assert.equal(new Set(requests).size, 4);
-    results.push({ viewport, counts: expected, all10Move: true, all10Animate: true, all4Deform: true,
+    results.push({ viewport, counts: expected, all11Move: true, all11Animate: true, all5Deform: true,
       cameraMode: latest.cameraMode, cameraFov: latest.cameraFov, cameraConstant: true, noEyeZoom: true,
       visible: start.visible, depthRange: JSON.parse(before.depthRange), minSeparation: check(latest).minSeparation,
       dynamics, activeSeconds: Number(latest.flightTime), wallSeconds: (Date.now() - wallStart) / 1000,

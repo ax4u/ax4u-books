@@ -6,9 +6,9 @@ import { WHALE_SPECIES, ANIMAL_COUNT, SCENE_POPULATION } from '../src/app/whale-
 import { createFinlessPorpoise } from '../src/app/whale-flight/finless-porpoise';
 
 const read=(p:string)=>readFileSync(p,'utf8');
-test('ten selected whales, original registry preserved; no information-selection catalog',()=>{
+test('ten selected whales plus one finless porpoise; no information-selection catalog',()=>{
  assert.deepEqual(WHALE_SPECIES.map(w=>w.id),['blue','humpback','sperm','orca','porpoise']);
- assert.deepEqual(SCENE_POPULATION,{blue:3,humpback:3,sperm:2,orca:2,porpoise:0});assert.equal(ANIMAL_COUNT,10);
+ assert.deepEqual(SCENE_POPULATION,{blue:3,humpback:3,sperm:2,orca:2,porpoise:1});assert.equal(ANIMAL_COUNT,11);
  assert.equal(new Set(WHALE_SPECIES.map(w=>w.scientific)).size,5);
  assert.equal(WHALE_SPECIES.filter(w=>w.model==='gltf').length,4);
  assert.equal(WHALE_SPECIES.filter(w=>w.model==='original').length,1);
@@ -48,6 +48,6 @@ test('copyright provenance is retained without species information overlays; col
  const credits=read('public/whale-flight/credits.txt');
  for(const item of WHALE_SPECIES)assert.ok(credits.includes(item.scientific));
  for(const author of ['Bohdan Lvov','Abner Wu'])assert.ok(credits.includes(author));
- assert.match(credits,/10 INDEPENDENT ANIMALS/);assert.match(credits,/capsule/i);assert.match(credits,/no 2D character overlay/);
+ assert.match(credits,/11 INDEPENDENT ANIMALS/);assert.match(credits,/capsule/i);assert.match(credits,/no 2D character overlay/);
  assert.doesNotMatch(credits,/Alex_Pfe|큰돌고래|참고래|귀신고래|일각고래|흰고래/);
 });

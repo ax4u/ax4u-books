@@ -26,8 +26,8 @@ export type FlightController = {
   getStats(): FlightStats;
 };
 type FlightOptions = { reducedMotion: boolean; onReady: () => void; onError: (message: string) => void };
-const IDS = ["blue", "humpback", "sperm", "orca"];
-const COMPOSITION = ["humpback-01", "blue-01", "orca-01", "sperm-01", "humpback-02", "blue-02", "orca-02", "sperm-02", "blue-03", "humpback-03"];
+const IDS = WHALE_SPECIES.filter(species => SCENE_POPULATION[species.id] > 0).map(species => species.id);
+const COMPOSITION = ["humpback-01", "blue-01", "orca-01", "sperm-01", "humpback-02", "blue-02", "orca-02", "sperm-02", "blue-03", "humpback-03", "porpoise-01"];
 // Relative inertial weights, not a claim that the integrator uses SI units.
 const MASS: Record<string, number> = { blue: 80000, humpback: 30000, sperm: 40000, orca: 5000, porpoise: 80 };
 const SPEED: Record<string, number> = { blue: 1.9, humpback: 1.65, sperm: 1.8, orca: 2.6, porpoise: .7 };
@@ -35,7 +35,7 @@ const FIXED_STEP = 1 / 60;
 const SKY_DEPTH = 1100;
 const rounded = (n: number) => Number(n.toFixed(5));
 
-/** Ten individually staged whales, with live physics and responsive swimming bounds. */
+/** Eleven individually staged cetaceans, with live physics and responsive swimming bounds. */
 export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOptions): FlightController {
   let disposed = false, failed = false, ready = false, paused = false, reduced = options.reducedMotion;
   let raf = 0, previousStamp = 0, elapsed = 0, frames = 0, accumulator = 0, lastSample = -1;
@@ -226,7 +226,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       }
       for (let index = 0; index < SCENE_POPULATION[species.id]; index++) {
         if (disposed || failed) return;
-        const phase = (index * .61803398875 + IDS.indexOf(String(species.id)) * .173) % 1;
+        const phase = (index * .61803398875 + IDS.indexOf(species.id) * .173) % 1;
         let model: THREE.Object3D, mixer: THREE.AnimationMixer | undefined, original: Original | undefined;
         let instance: THREE.Group;
         if (sourceModel && swimming && envelope) {
@@ -269,7 +269,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     if (disposed || failed) return;
     // Art-directed foreground / midground / distance, not a dense uniform grid.
     animals.sort((a, b) => COMPOSITION.indexOf(a.id) - COMPOSITION.indexOf(b.id));
-    if (animals.length !== ANIMAL_COUNT || new Set(animals.map(animal => animal.id)).size !== ANIMAL_COUNT || new Set(animals.map(animal => animal.model.uuid)).size !== ANIMAL_COUNT) throw new Error("고래 열 마리를 모두 준비하지 못했습니다.");
+    if (animals.length !== ANIMAL_COUNT || new Set(animals.map(animal => animal.id)).size !== ANIMAL_COUNT || new Set(animals.map(animal => animal.model.uuid)).size !== ANIMAL_COUNT) throw new Error("고래 열한 마리를 모두 준비하지 못했습니다.");
     const specs: (PodSpec & { visualLength: number })[] = animals.map(animal => ({ id: animal.id, species: animal.species.id, length: animal.envelope.length,
       radius: animal.envelope.radius, visualLength: animal.bodyLength, mass: MASS[animal.species.id], speed: SPEED[animal.species.id] * (.75 + animal.phase * .65) }));
     simulation = new PhysicsPodSimulation(specs, 42721, { aspect: width / height, fov: mobile ? 68 : 52 });
@@ -314,7 +314,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     updateCamera();
     for (const animal of animals) {
       if (!animal.body) continue;
-      // Object-level culling is conservative and preserves all ten live dynamic roots.
+      // Object-level culling is conservative and preserves all eleven live dynamic roots.
       // Every imported SkinnedMesh keeps frustumCulled=false to avoid stale bind boxes.
       const sphereRadius = animal.envelope.length / 2;
       animal.root.visible = frustum.intersectsSphere(new THREE.Sphere(animal.body.position, sphereRadius));
@@ -348,7 +348,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     canvas.dataset.physics = JSON.stringify(stats.physics); canvas.dataset.depthRange = JSON.stringify(stats.depthRange);
     canvas.dataset.nearestDistance = String(stats.nearestDistance); canvas.dataset.sceneKind = "living-pod";
     canvas.dataset.pixelRatio = String(pixelRatio);
-    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "dynamic-ten-v2";
+    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "dynamic-eleven-porpoise-v1";
     canvas.dataset.cameraPosition = JSON.stringify(camera.position.toArray());
     canvas.dataset.cameraFov = String(camera.fov); canvas.dataset.drawCalls = String(stats.drawCalls);
     canvas.dataset.triangles = String(renderer?.info.render.triangles ?? 0);

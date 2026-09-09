@@ -69,7 +69,7 @@ test('subpages inherit the brand image without a conflicting cover override', ()
         // The separately approved flight preview intentionally uses its own
         // dedicated artwork. Keep that exception narrow; all other routes inherit.
         assert.match(source, /pageSocialMetadata\("\/whale-flight"\)/);
-        assert.match(source, /whale-flight-close-v2\.jpg/);
+        assert.match(source, /whale-flight-close-v3\.jpg/);
         assert.match(source, /images: \[image\]/);
         assert.match(source, /images: \[\{ url: image\.url, alt: image\.alt \}\]/);
       } else if (file === join(root, 'src/app/exhibition/page.tsx')) {

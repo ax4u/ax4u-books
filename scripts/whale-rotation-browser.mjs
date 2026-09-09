@@ -11,7 +11,7 @@ async function sample(page,label){
  const models=JSON.parse(d.data.whaleModels),xs=models.map(m=>m.screenCenter[0]);
  const span=(Math.max(...xs)-Math.min(...xs))/2;
  const sizes=models.map(m=>m.bodyLength/(2*(28-m.position[2])*Math.tan(Number(d.data.cameraFov)*Math.PI/360)*(d.width/d.height)));
- assert.equal(d.data.motionEdition,'dynamic-ten-v2');assert.equal(models.length,10);
+ assert.equal(d.data.motionEdition,'dynamic-eleven-porpoise-v1');assert.equal(models.length,11);
  assert.deepEqual(JSON.parse(d.data.cameraPosition),[0,0,28]);
  // Independent curved courses can temporarily bring centers closer together.
  // The regression is resize-induced compression: frozen before/after positions
@@ -22,7 +22,7 @@ async function sample(page,label){
  assert.ok(Math.max(...sizes)>.30,`${label}: foreground whale is substantial, not distant dots`);
  assert.ok(Math.max(...sizes)<.85,`${label}: no screen-consuming whale`);
  await fs.writeFile(`${out}/${label}.json`,JSON.stringify(d,null,2));
- results.push({label,width:d.width,height:d.height,count:10,spanPercent:span*100,maxBroadsideLengthPercent:Math.max(...sizes)*100,time:Number(d.data.flightTime)});
+ results.push({label,width:d.width,height:d.height,count:11,spanPercent:span*100,maxBroadsideLengthPercent:Math.max(...sizes)*100,time:Number(d.data.flightTime)});
  return {d,models};
 }
 try{

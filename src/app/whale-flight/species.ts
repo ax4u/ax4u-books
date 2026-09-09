@@ -4,10 +4,10 @@ export type WhaleSpecies = {
   length: number; model: "gltf" | "original"; asset?: string; clip?: string;
 };
 /** Internal production metadata, not a species information UI.
- * Ten selected animals in the scene. Lengths are representative individuals,
+ * Eleven selected animals in the scene. Lengths are representative individuals,
  * not population means or maximum records. Porpoise taxonomy is recorded in credits.
  */
-export const SCENE_POPULATION: Readonly<Record<WhaleSpeciesId, number>> = { blue: 3, humpback: 3, sperm: 2, orca: 2, porpoise: 0 };
+export const SCENE_POPULATION: Readonly<Record<WhaleSpeciesId, number>> = { blue: 3, humpback: 3, sperm: 2, orca: 2, porpoise: 1 };
 export const WHALE_SPECIES: readonly WhaleSpecies[] = [
   {id:"blue",name:"대왕고래",english:"Blue whale",scientific:"Balaenoptera musculus",length:24,model:"gltf",asset:"/whale-flight/blue-whale.glb",clip:"Swimming"},
   {id:"humpback",name:"혹등고래",english:"Humpback whale",scientific:"Megaptera novaeangliae",length:14.5,model:"gltf",asset:"/whale-flight/humpback-whale.glb",clip:"Armature|ArmatureAction"},

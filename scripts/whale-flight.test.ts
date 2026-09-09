@@ -17,7 +17,7 @@ test('self hosted art and explicit source/derivative attribution are present', (
  for(const file of ['sky.webp','sangmung.webp','sangmung-wink.webp']) {
   const bytes=readFileSync('public/whale-flight/'+file); assert.equal(bytes.toString('ascii',0,4),'RIFF'); assert.equal(bytes.toString('ascii',8,12),'WEBP');
  }
- const credit=read('public/whale-flight/credits.txt'); assert.match(credit,/creativecommons.org\/licenses\/by\/4.0/);assert.match(credit,/Bohdan Lvov/);assert.match(credit,/FOUR SPECIES \/ 10 INDEPENDENT ANIMALS/);
+ const credit=read('public/whale-flight/credits.txt'); assert.match(credit,/creativecommons.org\/licenses\/by\/4.0/);assert.match(credit,/Bohdan Lvov/);assert.match(credit,/FIVE SPECIES \/ 11 INDEPENDENT ANIMALS/);
 });
 test('both navigation systems link to the public flight route with a fullscreen click handler', () => {
  for(const file of ['src/app/components/home/HomeNavigation.tsx','src/app/components/gobibi/BrandNavigation.tsx'])assert.match(read(file),/<FlightLink>고래들의 비상/);

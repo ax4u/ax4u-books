@@ -10,7 +10,7 @@ test('quiet observer completely replaces the automatic eye / fly-in camera', () 
   assert.match(scene, /camera\.lookAt\(0, 0, -140\)/);
   assert.match(scene, /camera\.fov = mobile \? 68 : 52/);
   assert.match(scene, /cameraMode = "quiet-observer"/);
-  assert.match(scene, /motionEdition = "dynamic-ten-v2"/);
+  assert.match(scene, /motionEdition = "dynamic-eleven-porpoise-v1"/);
   assert.doesNotMatch(scene, /camera\.position\.lerp|camera\.fov\s*=\s*THREE/);
   assert.doesNotMatch(ui, /onPointerMove|onPointerLeave|setPointer/);
 });

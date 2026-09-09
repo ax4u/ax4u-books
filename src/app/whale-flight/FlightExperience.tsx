@@ -110,7 +110,7 @@ export default function FlightExperience() {
 
   return <main className={styles.experience} data-ready={ready} data-paused={paused} data-edition="living-pod" aria-label="고래들의 비상 — 고비비 실시간 3D 체험">
     <div className={styles.poster} aria-hidden="true" />
-    <canvas key={attempt} ref={canvas} className={styles.canvas} role="img" aria-label="열 마리 고래가 가까운 구름과 먼 하늘 사이를 우아하게 가로지르는 실시간 3D 장면" />
+    <canvas key={attempt} ref={canvas} className={styles.canvas} role="img" aria-label="고래 열 마리와 상괭이 한 마리가 가까운 구름과 먼 하늘 사이를 우아하게 가로지르는 실시간 3D 장면" />
     <div className={styles.shade} aria-hidden="true" />
     <header className={styles.header}>
       <Link href="/" className={styles.brand} aria-label="GOBIBI 홈페이지로 나가기">GOBIBI <small>× SANG#MUNG</small></Link>
@@ -118,7 +118,7 @@ export default function FlightExperience() {
       <Link href="/" className={styles.exit} aria-label="체험 나가기">나가기 <span aria-hidden="true">↗</span></Link>
     </header>
 
-    {!ready && !error && <div className={styles.loading} role="status"><span className={styles.orbit} aria-hidden="true" /><p>고비비의 하늘을 여는 중</p><small>열 마리의 고래가 구름 너머에서 오고 있습니다.</small></div>}
+    {!ready && !error && <div className={styles.loading} role="status"><span className={styles.orbit} aria-hidden="true" /><p>고비비의 하늘을 여는 중</p><small>고래 열 마리와 상괭이 한 마리가 구름 너머에서 오고 있습니다.</small></div>}
     {error && <section className={styles.failure} role="alert"><span>잠시, 구름 사이에서</span><h1>하늘을 열지 못했어요.</h1><p>{error}</p><button type="button" onClick={retry}>다시 시도</button><Link href="/">고비비 홈으로</Link></section>}
 
     {ready && !error && <>
@@ -140,7 +140,7 @@ export default function FlightExperience() {
     </>}
     {credits && <section id="flight-credits" className={styles.credits} aria-label="작품 정보">
       <button type="button" onClick={() => setCredits(false)} aria-label="작품 정보 닫기">닫기 ×</button><h2>고래들의 비상</h2>
-      <p>열 마리 고래가 가까운 구름과 먼 하늘 사이를 저마다의 속도로 가로지르는 실시간 3D 작품입니다.</p>
+      <p>고래 열 마리와 상괭이 한 마리가 가까운 구름과 먼 하늘 사이를 저마다의 속도로 가로지르는 실시간 3D 작품입니다.</p>
       <p>3D 모델: Bohdan Lvov · Abner Wu / Trouvaille<br /><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a> · 일부 텍스처 최적화·조명·개별 유영 연출 적용</p>
       <p>배경·연출: GOBIBI × SANG#MUNG<br />사운드: 브라우저 합성 앰비언스 · 기본 음소거</p>
       <p>충돌은 몸과 지느러미의 활동 영역을 감싸는 3D 충돌체로 계산합니다. 질량·관성·반발과 회피를 적용한 실시간 시뮬레이션이며 실제 유체역학의 정밀 재현은 아닙니다.</p>
