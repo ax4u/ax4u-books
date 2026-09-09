@@ -11,11 +11,12 @@ async function sample(page,label){
  const models=JSON.parse(d.data.whaleModels),xs=models.map(m=>m.screenCenter[0]);
  const span=(Math.max(...xs)-Math.min(...xs))/2;
  const sizes=models.map(m=>m.bodyLength/(2*(28-m.position[2])*Math.tan(Number(d.data.cameraFov)*Math.PI/360)*(d.width/d.height)));
- assert.equal(d.data.motionEdition,'majestic-ten-v1');assert.equal(models.length,10);
+ assert.equal(d.data.motionEdition,'dynamic-ten-v2');assert.equal(models.length,10);
  assert.deepEqual(JSON.parse(d.data.cameraPosition),[0,0,28]);
- // Swimming legitimately changes the composition between samples. The exact
- // resize invariant is checked while paused below, not against a fixed grid.
- assert.ok(span>.45,`${label}: no central band: ${span}`);
+ // Independent curved courses can temporarily bring centers closer together.
+ // The regression is resize-induced compression: frozen before/after positions
+ // are checked exactly below, rather than comparing different swim times.
+ if (label === 'portrait-initial') assert.ok(span>.45,`${label}: initial framing spans the view: ${span}`);
  assert.ok(xs.some(x=>x<-.2)&&xs.some(x=>x>.2),`${label}: occupy both sides`);
  assert.ok(Number(d.data.pixelRatio)>=1,'readable silhouettes, no sub-CSS-pixel buffer');
  assert.ok(Math.max(...sizes)>.30,`${label}: foreground whale is substantial, not distant dots`);

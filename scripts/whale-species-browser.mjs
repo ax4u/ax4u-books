@@ -16,7 +16,7 @@ function check(d) {
   assert.equal(animals.length, 10); assert.deepEqual(JSON.parse(d.whaleCounts), expected);
   assert.equal(new Set(animals.map(x => x.modeluuid)).size, 10);
   assert.equal(new Set(animals.map(x => x.rootuuid)).size, 10);
-  assert.equal(d.cameraMode, 'quiet-observer'); assert.equal(d.motionEdition, 'majestic-ten-v1');
+  assert.equal(d.cameraMode, 'quiet-observer'); assert.equal(d.motionEdition, 'dynamic-ten-v2');
   assert.equal(d.heroEye, undefined); assert.equal(d.cameraBlend, undefined);
   assert.deepEqual(JSON.parse(d.cameraPosition), [0, 0, 28]);
   assert.ok(Number(d.cameraFov) >= 52, 'no telephoto lens');
@@ -59,11 +59,13 @@ try {
     snapshots.push({ viewport, phase: 'start', dataset: before });
     await page.getByRole('button', { name: '비행 시작', exact: true }).click();
     const wallStart = Date.now();
-    const phases = process.env.QA_QUICK ? [2, 5] : [2, 5, 9];
+    const phases = [3, 9, 18];
+    const trajectory = [start.animals];
     let latest;
     for (const seconds of phases) {
       await page.waitForFunction(t => Number(document.querySelector('canvas')?.dataset.flightTime) >= t, seconds, { timeout: 100000 });
       const d = await sample(page), current = check(d); latest = d;
+      trajectory.push(current.animals);
       assert.equal(d.cameraFov, before.cameraFov, 'field of view stays unchanged throughout the old zoom cycle');
       assert.deepEqual(JSON.parse(d.cameraPosition), JSON.parse(before.cameraPosition));
       assert.ok(current.animals.every((x, i) => JSON.stringify(x.position) !== JSON.stringify(start.animals[i].position)), 'all ten move independently');
@@ -73,6 +75,24 @@ try {
       snapshots.push({ viewport, phase: seconds, dataset: d });
       await page.screenshot({ path: `${output}/${viewport.width}x${viewport.height}-${seconds}s.png` });
     }
+    const dynamics = start.animals.map((animal, index) => {
+      const samples = trajectory.map(frame => frame[index]);
+      const speeds = samples.map(x => Math.hypot(...x.velocity));
+      const y = samples.map(x => x.position[1]), z = samples.map(x => x.position[2]);
+      const q0 = new THREE.Quaternion(...samples[0].quaternion).normalize();
+      return { id: animal.id, baseSpeed: animal.baseSpeed,
+        speedMin: Math.min(...speeds), speedMax: Math.max(...speeds),
+        speedRange: Math.max(...speeds) - Math.min(...speeds),
+        verticalRange: Math.max(...y) - Math.min(...y), depthRange: Math.max(...z) - Math.min(...z),
+        turningRadians: Math.max(...samples.map(x => q0.angleTo(new THREE.Quaternion(...x.quaternion).normalize()))) };
+    });
+    const allSpeeds = dynamics.flatMap(d => [d.speedMin, d.speedMax]);
+    assert.ok(Math.max(...allSpeeds) / Math.min(...allSpeeds) > 1.6, 'clearly different individual speeds');
+    assert.ok(dynamics.every(d => d.baseSpeed > 1.2), 'higher cruise speeds, not just a sped-up camera');
+    assert.ok(dynamics.filter(d => d.speedRange > .12).length >= 8, 'independent cruise / glide changes');
+    assert.ok(dynamics.filter(d => d.verticalRange > .2 && d.depthRange > .2 && d.turningRadians > .06).length >= 8,
+      'curved three-dimensional travel, not only parallel horizontal lines: ' + JSON.stringify(dynamics));
+    await fs.writeFile(`${output}/${viewport.width}x${viewport.height}-dynamics.json`, JSON.stringify(dynamics, null, 2));
     await page.mouse.move(viewport.width * .95, viewport.height * .9);
     await page.waitForTimeout(700);
     assert.deepEqual(JSON.parse((await sample(page)).cameraPosition), [0, 0, 28], 'pointer cannot start automatic camera movement');
@@ -83,7 +103,7 @@ try {
     results.push({ viewport, counts: expected, all10Move: true, all10Animate: true, all4Deform: true,
       cameraMode: latest.cameraMode, cameraFov: latest.cameraFov, cameraConstant: true, noEyeZoom: true,
       visible: start.visible, depthRange: JSON.parse(before.depthRange), minSeparation: check(latest).minSeparation,
-      activeSeconds: Number(latest.flightTime), wallSeconds: (Date.now() - wallStart) / 1000,
+      dynamics, activeSeconds: Number(latest.flightTime), wallSeconds: (Date.now() - wallStart) / 1000,
       softwareWebGLFps: (Number(latest.flightFrames) - Number(before.flightFrames)) / ((Date.now() - wallStart) / 1000),
       drawCalls: Number(before.drawCalls), triangles: Number(before.triangles) });
     await fs.writeFile(output + '/snapshots.json', JSON.stringify(snapshots));

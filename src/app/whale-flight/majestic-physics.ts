@@ -4,9 +4,11 @@ import { capsuleSeparation, resolveCapsuleCollision, type PodBody, type PodSpec 
 const Z = new THREE.Vector3(0, 0, 1);
 const clamp = THREE.MathUtils.clamp;
 const cameraZ = 28;
+// Shared by propulsion safety and travel-bounded substeps, including impulses.
+const maxSpeedRatio = 1.45;
 const bound = (b: PodBody) => Math.max(b.spec.radius, b.spec.length / 2);
 type Viewport = { aspect?: number; fov?: number };
-type Motion = { yaw: number; pitch: number; direction: number; turnTarget: number | null; rate: number; frequency: number; depth: number; framingDepth: number; edge: number };
+type Motion = { yaw: number; pitch: number; direction: number; turnTarget: number | null; rate: number; frequency: number; paceFrequency: number; pacePhase: number; depth: number; framingDepth: number; edge: number };
 const staging = [
   [-.3, -.05, .50], [.2, .45, .36], [.65, -.65, .13], [-.55, .67, .19],
   [.55, .05, .145], [-.6, -.5, .20], [-.8, -.75, .105], [-.15, -.8, .125],
@@ -40,7 +42,7 @@ export class MajesticSimulation {
       const yaw = direction * Math.PI / 2 + (this.random() - .5) * .12;
       const pitch = (this.random() - .5) * .035;
       const b: PodBody = { spec, position: new THREE.Vector3(), velocity: new THREE.Vector3(), quaternion: new THREE.Quaternion(),
-        mode: 'solo', school: i, phase: (i + this.random() * .3) * Math.PI * 2 / Math.max(1, specs.length),
+        mode: 'solo', school: i, phase: (i + this.random() * .3) * Math.PI * 2 / staging.length,
         nextMode: Infinity, wander: new THREE.Vector3(), nextWander: Infinity };
       this.orient(b, yaw, pitch);
       let depth = Math.max(this.standoff(b) + 1, (spec.visualLength ?? spec.length) / (2 * width * this.tanHalfFov * this.aspect));
@@ -50,8 +52,9 @@ export class MajesticSimulation {
         if (this.bodies.every(a => capsuleSeparation(a, b).distance > .5)) break;
         if (attempt > 10000) throw new Error('Cannot stage capsules');
       }
-      this.motion.set(b, { yaw, pitch, direction, turnTarget: null, rate: .035 + this.random() * .008,
-        frequency: .012 + this.random() * .007, depth, framingDepth: depth, edge: 1.04 + this.random() * .08 });
+      this.motion.set(b, { yaw, pitch, direction, turnTarget: null, rate: .09 + this.random() * .03,
+        frequency: .09 + this.random() * .07, depth, framingDepth: depth, edge: .82 + this.random() * .16,
+        paceFrequency: .10 + this.random() * .10, pacePhase: this.random() * Math.PI * 2 });
       b.velocity.copy(Z).applyQuaternion(b.quaternion).multiplyScalar(spec.speed * (.92 + .06 * this.random()));
       this.bodies.push(b);
     }
@@ -120,7 +123,7 @@ export class MajesticSimulation {
     let remaining = dt;
     while (remaining > 1e-10) {
       let h = Math.min(1 / 60, remaining);
-      for (const b of this.bodies) h = Math.min(h, .22 * b.spec.radius / Math.max(.01, b.velocity.length() + (steering ? b.spec.speed * 1.15 : 0)));
+      for (const b of this.bodies) h = Math.min(h, .22 * b.spec.radius / Math.max(.01, b.velocity.length() + (steering ? b.spec.speed * maxSpeedRatio : 0)));
       if (steering) this.steer(h);
       this.solve(steering);
       const previous = this.bodies.map(b => b.position.clone());
@@ -136,7 +139,7 @@ export class MajesticSimulation {
         if (relative.addScaledVector(travel, t).lengthSq() < (bound(a) + bound(b)) ** 2) this.stats.sweptCandidates++;
       }
       this.solve(steering);
-      if (steering) for (const b of this.bodies) b.velocity.clampLength(0, b.spec.speed * 1.15);
+      if (steering) for (const b of this.bodies) b.velocity.clampLength(0, b.spec.speed * maxSpeedRatio);
       this.time += h; this.stats.steps++; remaining -= h;
     }
     this.measurePenetration();
@@ -145,9 +148,11 @@ export class MajesticSimulation {
     const targets = this.bodies.map(b => {
       const m = this.motion.get(b)!;
       const depth = cameraZ - b.position.z, hh = depth * this.tanHalfFov;
-      // Only start a U-turn once the whole conservative silhouette is outside.
-      // Each animal has its own margin, speed and turn rate; never a flock clock.
-      if (m.turnTarget === null && b.position.x * m.direction > hh * this.aspect * m.edge + bound(b)) {
+      // Anticipate a personal turning radius, allowing some turns on screen.
+      // Waiting for the entire capsule to leave at this pace empties the scene.
+      const turnRadius = Math.max(b.velocity.length(), b.spec.speed) / (m.rate * 1.8);
+      const edge = Math.max(hh * this.aspect * .15, hh * this.aspect * m.edge - turnRadius * .7);
+      if (m.turnTarget === null && b.position.x * m.direction > edge) {
         // Alternate the depth side according to actual position. Turning away
         // on EVERY pass would send the whole cast permanently into the distance.
         const depthSide = depth > m.depth + 4 ? -1 : 1;
@@ -155,14 +160,17 @@ export class MajesticSimulation {
       }
       if (m.turnTarget !== null) {
         const delta = m.turnTarget - m.yaw;
-        m.yaw += clamp(delta, -m.rate * 2 * h, m.rate * 2 * h);
         if (Math.abs(delta) < .01) { m.direction *= -1; m.turnTarget = null; }
       }
       const band = Math.max(12, m.depth * .15);
-      const zBias = .10 * clamp((depth - m.depth) / band, -1, 1);
-      const yaw = m.turnTarget !== null ? m.yaw : Math.atan2(m.direction, zBias) + .045 * Math.sin(this.time * m.frequency + b.phase);
-      const pitch = .025 * Math.sin(this.time * m.frequency * .7 + b.phase)
-        - .08 * Math.sign(b.position.y) * clamp((Math.abs(b.position.y) - hh * 1.15) / Math.max(10, hh * .3), 0, 1);
+      const zBias = .55 * clamp((depth - m.depth) / band, -1, 1);
+      const course = this.time * m.frequency + b.phase;
+      // Slowly evolving S bends, rises and dives, not a looped position spline.
+      // Independent harmonics change the shape as well as the pace of each pass.
+      const yaw = m.turnTarget !== null ? m.yaw + clamp(m.turnTarget - m.yaw, -.6, .6)
+        : Math.atan2(m.direction, zBias) + .34 * Math.sin(course) + .12 * Math.sin(course * .43 + b.phase);
+      const pitch = .20 * Math.sin(course * .71 + b.phase * 1.3) + .055 * Math.sin(course * .39 + b.phase)
+        - .32 * Math.sign(b.position.y) * clamp((Math.abs(b.position.y) - hh * .72) / Math.max(10, hh * .4), 0, 1);
       return new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
     });
     // The original translated-capsule predictive avoidance/restitution formulas.
@@ -185,18 +193,27 @@ export class MajesticSimulation {
     }
     this.bodies.forEach((b, i) => {
       const m = this.motion.get(b)!, target = targets[i];
-      if (m.turnTarget === null) {
-        const base = m.direction * Math.PI / 2;
-        const desired = base + clamp(Math.atan2(Math.sin(Math.atan2(target.x, target.z) - base), Math.cos(Math.atan2(target.x, target.z) - base)), -.15, .15);
-        const delta = Math.atan2(Math.sin(desired - m.yaw), Math.cos(desired - m.yaw));
-        m.yaw += clamp(delta * (1 - Math.exp(-.18 * h)), -m.rate * h, m.rate * h);
-      }
-      const desiredPitch = clamp(Math.atan2(target.y, Math.hypot(target.x, target.z)), -.08, .08);
-      m.pitch += clamp((desiredPitch - m.pitch) * (1 - Math.exp(-.1 * h)), -.008 * h, .008 * h);
+      const base = m.direction * Math.PI / 2;
+      const targetYaw = Math.atan2(target.x, target.z);
+      const desired = m.turnTarget !== null ? targetYaw
+        : base + clamp(Math.atan2(Math.sin(targetYaw - base), Math.cos(targetYaw - base)), -.85, .85);
+      const delta = Math.atan2(Math.sin(desired - m.yaw), Math.cos(desired - m.yaw));
+      const rate = m.rate * (m.turnTarget !== null ? 1.8 : 1);
+      m.yaw += clamp(delta * (1 - Math.exp(-.55 * h)), -rate * h, rate * h);
+      const desiredPitch = clamp(Math.atan2(target.y, Math.hypot(target.x, target.z)), -.30, .30);
+      m.pitch += clamp((desiredPitch - m.pitch) * (1 - Math.exp(-.4 * h)), -.045 * h, .045 * h);
       this.orient(b, m.yaw, m.pitch);
       b.wander.copy(target).normalize();
-      const speed = b.spec.speed * (.95 + .04 * Math.sin(this.time * m.frequency * .63 + b.phase));
+      // Two personal, incommensurate clocks blend energetic strokes into glides;
+      // no school speed, shared transition timer or position-on-a-spline reset.
+      const speed = b.spec.speed * (1.025 + .24 * Math.sin(this.time * m.paceFrequency + m.pacePhase)
+        + .085 * Math.sin(this.time * m.paceFrequency * .47 + m.pacePhase * 1.7));
       const propulsion = Z.clone().applyQuaternion(b.quaternion).multiplyScalar(speed);
+      // Ease the outward component before a personal depth-band edge. Faster
+      // U-turns must not accumulate retreat or erase the near/mid/far staging.
+      // This limits desired thrust, not position or post-collision velocity.
+      const depthRoom = Math.max(0, m.depth + Math.max(14, m.depth * .25) - (cameraZ - b.position.z));
+      if (propulsion.z < 0) propulsion.z = Math.max(propulsion.z, -depthRoom * .22);
       // Relax toward propulsion; retain real collision deflection instead of
       // replacing velocity with a prescribed trajectory each frame.
       b.velocity.lerp(propulsion, 1 - Math.exp(-.4 * h));

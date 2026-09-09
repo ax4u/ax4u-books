@@ -30,7 +30,7 @@ const IDS = ["blue", "humpback", "sperm", "orca"];
 const COMPOSITION = ["humpback-01", "blue-01", "orca-01", "sperm-01", "humpback-02", "blue-02", "orca-02", "sperm-02", "blue-03", "humpback-03"];
 // Relative inertial weights, not a claim that the integrator uses SI units.
 const MASS: Record<string, number> = { blue: 80000, humpback: 30000, sperm: 40000, orca: 5000, porpoise: 80 };
-const SPEED: Record<string, number> = { blue: .65, humpback: .55, sperm: .6, orca: .85, porpoise: .7 };
+const SPEED: Record<string, number> = { blue: 1.9, humpback: 1.65, sperm: 1.8, orca: 2.6, porpoise: .7 };
 const FIXED_STEP = 1 / 60;
 const SKY_DEPTH = 1100;
 const rounded = (n: number) => Number(n.toFixed(5));
@@ -261,8 +261,8 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
         const root = new THREE.Group(); root.name = id; root.userData.species = species.id; root.userData.animalId = id; root.add(instance);
         const animal: Animal = { id, species, root, model, mixer, original, bones: representativeBones(instance, clips), bodyLength,
           envelope: envelope!, animationTime: mixer?.time ?? phase * 6.28, animationPending: 0,
-          // Native fluke cycles stay slow and independent; no synchronized flapping.
-          animationSpeed: swimming ? swimming.duration / (species.id === "orca" ? 6 : 9) * (.88 + phase * .24) : .34 + phase * .08, phase };
+          // Individual fluke rhythms follow each animal's faster cruise and glide.
+          animationSpeed: swimming ? swimming.duration / (species.id === "orca" ? 4.2 : 6) * (.82 + phase * .4) : .34 + phase * .08, phase };
         animals.push(animal); scene.add(root);
       }
     }));
@@ -271,7 +271,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     animals.sort((a, b) => COMPOSITION.indexOf(a.id) - COMPOSITION.indexOf(b.id));
     if (animals.length !== ANIMAL_COUNT || new Set(animals.map(animal => animal.id)).size !== ANIMAL_COUNT || new Set(animals.map(animal => animal.model.uuid)).size !== ANIMAL_COUNT) throw new Error("고래 열 마리를 모두 준비하지 못했습니다.");
     const specs: (PodSpec & { visualLength: number })[] = animals.map(animal => ({ id: animal.id, species: animal.species.id, length: animal.envelope.length,
-      radius: animal.envelope.radius, visualLength: animal.bodyLength, mass: MASS[animal.species.id], speed: SPEED[animal.species.id] * (.9 + animal.phase * .2) }));
+      radius: animal.envelope.radius, visualLength: animal.bodyLength, mass: MASS[animal.species.id], speed: SPEED[animal.species.id] * (.75 + animal.phase * .65) }));
     simulation = new PhysicsPodSimulation(specs, 42721, { aspect: width / height, fov: mobile ? 68 : 52 });
     const bodies = new Map(simulation.bodies.map(body => [body.spec.id, body]));
     for (const animal of animals) {
@@ -303,7 +303,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
       animal.animationPending += animationDelta;
       const near = camera.position.distanceToSquared(animal.body.position) < 100 * 100;
       if (animal.animationPending > 0 && (near || animal.animationPending >= .1)) {
-        const pace = THREE.MathUtils.clamp(animal.body.velocity.length() / animal.body.spec.speed, .8, 1.15);
+        const pace = THREE.MathUtils.clamp(animal.body.velocity.length() / animal.body.spec.speed, .65, 1.45);
         const advance = animal.animationPending * animal.animationSpeed * pace;
         animal.animationTime += advance;
         animal.mixer?.update(advance); animal.original?.update(animal.animationTime, animal.animationSpeed);
@@ -348,7 +348,7 @@ export function createFlightScene(canvas: HTMLCanvasElement, options: FlightOpti
     canvas.dataset.physics = JSON.stringify(stats.physics); canvas.dataset.depthRange = JSON.stringify(stats.depthRange);
     canvas.dataset.nearestDistance = String(stats.nearestDistance); canvas.dataset.sceneKind = "living-pod";
     canvas.dataset.pixelRatio = String(pixelRatio);
-    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "majestic-ten-v1";
+    canvas.dataset.cameraMode = "quiet-observer"; canvas.dataset.motionEdition = "dynamic-ten-v2";
     canvas.dataset.cameraPosition = JSON.stringify(camera.position.toArray());
     canvas.dataset.cameraFov = String(camera.fov); canvas.dataset.drawCalls = String(stats.drawCalls);
     canvas.dataset.triangles = String(renderer?.info.render.triangles ?? 0);
