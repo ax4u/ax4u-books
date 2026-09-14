@@ -57,10 +57,10 @@ export default function ExhibitionPage() {
                   <div className={styles.coverPanel}>
                     <div className={styles.coverTopline}><span>GOBIBI BOOKSHELF</span><span aria-hidden="true">✳</span></div>
                     <Image
-                      src={book.pages[0].src}
+                      src={book.cover.src}
                       alt={`${book.title} 앞표지`}
-                      width={book.pages[0].width}
-                      height={book.pages[0].height}
+                      width={book.cover.width}
+                      height={book.cover.height}
                       sizes="(max-width: 700px) 82vw, (max-width: 1100px) 42vw, 490px"
                       unoptimized
                       className={styles.coverImage}
@@ -72,7 +72,8 @@ export default function ExhibitionPage() {
                     <h3>{book.title}</h3>
                     <p className={styles.bookDescription}>{book.description}</p>
                     <dl className={styles.bookFacts}>
-                      <div><dt>책 속으로</dt><dd>앞표지 + 본문 {book.pages.length - 1}쪽</dd></div>
+                      <div><dt>지은이</dt><dd>{book.author}</dd></div>
+                      <div><dt>책 속으로</dt><dd>표지 포함 감상 이미지 {book.pages.length}장</dd></div>
                       <div><dt>감상 방법</dt><dd>로그인 없이, 자유롭게</dd></div>
                     </dl>
                     <span className={styles.openBook}>그림책 펼치기 <span aria-hidden="true">↗</span></span>

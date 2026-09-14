@@ -11,3 +11,5 @@ out
 build
 *.pem
 *.tsbuildinfo
+# One-time task runner; originals and evidence remain outside this release.
+scripts/finish-exhibition.ts

@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm run verify:exhibition-assets && npm run build:exhibition",
   "crons": [
     {
       "path": "/api/jobs/generate",

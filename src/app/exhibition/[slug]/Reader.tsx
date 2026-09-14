@@ -96,7 +96,7 @@ export default function Reader({ book }: { book: ExhibitionBook }) {
   const forward = turn?.direction === "forward";
   const left = turn?.ready && !forward ? destination[0] : current[0];
   const right = turn?.ready && forward ? destination[1] : current[1];
-  const label = index === 0 ? "앞표지" : index === 1 ? "본문 1쪽" : `본문 ${current[0]}${current[1] === null ? "" : `–${current[1]}`}쪽`;
+  const label = current.filter((p): p is number => p !== null).map(p => book.pages[p].label).join(" · ");
   return <section aria-label="그림책 읽기" aria-describedby="reader-help" tabIndex={0} onKeyDown={onKeyDown} className={styles.reader}>
     <div data-page-stage className={styles.stage} ref={stage} onPointerMove={move} onPointerLeave={() => setLens(null)}
       onTouchStart={event => { touch.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null; }}

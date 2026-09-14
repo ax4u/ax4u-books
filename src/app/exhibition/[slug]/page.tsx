@@ -33,7 +33,8 @@ export default async function ExhibitionReader({ params }: { params: Promise<{ s
             <div className={styles.titleCopy}>
               <p className={styles.eyebrow}>이야기가 머무는 작은 독서실</p>
               <h1>{book.title}</h1>
-              <p className={styles.roomDescription}>표지부터, 한 장씩 이야기 속으로.<br />상멍이는 곁에서 기다릴게요. 편히 읽고 가세요.</p>
+              <p>{book.author}</p>
+              <p className={styles.roomDescription}>{book.description}</p>
             </div>
             <div className={styles.roomScene}>
               <GobibiArt scene="library" quiet className={styles.libraryArt} />
@@ -46,7 +47,8 @@ export default async function ExhibitionReader({ params }: { params: Promise<{ s
         <Reader key={book.slug} book={book} />
 
         <div className={styles.caption}>
-          <p>공개 작품 · 앞표지 + 본문 {book.pages.length - 1}쪽</p>
+          <p>공개 작품 · {book.author} · 표지 포함 감상 이미지 {book.pages.length}장</p>
+          {book.readingPdf && <a href={book.readingPdf} target="_blank" rel="noopener noreferrer">읽기용 PDF 열기 (새 창)</a>}
           <span>글과 그림은 원본 그대로, 이야기는 나만의 속도로.</span>
         </div>
         <section className={styles.afterReading} aria-labelledby="after-reading-title">
