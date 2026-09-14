@@ -64,7 +64,7 @@ test('isolated runner allowlists environment and keeps fixtures outside deployed
 });
 
 test('production access policy and exhibition publication allowlist remain unchanged', () => {
-  assert.deepEqual(publishedBooks.map(book => book.slug), ['planet-friends']);
+  assert.deepEqual(publishedBooks.map(book => book.slug), []);
   for (const slug of ['private-book','toString','__proto__','../planet-friends','']) assert.equal(getPublishedBook(slug), undefined);
   const auth = readFileSync('src/lib/auth.ts', 'utf8');
   assert.match(auth, /if \(!isLocalDemoAllowed\(\)\) return null/);

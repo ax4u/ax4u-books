@@ -1,0 +1,13 @@
+# Keep preserved exhibition originals out of all new deployment uploads.
+public/exhibition/**
+# Explicitly retain the repository's private/build exclusions.
+node_modules
+.git
+.next
+.vercel
+.env*
+coverage
+out
+build
+*.pem
+*.tsbuildinfo

@@ -48,7 +48,7 @@ export default function ExhibitionPage() {
           <div className={styles.sectionMeta}><span>01 — OPEN BOOKS</span><span>작은 상상이 한 권의 책으로</span></div>
           <div className={styles.sectionHeading}>
             <h2 id="books-title">오픈 그림책 전시회</h2>
-            <p>지금 만날 수 있는 그림책이에요.<br />마음이 가는 표지를 눌러 보세요.</p>
+            <p>{publishedBooks.length === 0 ? <>현재 공개 중인 그림책이 없습니다.</> : <>지금 만날 수 있는 그림책이에요.<br />마음이 가는 표지를 눌러 보세요.</>}</p>
           </div>
           <div className={styles.bookGrid}>
             {publishedBooks.map(book => (
