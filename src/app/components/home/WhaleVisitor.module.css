@@ -1,0 +1,33 @@
+.visitor.visitor {
+  width: clamp(300px, 34vw, 490px);
+  right: 9%;
+  bottom: 12%;
+}
+.visitor button { transform: none; }
+.visitor button img {
+  height: auto;
+  aspect-ratio: 1375 / 555;
+  margin: 22px 0;
+  animation: foregroundSwim 12s ease-in-out infinite;
+  transform-origin: 48% 55%;
+}
+.visitor p { max-width: 280px; margin: 0 auto !important; }
+.characterWhale.characterWhale { width: 100%; transform: rotate(-2deg); }
+@keyframes foregroundSwim {
+  0%, 100% { transform: translate(0, 0) rotate(-1deg); }
+  25% { transform: translate(-14px, -10px) rotate(1deg); }
+  50% { transform: translate(-24px, -4px) rotate(2deg); }
+  75% { transform: translate(-8px, 8px) rotate(-.5deg); }
+}
+@media (max-width: 760px) {
+  .visitor.visitor { width: min(76vw, 340px); right: 8%; bottom: 13%; }
+  .visitor button img { margin: 28px 0; }
+  .scene nav a[href="/exhibition"] { top: 80%; }
+  .visitor p { max-width: 210px; }
+}
+@media (max-width: 360px) {
+  .visitor.visitor { width: 78vw; right: 7%; bottom: 15%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visitor button img { animation: none !important; }
+}
