@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import GobibiShell from "@/app/components/gobibi/GobibiShell";
 import GobibiArt from "@/app/components/gobibi/GobibiArt";
 import { getPublishedBook, publishedBooks } from "@/lib/exhibition/catalog";
-import { pageSocialMetadata } from "@/lib/site-metadata";
-import Reader from "./Reader";
+import { pageSocialMetadata, SITE_ORIGIN } from "@/lib/site-metadata";
+import Reader from "./ResponsiveReader";
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 import styles from "./reader.module.css";
 
 export const dynamicParams = false;
@@ -13,7 +15,14 @@ export function generateStaticParams() { return publishedBooks.map(({ slug }) =>
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const book = getPublishedBook((await params).slug);
   if (!book) notFound();
-  return { ...pageSocialMetadata(`/exhibition/${book.slug}`), title: `${book.title} | GOBIBI 고비비 독서실`, description: book.description };
+  const social = pageSocialMetadata(`/exhibition/${book.slug}`);
+  const title = `${book.title} | GOBIBI 고비비 독서실`;
+  const image = { url: new URL(book.cover.src, SITE_ORIGIN).href, width: book.cover.width, height: book.cover.height, type: "image/webp", alt: `${book.title} 앞표지` };
+  return {
+    ...social, title, description: book.description,
+    openGraph: { ...social.openGraph, title, description: book.description, images: [image] },
+    twitter: { ...social.twitter, title, description: book.description, images: [{ url: image.url, alt: image.alt }] },
+  };
 }
 
 export default async function ExhibitionReader({ params }: { params: Promise<{ slug: string }> }) {

@@ -77,6 +77,13 @@ test('subpages inherit the brand image without a conflicting cover override', ()
         assert.match(source, /https:\/\/gobibi\.art\/social\/exhibition-library-v1\.jpg/);
         assert.match(source, /images: \[image\]/);
         assert.match(source, /images: \[\{ url: image\.url, alt: image\.alt \}\]/);
+      } else if (file === join(root, 'src/app/exhibition/[slug]/page.tsx')) {
+        // Approved book-specific previews must be the original cover, not brand art.
+        assert.match(source, /new URL\(book\.cover\.src, SITE_ORIGIN\)\.href/);
+        assert.match(source, /width: book\.cover\.width, height: book\.cover\.height/);
+        assert.match(source, /type: "image\/webp"/);
+        assert.match(source, /images: \[image\]/);
+        assert.match(source, /images: \[\{ url: image\.url, alt: image\.alt \}\]/);
       } else assert.doesNotMatch(source, /\b(?:openGraph|twitter)\s*:/, file);
     }
   }

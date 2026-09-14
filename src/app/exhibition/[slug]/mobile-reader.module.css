@@ -1,0 +1,48 @@
+.reader {
+  position: fixed; inset: 0; z-index: 1000;
+  width: 100%; height: 100vh; height: 100dvh;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none;
+  background: #171b20; color: #f8f5ed; color-scheme: dark;
+  font-family: var(--font-nanum-gothic), sans-serif;
+}
+.reader *, .reader *::before, .reader *::after { box-sizing: border-box; }
+.reader:fullscreen { width: 100%; height: 100%; }
+.reader button, .reader select { min-height: 44px; min-width: 44px; border: 0; border-radius: 6px; padding: 4px 9px; font: inherit; font-size: 12px; color: inherit; background: transparent; cursor: pointer; }
+.reader select { max-width: 116px; background: #292e35; }
+.reader button:disabled { opacity: .35; cursor: default; }
+.reader button:focus-visible, .reader select:focus-visible { outline: 2px solid #ffe78c; outline-offset: -2px; }
+.header { flex: 0 0 44px; display: flex; align-items: center; gap: 2px; padding-inline: 2px; }
+.header span { min-width: 0; flex: 1; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; font-size: 11px; }
+.stage { flex: 1; min-height: 0; min-width: 0; display: flex; justify-content: center; align-items: center; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; }
+.book { position: relative; flex: none; perspective: 2500px; isolation: isolate; }
+.sheet, .leaf { position: absolute; top: 0; width: 50%; height: 100%; }
+.sheet { background: #fffdf7; box-shadow: 0 2px 3px #0004, 0 6px 16px #0005; }
+.left { left: 0; }
+.right { left: 50%; }
+.book[data-single="true"] .sheet, .book[data-single="true"] .leaf { width: 100%; left: 0; }
+.book img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+.spine { position: absolute; z-index: 2; left: calc(50% - 5px); top: 0; bottom: 0; width: 10px; pointer-events: none; background: linear-gradient(90deg, transparent, #30271930, #fff8, transparent); }
+.leaf { z-index: 3; transform-style: preserve-3d; will-change: transform; }
+.forward { left: 50%; transform-origin: left center; }
+.reverse { left: 0; transform-origin: right center; }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #fffdf7; box-shadow: 0 5px 20px #0007; }
+.front { transform: rotateY(0deg) translateZ(.2px); }
+.back { transform: rotateY(180deg) translateZ(.2px); }
+.face::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, #30271930, transparent 9%, transparent 90%, #30271918); }
+.controls { flex: 0 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding-inline: 4px; }
+.controls label { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+.controls output { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.reveal { position: absolute; bottom: max(4px, env(safe-area-inset-bottom)); right: max(4px, env(safe-area-inset-right)); background: #171b20df !important; border: 1px solid #ffffff50 !important; }
+.notice { position: absolute; bottom: 50px; left: 10%; right: 10%; margin: 0; padding: 12px; border-radius: 8px; background: #171b20ef; font-size: 12px; line-height: 1.7; text-align: center; }
+.error { position: absolute; inset: 44px 0 48px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; background: #171b20ee; padding: 24px; }
+.launch { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 12px 20px; }
+.launch img { width: min(100%, 390px); height: 40dvh; object-fit: contain; }
+.launch button, .launch a { min-height: 44px; padding: 12px 20px; border-radius: 24px; background: #1649dd; color: #fff9e9; font-size: 13px; }
+@media (orientation: landscape) {
+  .reader[data-controls="true"] { padding-top: env(safe-area-inset-top, 0px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .leaf { display: none; }
+  .reader *, .reader *::before, .reader *::after { animation: none !important; transition: none !important; }
+}
