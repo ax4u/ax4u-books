@@ -1,10 +1,12 @@
 import { isLocalDemoAllowed } from "@/lib/runtime-policy";
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from "@/lib/exhibition-mode";
 import { env } from "@/lib/env";
 import { processGenerationJobs } from "@/lib/jobs/generation";
 
 export const maxDuration = 300;
 
 export async function GET(request: Request) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   const auth = request.headers.get("authorization");
   if (env.cronSecret) {
     if (auth !== `Bearer ${env.cronSecret}`) {

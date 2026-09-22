@@ -7,6 +7,7 @@ import { createBook } from "@/lib/books/store";
 import { createBookCheckout } from "@/lib/polar/checkout";
 import { env, isPolarConfigured, resolveAiProvider } from "@/lib/env";
 import { isLocalDemoAllowed } from "@/lib/runtime-policy";
+import { FREE_EXHIBITION_ONLY, EXHIBITION_ONLY_MESSAGE } from "@/lib/exhibition-mode";
 
 const schema = z.object({
   topic: z.string().min(2, "주제를 조금 더 자세히 입력해 주세요.").max(200),
@@ -24,6 +25,7 @@ export async function createBookAction(
   _prev: CreateState,
   formData: FormData,
 ): Promise<CreateState> {
+  if (FREE_EXHIBITION_ONLY) return { error: EXHIBITION_ONLY_MESSAGE };
   let user;
   try {
     user = await getSessionUser();

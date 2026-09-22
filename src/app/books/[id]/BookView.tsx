@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Book } from "@/lib/books/types";
 import { hasPageImage, pageImageSrc } from "@/lib/books/images";
 import { statusLabel } from "@/app/books/status";
+import { FREE_EXHIBITION_ONLY, EXHIBITION_ONLY_MESSAGE } from "@/lib/exhibition-mode";
 import Link from "next/link";
 import ui from "@/app/studio.module.css";
 
@@ -27,10 +28,11 @@ export default function BookView({ book }: { book: Book }) {
   const lastSig = useRef(`${book.status}:${imagesReady}`);
   const lastTrigger = useRef(0);
 
-  const active = book.status === "paid" || book.status === "generating";
+  const active = !FREE_EXHIBITION_ONLY && (book.status === "paid" || book.status === "generating");
   const pages = [...book.pages].sort((a, b) => a.index - b.index);
 
   const triggerGeneration = useCallback(async () => {
+    if (FREE_EXHIBITION_ONLY) return;
     if (Date.now() - lastTrigger.current < STALL_MS) return;
     lastTrigger.current = Date.now();
     await fetch(`/api/books/${book.id}/generate`, { method: "POST" }).catch(
@@ -181,6 +183,7 @@ export default function BookView({ book }: { book: Book }) {
         <span>GOBIBI READING ROOM</span>
       </nav>
       {error && <div className={ui.errorNotice} role="alert">{error}</div>}
+      {FREE_EXHIBITION_ONLY && <p className={ui.notice}>{EXHIBITION_ONLY_MESSAGE} 기존 책은 읽기 전용으로 보존됩니다.</p>}
 
       <header className={ui.bookHeading}>
         <div className={ui.bookHeadingCopy}>
@@ -197,7 +200,7 @@ export default function BookView({ book }: { book: Book }) {
             </label>
           )}
         </div>
-        <div className={ui.editorActions}>
+        {!FREE_EXHIBITION_ONLY && <div className={ui.editorActions}>
           {editing ? (
             <>
               <button type="button" onClick={saveEdits} disabled={saving} className={ui.primarySmall}>{saving ? "저장 중" : "저장"}</button>
@@ -224,12 +227,12 @@ export default function BookView({ book }: { book: Book }) {
             >편집</button>
           )}
           <button type="button" onClick={deleteBook} className={ui.dangerQuiet}>삭제</button>
-        </div>
+        </div>}
       </header>
 
       {editing && <p className={ui.notice}>제목과 각 쪽의 글·이미지 프롬프트를 수정할 수 있어요. 글을 저장하는 것과 그림 재생성은 별도 작업입니다.</p>}
 
-      {book.status === "draft" && (
+      {!FREE_EXHIBITION_ONLY && book.status === "draft" && (
         <section className={ui.statePanel} data-state="draft" aria-labelledby="draft-title">
           <p className={ui.eyebrow}>BEFORE THE FIRST PAGE</p>
           <h2 id="draft-title">아직 결제를 기다리고 있어요.</h2>
@@ -237,7 +240,7 @@ export default function BookView({ book }: { book: Book }) {
         </section>
       )}
 
-      {(book.status === "paid" || book.status === "generating") && (
+      {!FREE_EXHIBITION_ONLY && (book.status === "paid" || book.status === "generating") && (
         <section className={ui.statePanel} data-state="generating" aria-labelledby="generating-title" role="status" aria-live="polite">
           <p className={ui.eyebrow}>IN THE STORY STUDIO</p>
           <h2 id="generating-title">한 장씩, 이야기를 만들고 있어요.</h2>
@@ -249,7 +252,7 @@ export default function BookView({ book }: { book: Book }) {
         </section>
       )}
 
-      {book.status === "failed" && (
+      {!FREE_EXHIBITION_ONLY && book.status === "failed" && (
         <section className={ui.statePanel} data-state="failed" aria-labelledby="failed-title">
           <p className={ui.eyebrow}>A PAUSE IN THE STORY</p>
           <h2 id="failed-title">제작 도중, 잠시 멈췄어요.</h2>
@@ -263,12 +266,12 @@ export default function BookView({ book }: { book: Book }) {
         <section className={ui.statePanel} data-state="completed" aria-labelledby="completed-title">
           <p className={ui.eyebrow}>YOUR STORY, NOW A BOOK</p>
           <h2 id="completed-title">한 권의 이야기가 완성됐어요.</h2>
-          <p>글과 그림을 천천히 살펴보세요. 필요한 부분을 편집하고 PDF로 간직할 수 있어요.</p>
+          <p>글과 그림을 천천히 읽고 PDF로 간직할 수 있어요.</p>
           <div className={ui.downloadActions}>
             <a href={`/api/books/${book.id}/pdf`} className={ui.primaryButton}>PDF 다운로드 <span aria-hidden="true">↓</span></a>
-            <a href={`/printing/${book.id}`} className={ui.secondaryButton}>종이책 인쇄 준비 · 견적 <span aria-hidden="true">↗</span></a>
+            {!FREE_EXHIBITION_ONLY && <a href={`/printing/${book.id}`} className={ui.secondaryButton}>종이책 인쇄 준비 · 견적 <span aria-hidden="true">↗</span></a>}
           </div>
-          <p className={ui.fieldHint}>전자책 PDF는 인쇄용 파일이 아닙니다. 종이책 판매·결제·주문·배송은 아직 제공하지 않습니다.</p>
+          <p className={ui.fieldHint}>전자책 PDF는 인쇄용 파일이 아닙니다. 종이책 판매·결제·주문·배송은 제공하지 않습니다.</p>
         </section>
       )}
 
@@ -333,14 +336,14 @@ function PageCard({
           <p className={ui.pageNumber}>
             {page.index + 1}쪽
           </p>
-          <button
+          {!FREE_EXHIBITION_ONLY && <button
             type="button"
             onClick={onRegenerate}
             disabled={regenerating}
             className={ui.secondarySmall}
           >
             {regenerating ? "요청 중" : "그림 재생성"}
-          </button>
+          </button>}
         </div>
         {editing ? (
           <div className={ui.formStack}>

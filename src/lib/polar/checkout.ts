@@ -1,4 +1,5 @@
 import { isLocalDemoAllowed } from "@/lib/runtime-policy";
+import { FREE_EXHIBITION_ONLY, EXHIBITION_ONLY_MESSAGE } from "@/lib/exhibition-mode";
 import { getPolarClient } from "./client";
 import { updateBook } from "@/lib/books/store";
 import { env } from "@/lib/env";
@@ -14,6 +15,7 @@ export async function createBookCheckout(
   book: Book,
   user: SessionUser,
 ): Promise<{ url: string }> {
+  if (FREE_EXHIBITION_ONLY) throw new Error(EXHIBITION_ONLY_MESSAGE);
   const polar = getPolarClient();
 
   if (!polar) {

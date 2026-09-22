@@ -9,6 +9,13 @@ export const metadata: Metadata = {
 
 const sections = [
   {
+    "title": "현재 운영 범위 — 비상업 무료 전시",
+    "paragraphs": [
+      "현재는 공개 승인된 그림책의 무료 열람과 브라우저 안 캐릭터 체험만 운영합니다. 유료 제작·판매·상업 협업은 운영하지 않습니다. 신규 결제, AI 제작·재생성, 인쇄 견적·주문과 결제 웹훅·생성 작업 처리는 서버에서 차단됩니다.",
+      "기존 내 책과 PDF 열람은 원래 계정의 접근 범위 안에서 유지하며 편집·삭제는 중지됩니다. 아래 AI·결제·인쇄 관련 내용은 보존된 코드 및 미확정 검토 사항이며 현재 제공 또는 판매 예고를 의미하지 않습니다. 기존 거래의 정산·취소·환불 완료를 뜻하지 않습니다."
+    ]
+  },
+  {
     "title": "문서의 성격과 적용 범위",
     "paragraphs": [
       "이 이용약관은 GOBIBI(고비비)의 서비스 범위와 이용 조건을 정하기 위한 검토용 초안입니다. 확정·시행된 약관이 아니며 시행일은 미정입니다. 이 문서의 열람만으로 약관 동의나 유료 계약이 성립하지 않습니다.",
@@ -65,6 +72,7 @@ const sections = [
   }
 ] as const;
 const sources = [
+  "src/lib/exhibition-mode.ts",
   "src/app/auth/actions.ts",
   "src/lib/auth.ts",
   "src/lib/google-auth.ts",

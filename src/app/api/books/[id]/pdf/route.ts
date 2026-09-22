@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/lib/auth";
+import { FREE_EXHIBITION_ONLY } from "@/lib/exhibition-mode";
 import {
   bufferToArrayBuffer,
   readStoredAsset,
@@ -40,6 +41,8 @@ export async function GET(
   }
 
   const pdf = await generateBookPdf(book);
+  // Preserve existing download links without persisting new files or DB changes.
+  if (FREE_EXHIBITION_ONLY) return pdfResponse(Buffer.from(pdf), filename);
   const storedPath = await storeBookPdf(book.id, pdf);
   if (storedPath) {
     await updateBook(book.id, { pdfPath: storedPath });

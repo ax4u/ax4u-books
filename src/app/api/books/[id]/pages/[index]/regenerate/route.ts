@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from "@/lib/exhibition-mode";
 import { getSessionUser } from "@/lib/auth";
 import { getBook, updateBook } from "@/lib/books/store";
 import {
@@ -12,6 +13,7 @@ export async function POST(
   _request: Request,
   ctx: { params: Promise<{ id: string; index: string }> },
 ) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   const { id, index } = await ctx.params;
   const pageIndex = Number(index);
   if (!Number.isInteger(pageIndex) || pageIndex < 0) {

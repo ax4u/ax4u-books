@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from "@/lib/exhibition-mode";
 import { getSessionUser } from "@/lib/auth";
 import { deleteBookAssets } from "@/lib/books/assets";
 import { deleteBook, getBook, updateBook } from "@/lib/books/store";
@@ -20,6 +21,7 @@ export async function PATCH(
   request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   const { id } = await ctx.params;
   const user = await getSessionUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
@@ -63,6 +65,7 @@ export async function DELETE(
   _request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   const { id } = await ctx.params;
   const user = await getSessionUser();
   if (!user) return new Response("Unauthorized", { status: 401 });

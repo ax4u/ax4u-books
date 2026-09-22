@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from "@/lib/exhibition-mode";
 import { getSessionUser } from "@/lib/auth";
 import { getBook, updateBook } from "@/lib/books/store";
 import {
@@ -19,6 +20,7 @@ export async function POST(
   _request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   const { id } = await ctx.params;
 
   const user = await getSessionUser();

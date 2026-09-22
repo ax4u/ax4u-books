@@ -36,7 +36,7 @@ export default async function ExhibitionReader({ params }: { params: Promise<{ s
           <nav className={styles.breadcrumb} aria-label="전자책 메뉴">
             <Link href="/exhibition">← 오픈 그림책 전시회</Link>
             <span>GOBIBI READING ROOM</span>
-            <Link href="/create">나의 책 만들기 <span aria-hidden="true">↗</span></Link>
+            <Link href="/#studio">무료 캐릭터 체험 <span aria-hidden="true">↗</span></Link>
           </nav>
           <div className={styles.roomWelcome}>
             <div className={styles.titleCopy}>
@@ -68,7 +68,7 @@ export default async function ExhibitionReader({ params }: { params: Promise<{ s
           </div>
           <div className={styles.readingLinks}>
             <Link href="/exhibition" className={styles.backToBooks}>전시회 목록으로 돌아가기 <span aria-hidden="true">↗</span></Link>
-            <Link href="/create" className={styles.createLink}>상멍이와 나의 책 만들기 <span aria-hidden="true">↗</span></Link>
+            <Link href="/#studio" className={styles.createLink}>상멍이와 무료 캐릭터 체험 <span aria-hidden="true">↗</span></Link>
             <span>고비비에서, 다음 이야기로 만나요.</span>
           </div>
         </section>

@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { FREE_EXHIBITION_ONLY } from '@/lib/exhibition-mode';
+import ExhibitionOnlyNotice from '@/app/components/gobibi/ExhibitionOnlyNotice';
 import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { lookupPrintBinding, type MappingDatabase, type PreparedBinding } from '@/lib/printing/mapping';
@@ -12,6 +14,7 @@ export const metadata = { title: '인쇄 준비실 | 고비비 GOBIBI' };
 
 export const dynamic = 'force-dynamic';
 export default async function PrintingPage({ params }: { params: Promise<{ bookId: string }> }) {
+  if (FREE_EXHIBITION_ONLY) return <ExhibitionOnlyNotice />;
   const { bookId } = await params;
   const db = await createSupabaseServerClient();
   if (!db) redirect('/login');

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FREE_EXHIBITION_ONLY } from "@/lib/exhibition-mode";
+import ExhibitionOnlyNotice from "@/app/components/gobibi/ExhibitionOnlyNotice";
 import { redirect } from "next/navigation";
 import GobibiShell from "@/app/components/gobibi/GobibiShell";
 import PageHero from "@/app/components/gobibi/PageHero";
@@ -10,6 +12,7 @@ import ui from "@/app/studio.module.css";
 export const metadata = { title: "이야기 작업실 | GOBIBI" };
 
 export default async function CreatePage() {
+  if (FREE_EXHIBITION_ONLY) return <ExhibitionOnlyNotice />;
   const user = await getSessionUser();
   if (!user) redirect("/login");
 

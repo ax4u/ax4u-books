@@ -1,4 +1,5 @@
 import { isLocalDemoAllowed } from "@/lib/runtime-policy";
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from "@/lib/exhibition-mode";
 import { after, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getBook, updateBook } from "@/lib/books/store";
@@ -16,6 +17,7 @@ export const maxDuration = 300;
  * real Polar credentials are present.
  */
 export async function GET(request: Request) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   if (!isLocalDemoAllowed() || isPolarConfigured) {
     return new Response("Mock pay disabled (Polar is configured)", {
       status: 404,

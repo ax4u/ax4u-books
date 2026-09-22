@@ -42,10 +42,10 @@ export function incrementMetric(whale: WhaleState, key: keyof WhaleState["metric
 }
 export type ReturnIntent = "yes" | "maybe" | "no";
 export type PurchaseIntent = "unsure" | "free-only" | "consider";
-export type Feedback = { returnIntent: ReturnIntent; reason: string; purchaseIntent: PurchaseIntent };
+export type Feedback = { returnIntent: ReturnIntent; reason: string; purchaseIntent?: PurchaseIntent };
 export function normalizeFeedback(value: unknown): Feedback | null {
-  if (!record(value) || !["yes", "maybe", "no"].includes(String(value.returnIntent)) || !["unsure", "free-only", "consider"].includes(String(value.purchaseIntent)) || typeof value.reason !== "string") return null;
-  return { returnIntent: value.returnIntent as ReturnIntent, reason: value.reason.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 300), purchaseIntent: value.purchaseIntent as PurchaseIntent };
+  if (!record(value) || !["yes", "maybe", "no"].includes(String(value.returnIntent)) || (value.purchaseIntent !== undefined && !["unsure", "free-only", "consider"].includes(String(value.purchaseIntent))) || typeof value.reason !== "string") return null;
+  return { returnIntent: value.returnIntent as ReturnIntent, reason: value.reason.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 300), ...(value.purchaseIntent !== undefined ? { purchaseIntent: value.purchaseIntent as PurchaseIntent } : {}) };
 }
 /** Explicit allowlist: no companion name, story, id, birthday, URL, or identifiers. */
 export function createFeedbackPayload(value: unknown, whale: WhaleState | null) {

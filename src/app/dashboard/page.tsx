@@ -24,7 +24,7 @@ export default async function DashboardPage() {
           description="처음 떠올린 상상부터 완성된 그림책까지. 한 권씩 쌓이는 나만의 이야기를 만나 보세요. 완성된 책도 자동으로 공개 전시되지 않아요."
           scene="library"
         >
-          <Link href="/create" prefetch={false} className={ui.primaryButton}>새 그림책 만들기 <span aria-hidden="true">↗</span></Link>
+          <Link href="/exhibition" className={ui.primaryButton}>무료 전시 둘러보기 <span aria-hidden="true">↗</span></Link>
         </PageHero>
         <div className={ui.content}>
           <div className={ui.shelfHeading}>
@@ -40,8 +40,8 @@ export default async function DashboardPage() {
               <div className={ui.emptyCopy}>
                 <p className={ui.eyebrow}>A PLACE FOR YOUR FIRST BOOK</p>
                 <h3 id="empty-shelf-title">첫 번째 책 자리를<br />비워 두었어요.</h3>
-                <p>아직 만든 그림책이 없어요.<br />상멍이와 함께 작은 생각 하나를 이야기로 펼쳐 볼까요?</p>
-                <Link href="/create" prefetch={false} className={ui.primaryButton}>첫 그림책 만들러 가기 <span aria-hidden="true">↗</span></Link>
+                <p>기존 내 책을 보존하는 읽기 전용 책장입니다.<br />지금은 무료 전시와 캐릭터 체험을 즐겨 보세요.</p>
+                <Link href="/#studio" className={ui.primaryButton}>캐릭터 체험하러 가기 <span aria-hidden="true">↗</span></Link>
                 <Link href="/exhibition" className={ui.textLink}>다른 그림책에서 영감 얻기 <span aria-hidden="true">↗</span></Link>
               </div>
             </section>

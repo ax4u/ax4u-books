@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from "@/lib/exhibition-mode";
 import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
 import { env, isPolarConfigured } from "@/lib/env";
 import { getBook, getBookByCheckoutId, updateBook } from "@/lib/books/store";
@@ -14,6 +15,7 @@ export const maxDuration = 300;
  * book as paid and kicks off generation in the background via `after()`.
  */
 export async function POST(request: Request) {
+  if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
   if (!isPolarConfigured || !env.polarWebhookSecret) {
     return new Response("Polar not configured", { status: 503 });
   }

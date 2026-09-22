@@ -108,7 +108,7 @@ export default function ExhibitionPage() {
             <p className={styles.eyebrow}>03 — YOUR NEXT STORY</p>
             <h2 id="studio-invitation-title">다음 이야기는,<br />당신에게서.</h2>
             <p>책을 덮고 떠오른 작은 생각이 있나요?<br />상멍이와 함께, 나만의 캐릭터와 첫 이야기를 시작해 보세요.</p>
-            <Link href="/create" className={styles.primaryLink}>나의 그림책 만들기 <span aria-hidden="true">↗</span></Link>
+            <Link href="/#studio" className={styles.primaryLink}>무료 캐릭터 체험하기 <span aria-hidden="true">↗</span></Link>
             <Link href="/#sangmung" className={styles.textLink}>상멍이와 먼저 인사하기 <span aria-hidden="true">↗</span></Link>
           </div>
           <div className={styles.studioScene}><GobibiArt scene="studio" quiet className={styles.studioArt} /><span>FROM A LITTLE IDEA TO A WHOLE NEW WORLD</span></div>

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from '../exhibition-mode';
 import { PrintError, SweetbookClient, uidSchema } from './client';
 import { validatePageCount } from './safety';
 
@@ -32,6 +33,7 @@ async function jsonBody(request: Request): Promise<unknown> {
 }
 export function printingHandlers(deps: PrintingDependencies) {
   const run = async (request: Request, mutate: boolean, action: (userId: string) => Promise<unknown>) => {
+    if (FREE_EXHIBITION_ONLY) return exhibitionOnlyResponse();
     try {
       const user = await deps.authenticate();
       if (!user) throw new PrintError('PRINT_AUTH_REQUIRED', 401);
