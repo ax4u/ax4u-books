@@ -850,5 +850,351 @@
         "label": "본문 64쪽"
       }
     ]
+  },
+  {
+    "slug": "buildergarlic-garlic-robot-alli",
+    "title": "빌더갈릭과 마늘 로봇 알리",
+    "description": "마음을 배우는 AI 대모험. 빌더갈릭과 마늘 로봇 알리의 이야기를 원본 그대로 만나보세요.",
+    "author": "글 · 그림 빌더갈릭",
+    "cover": {
+      "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-000.webp",
+      "width": 1140,
+      "height": 1271,
+      "label": "앞표지"
+    },
+    "fullCover": {
+      "src": "/published-exhibition/buildergarlic-garlic-robot-alli/full-cover.webp",
+      "width": 2400,
+      "height": 1271,
+      "label": "뒷표지 · 책등 · 앞표지 전체"
+    },
+    "pages": [
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-000.webp",
+        "width": 1140,
+        "height": 1271,
+        "label": "앞표지"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-001.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "속표지 (원본 1쪽)"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-002.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 2쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-003.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 3쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-004.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 4쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-005.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 5쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-006.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 6쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-007.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 7쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-008.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 8쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-009.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 9쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-010.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 10쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-011.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 11쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-012.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 12쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-013.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 13쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-014.webp",
+        "width": 1200,
+        "height": 1800,
+        "label": "본문 원본 14쪽"
+      },
+      {
+        "src": "/published-exhibition/buildergarlic-garlic-robot-alli/page-015.webp",
+        "width": 1800,
+        "height": 1200,
+        "label": "본문 원본 15쪽"
+      }
+    ]
+  },
+  {
+    "slug": "sangmung-paper-boat-promise",
+    "title": "상멍이와 종이배 약속",
+    "description": "상멍이와 종이배에 담긴 약속. 속표지부터 제작 안내까지 모든 페이지를 원본 순서대로 전시합니다.",
+    "author": "제공된 캐릭터와 이야기 자료를 바탕으로 AI를 활용해 제작",
+    "cover": {
+      "src": "/published-exhibition/sangmung-paper-boat-promise/page-000.webp",
+      "width": 1164,
+      "height": 1269,
+      "label": "앞표지"
+    },
+    "fullCover": {
+      "src": "/published-exhibition/sangmung-paper-boat-promise/full-cover.webp",
+      "width": 2400,
+      "height": 1269,
+      "label": "뒷표지 · 책등 · 앞표지 전체"
+    },
+    "pages": [
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-000.webp",
+        "width": 1164,
+        "height": 1269,
+        "label": "앞표지"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-001.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "속표지 (원본 1쪽)"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-002.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 2쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-003.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 3쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-004.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 4쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-005.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 5쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-006.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 6쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-007.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 7쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-008.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 8쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-009.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 9쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-010.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 10쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-011.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 11쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-012.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 12쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-013.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 13쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-014.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 14쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-015.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 15쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-016.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 16쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-017.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 17쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-018.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 18쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-019.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 19쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-020.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 20쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-021.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 21쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-022.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 22쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-023.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 23쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-024.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 24쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-025.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 25쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-026.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 26쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-027.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 27쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-028.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 28쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-029.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 29쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-030.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 30쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-031.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 31쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-032.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 32쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-033.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "본문 원본 33쪽"
+      },
+      {
+        "src": "/published-exhibition/sangmung-paper-boat-promise/page-034.webp",
+        "width": 1800,
+        "height": 1800,
+        "label": "제작 안내 (원본 34쪽)"
+      }
+    ]
   }
 ]

@@ -57,6 +57,7 @@ export default async function ExhibitionReader({ params }: { params: Promise<{ s
 
         <div className={styles.caption}>
           <p>공개 작품 · {book.author} · 표지 포함 감상 이미지 {book.pages.length}장</p>
+          {book.fullCover && <a href={book.fullCover.src} target="_blank" rel="noopener noreferrer">전체 표지 보기 (뒷표지 · 책등 · 앞표지, 새 창)</a>}
           {book.readingPdf && <a href={book.readingPdf} target="_blank" rel="noopener noreferrer">읽기용 PDF 열기 (새 창)</a>}
           <span>글과 그림은 원본 그대로, 이야기는 나만의 속도로.</span>
         </div>

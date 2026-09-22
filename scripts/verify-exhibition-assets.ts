@@ -10,7 +10,7 @@ async function main() {
     console.log('PREPARATION ONLY: empty catalog; actual book assets are not verified.');
     return;
   }
-  assert.equal(publishedBooks.length, 3, 'Publication requires all three final books; empty preparation catalog cannot deploy.');
+  assert.equal(publishedBooks.length, 5, 'Publication requires all five final books; empty preparation catalog cannot deploy.');
   const root = realpathSync('public');
   const expected = new Set<string>();
   const hashes: Record<string, string> = {};
@@ -22,7 +22,7 @@ async function main() {
     hashes[src] = createHash('sha256').update(data).digest('hex');
     return data;
   }
-  const pageCounts: Record<string, number> = { 'love-treatment-epilogue': 43, 'mom-dreamed-grownup': 27, 'sangmung-haeon-back-to-sea': 65 };
+  const pageCounts: Record<string, number> = { 'love-treatment-epilogue': 43, 'mom-dreamed-grownup': 27, 'sangmung-haeon-back-to-sea': 65, 'buildergarlic-garlic-robot-alli': 16, 'sangmung-paper-boat-promise': 35 };
   for (const book of publishedBooks) {
     assert.equal(book.pages.length, pageCounts[book.slug], 'approved page count');
     for (const [index, page] of book.pages.entries()) {
@@ -31,6 +31,12 @@ async function main() {
       assert.equal(meta.format, 'webp', page.src);
       assert.equal(meta.width, page.width, page.src);
       assert.equal(meta.height, page.height, page.src);
+    }
+    if (book.fullCover) {
+      const meta = await sharp(readAsset(book.fullCover.src)).metadata();
+      assert.equal(meta.format, 'webp', book.fullCover.src);
+      assert.equal(meta.width, book.fullCover.width, book.fullCover.src);
+      assert.equal(meta.height, book.fullCover.height, book.fullCover.src);
     }
     if (book.readingPdf) assert.equal(readAsset(book.readingPdf).subarray(0, 5).toString(), '%PDF-', book.readingPdf);
   }
