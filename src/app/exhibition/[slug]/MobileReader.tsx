@@ -8,6 +8,7 @@ import styles from "./mobile-reader.module.css";
 
 type Turn = { from: number; to: number; direction: 1 | -1; progress: number; settling: boolean };
 type Drag = { id: number; x: number; y: number; axis: "pending" | "horizontal" | "vertical" };
+const facingQuery = "(min-width: 1101px), (orientation: landscape)";
 // Same recto/verso contract as the existing desktop reader: cover, blank/1, 2/3, 4/5…
 function spread(page: number, count: number): [number | null, number | null] {
   if (page < 2) return [null, page];
@@ -24,7 +25,8 @@ function adjacent(page: number, direction: 1 | -1, wide: boolean, count: number)
 export default function MobileReader({ book }: { book: ExhibitionBook }) {
   const [open, setOpen] = useState(true);
   const [page, setPage] = useState(0); // Absolute original page survives every orientation change.
-  const [wide, setWide] = useState(() => window.matchMedia("(orientation: landscape)").matches);
+  const [wide, setWide] = useState(() => window.matchMedia(facingQuery).matches);
+  const [zoom, setZoom] = useState(100);
   const [controls, setControls] = useState(true);
   const [turn, setTurn] = useState<Turn | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -101,9 +103,9 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   }
 
   useEffect(() => {
-    const orientation = window.matchMedia("(orientation: landscape)");
+    const orientation = window.matchMedia(facingQuery);
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const rotate = () => { abort(); setWide(orientation.matches); };
+    const rotate = () => { abort(); setZoom(100); setWide(orientation.matches); };
     const reduce = () => { setReduceMotion(motion.matches); if (motion.matches) abort(); };
     const hidden = () => { if (document.hidden) abort(); };
     orientation.addEventListener("change", rotate);
@@ -153,7 +155,7 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
 
   function pointerDown(event: PointerEvent<HTMLDivElement>) {
     if (!event.isPrimary) { if (drag.current && !pose.current?.settling) finish(false); drag.current = null; return; }
-    if (event.button !== 0 || pose.current) return;
+    if (event.button !== 0 || pose.current || zoom !== 100) return;
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, axis: "pending" };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -185,11 +187,13 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   }
   const current = spread(page, count), destination = spread(turn?.to ?? page, count);
   const forward = turn?.direction !== -1;
-  const single = !wide || (page === 0 && !turn);
+  const single = !wide;
   const visible = single ? [page] : current.filter((p): p is number => p !== null);
-  const ratio = book.pages[page].width / book.pages[page].height * (single ? 1 : 2);
-  const width = Math.min(size.width, size.height * ratio);
+  // Stable page size: opening the cover must not suddenly halve its width.
+  const ratio = book.pages[0].width / book.pages[0].height * (single ? 1 : 2);
+  const width = Math.min(size.width - 24, (size.height - 24) * ratio) * zoom / 100;
   const progress = turn?.progress ?? 0;
+  const coverOffset = wide ? (turn?.from === 0 ? 1 - progress : turn?.to === 0 ? progress : page === 0 ? 1 : 0) : 0;
   // Reuse the existing CSS 3D two-faced paper. Single-page view tracks the leaf
   // across one page width; at 180deg its correctly oriented reverse fills the slot.
   const shift = !wide ? `${progress * (forward ? 100 : -100)}%` : "0%";
@@ -207,9 +211,9 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
       <button ref={launch} type="button" onClick={() => setOpen(true)}>전체뷰로 이어 읽기</button>
       <Link href="/exhibition">전시회 목록으로</Link>
     </div>
-    {open && createPortal(<section ref={root} data-mobile-reader="v1" data-layout={wide ? "landscape" : "portrait"} data-current-page={page} data-turning={turn ? (turn.settling ? "settling" : "dragging") : "idle"} data-controls={controls} data-fullscreen={fullscreen ? "native" : "in-page"} role="dialog" aria-modal="true" aria-label={`${book.title} 모바일 독서실`} tabIndex={-1} className={styles.reader}
+    {open && createPortal(<section ref={root} data-mobile-reader="v2" data-layout={wide ? "landscape" : "portrait"} data-current-page={page} data-turning={turn ? (turn.settling ? "settling" : "dragging") : "idle"} data-controls={controls} data-fullscreen={fullscreen ? "native" : "in-page"} role="dialog" aria-modal="true" aria-label={`${book.title} 그림책 독서실`} tabIndex={-1} className={styles.reader}
       onKeyDown={event => {
-        if (event.key === "Escape") { event.preventDefault(); close(); return; }
+        if (event.key === "Escape") { event.preventDefault(); if (zoom !== 100) setZoom(100); else close(); return; }
         if (event.key === "Tab") {
           const items = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), a[href]')].filter(el => el.getClientRects().length);
           const first = items[0], last = items.at(-1);
@@ -227,8 +231,9 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
         <button type="button" aria-label="전체화면" aria-pressed={fullscreen} onClick={() => void toggleFullscreen()}>{fullscreen ? "화면 복귀" : "전체화면"}</button>
         <button type="button" aria-label="컨트롤 접기" onClick={() => { abort(); setControls(false); }}>접기</button>
       </header>}
-      <div ref={stage} data-mobile-stage className={styles.stage} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => pointerUp(event)} onPointerCancel={event => pointerUp(event, true)} onLostPointerCapture={event => pointerUp(event, true)}>
-        <div data-mobile-book data-single={single} className={styles.book} style={{ width: width || "100%", height: width ? width / ratio : "100%" } as CSSProperties}>
+      <div ref={stage} data-mobile-stage data-zoomed={zoom > 100} className={styles.stage} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => pointerUp(event)} onPointerCancel={event => pointerUp(event, true)} onLostPointerCapture={event => pointerUp(event, true)}>
+        <div className={styles.canvas}>
+        <div data-mobile-book data-single={single} data-closed={wide && page === 0 && !turn} className={styles.book} style={{ width: width > 0 ? width : "100%", height: width > 0 ? width / ratio : "100%", transform: `translateX(${-25 * coverOffset}%)` } as CSSProperties}>
           {single ? <div data-visible-side="single" className={styles.sheet}>{image(turn && !reduceMotion ? null : page)}</div> : <>
             <div data-visible-side="left" className={`${styles.sheet} ${styles.left}`}>{image(turn && !forward ? destination[0] : current[0])}</div>
             <div data-visible-side="right" className={`${styles.sheet} ${styles.right}`}>{image(turn && forward ? destination[1] : current[1])}</div>
@@ -239,8 +244,15 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
             <div data-leaf-face="back" className={`${styles.face} ${styles.back}`}>{image(back)}</div>
           </div>}
         </div>
+        </div>
       </div>
-      {controls && <nav className={styles.controls} aria-label="모바일 페이지 이동">
+      {controls && <div className={styles.tools} aria-label="읽기 도구">
+        <button type="button" aria-label="축소" disabled={zoom === 100 || !!turn} onClick={() => setZoom(z => z - 25)}>−</button>
+        <button type="button" aria-label="배율 초기화" onClick={() => setZoom(100)}>{zoom}%</button>
+        <button type="button" aria-label="확대" disabled={zoom === 200 || !!turn} onClick={() => setZoom(z => z + 25)}>＋</button>
+        <span id="reader-help">{zoom > 100 ? "스크롤하여 그림을 살펴보세요 · 배율을 누르면 원래 크기" : "종이를 좌우로 끌어 넘겨요 · 방향키로도 읽을 수 있어요"}</span>
+      </div>}
+      {controls && <nav className={styles.controls} aria-label="페이지 이동">
         <button type="button" aria-label="이전 페이지" disabled={!!turn || adjacent(page, -1, wide, count) === page} onClick={() => navigate(-1)}>←</button>
         <label>페이지 <select aria-label="페이지 선택" disabled={!!turn} value={page} onChange={event => { abort(); setFailed(false); setPage(Number(event.target.value)); }}>{book.pages.map((p, i) => <option key={p.src} value={i}>{p.label}</option>)}</select></label>
         <output aria-live="polite" role="status">{visible.map(p => p + 1).join("–")} / {count}</output>

@@ -14,7 +14,17 @@
 .reader button:focus-visible, .reader select:focus-visible { outline: 2px solid #ffe78c; outline-offset: -2px; }
 .header { flex: 0 0 44px; display: flex; align-items: center; gap: 2px; padding-inline: 2px; }
 .header span { min-width: 0; flex: 1; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; font-size: 11px; }
-.stage { flex: 1; min-height: 0; min-width: 0; display: flex; justify-content: center; align-items: center; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; }
+.stage { flex: 1; min-height: 0; min-width: 0; overflow: hidden; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; }
+.canvas { min-width: 100%; min-height: 100%; width: max-content; display: flex; justify-content: center; align-items: center; padding: 12px; }
+.stage[data-zoomed="true"] { overflow: auto; touch-action: pan-x pan-y pinch-zoom; }
+.stage[data-zoomed="true"] .canvas { padding: 24px; }
+.book[data-closed="true"] .left, .book[data-closed="true"] .spine { visibility: hidden; }
+.tools { flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.tools span { font-size: 11px; color: #d5d7db; }
+@media (max-width: 600px), (max-height: 500px) { .tools span { display: none; } }
+.reader { background: radial-gradient(ellipse at center, #39414a, #171b20 75%); }
+.header { border-bottom: 1px solid #ffffff18; }
+.controls { border-top: 1px solid #ffffff18; }
 .book { position: relative; flex: none; perspective: 2500px; isolation: isolate; }
 .sheet, .leaf { position: absolute; top: 0; width: 50%; height: 100%; }
 .sheet { background: #fffdf7; box-shadow: 0 2px 3px #0004, 0 6px 16px #0005; }
