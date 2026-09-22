@@ -197,10 +197,12 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   // Reuse the existing CSS 3D two-faced paper. Single-page view tracks the leaf
   // across one page width; at 180deg its correctly oriented reverse fills the slot.
   const shift = !wide ? `${progress * (forward ? 100 : -100)}%` : "0%";
-  // Compensate perspective expansion so even edge-to-edge landscape turns stay
-  // inside the visible height (no clipping under collapsed controls / safe areas).
-  const turnScale = 1 - (width / (wide ? 2 : 1) / 2500 + .02) * Math.sin(Math.PI * progress);
-  const transform = `translateX(${shift}) rotateY(${(forward ? -180 : 180) * progress}deg) scale(${turnScale})`;
+  // Facing pages rotate into the book's depth, keeping the full-height binding
+  // fixed. Scaling the entire leaf used to detach its top/bottom from the spine.
+  // Portrait keeps its existing travelling single-page gesture.
+  const turnScale = wide ? 1 : 1 - (width / 2500 + .02) * Math.sin(Math.PI * progress);
+  const angle = (forward ? 1 : -1) * (wide ? 180 : -180) * progress;
+  const transform = `translateX(${shift}) rotateY(${angle}deg) scale(${turnScale})`;
   const front = wide ? (forward ? current[1] : current[0]) : page;
   const back = wide ? (forward ? destination[0] : destination[1]) : (turn?.to ?? page);
 
@@ -211,7 +213,7 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
       <button ref={launch} type="button" onClick={() => setOpen(true)}>전체뷰로 이어 읽기</button>
       <Link href="/exhibition">전시회 목록으로</Link>
     </div>
-    {open && createPortal(<section ref={root} data-mobile-reader="v2" data-layout={wide ? "landscape" : "portrait"} data-current-page={page} data-turning={turn ? (turn.settling ? "settling" : "dragging") : "idle"} data-controls={controls} data-fullscreen={fullscreen ? "native" : "in-page"} role="dialog" aria-modal="true" aria-label={`${book.title} 그림책 독서실`} tabIndex={-1} className={styles.reader}
+    {open && createPortal(<section ref={root} data-mobile-reader="v3-seam" data-layout={wide ? "landscape" : "portrait"} data-current-page={page} data-turning={turn ? (turn.settling ? "settling" : "dragging") : "idle"} data-controls={controls} data-fullscreen={fullscreen ? "native" : "in-page"} role="dialog" aria-modal="true" aria-label={`${book.title} 그림책 독서실`} tabIndex={-1} className={styles.reader}
       onKeyDown={event => {
         if (event.key === "Escape") { event.preventDefault(); if (zoom !== 100) setZoom(100); else close(); return; }
         if (event.key === "Tab") {
