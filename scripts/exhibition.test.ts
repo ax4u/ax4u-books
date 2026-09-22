@@ -7,7 +7,7 @@ import { publishedBooks, getPublishedBook } from '../src/lib/exhibition/catalog'
 import { proxy, config } from '../src/proxy';
 
 test('withdrawn works are absent from the catalog and cannot be resolved', () => {
-  assert.ok(publishedBooks.length === 0 || publishedBooks.length === 3);
+  assert.ok(publishedBooks.length === 0 || publishedBooks.length === 5);
   for (const slug of ['planet-friends', 'private-book', '__proto__', '']) {
     assert.equal(getPublishedBook(slug), undefined);
   }
