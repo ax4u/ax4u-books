@@ -201,6 +201,13 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   const curlForward = single || forward;
   const paperWidth = Math.max(0, width / (single ? 1 : 2));
   const hardCover = !!turn && (turn.from === 0 || turn.to === 0);
+  // Fit the complete opening cover plus the stationary page, not just the
+  // original single-page slot. Negative-Z perspective contracts this envelope.
+  // Only the temporary portrait cover pose changes; idle/body sizing is intact.
+  const coverExcursion = single && hardCover && !reduceMotion
+    ? paperWidth * Math.max(0, -Math.cos(Math.PI * curlProgress)) : 0;
+  const coverScale = paperWidth > 0 ? paperWidth / (paperWidth + coverExcursion) : 1;
+  const coverShift = coverExcursion * coverScale / 2;
   // A single integrated tangent makes the real front cover a rigid board;
   // interior pages retain the existing 48-facet flexible paper surface.
   const strips = turn ? paperCurl(curlProgress, hardCover ? 1 : 48) : [];
@@ -245,7 +252,7 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
       </header>}
       <div ref={stage} data-mobile-stage data-zoomed={zoom > 100} className={styles.stage} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => pointerUp(event)} onPointerCancel={event => pointerUp(event, true)} onLostPointerCapture={event => pointerUp(event, true)}>
         <div className={styles.canvas}>
-        <div data-mobile-book data-single={single} data-closed={page === 0 && !turn} className={styles.book} style={{ width: width > 0 ? width : "100%", height: width > 0 ? width / ratio : "100%", transform: `translateX(${-25 * coverOffset}%)` } as CSSProperties}>
+        <div data-mobile-book data-single={single} data-closed={page === 0 && !turn} className={styles.book} style={{ width: width > 0 ? width : "100%", height: width > 0 ? width / ratio : "100%", transform: `translateX(${-25 * coverOffset}%) translateX(${coverShift}px) scale(${coverScale})` } as CSSProperties}>
           {(single ? ["right"] : ["left", "right"]).map(side => <div key={side} data-book-board={side} aria-hidden="true" className={`${styles.board} ${side === "left" ? styles.left : styles.right}`} style={{ "--block-depth": `${side === "left" ? leftDepth : rightDepth}px` } as CSSProperties}>
             <div data-page-block={side} className={styles.pageBlock} />
           </div>)}

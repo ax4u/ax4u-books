@@ -19,6 +19,9 @@
 .stage[data-zoomed="true"] { overflow: auto; touch-action: pan-x pan-y pinch-zoom; }
 .stage[data-zoomed="true"] .canvas { padding: 24px; }
 .book[data-closed="true"] .left { visibility: hidden; }
+/* A missing source page is not an extra flat endpaper behind the moving cover. */
+.book:has([data-visible-side="left"]:empty) [data-visible-side="left"],
+.book:has([data-visible-side="left"]:empty) [data-book-board="left"] { visibility: hidden; }
 .tools { flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .tools span { font-size: 11px; color: #d5d7db; }
 @media (max-width: 600px), (max-height: 500px) { .tools span { display: none; } }
