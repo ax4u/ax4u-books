@@ -8,11 +8,11 @@ const fixture = () => approvedTitles.map((title, i) => {
   const page = { src: `/published-exhibition/${slug}/cover.webp`, width: 600, height: 800, label: '앞표지' };
   return { slug, title, description: '테스트 전용 소개', author: '테스트 전용 저자', cover: page, readingPdf: `/published-exhibition/${slug}/reading.pdf`, pages: [page, { ...page, src: `/published-exhibition/${slug}/page-1.webp`, label: '본문 1쪽' }] };
 });
-test('empty preparation state and all five approved works validate', () => {
-  assert.equal(approvedTitles.length, 5);
+test('empty preparation state and all six approved works validate', () => {
+  assert.equal(approvedTitles.length, 6);
   assert.equal(exhibitionCatalogSchema.parse([]).length, 0);
-  assert.equal(exhibitionCatalogSchema.parse(fixture()).length, 5);
-  assert.equal(exhibitionCatalogSchema.parse(fixture().map(({ readingPdf, ...book }) => { void readingPdf; return book; })).length, 5);
+  assert.equal(exhibitionCatalogSchema.parse(fixture()).length, 6);
+  assert.equal(exhibitionCatalogSchema.parse(fixture().map(({ readingPdf, ...book }) => { void readingPdf; return book; })).length, 6);
 });
 test('full cover is separate from reader pages and restricted to its own book', () => {
   const books = fixture().map(book => ({ ...book, fullCover: { ...book.cover, src: `/published-exhibition/${book.slug}/full-cover.webp`, width: 1600 } }));

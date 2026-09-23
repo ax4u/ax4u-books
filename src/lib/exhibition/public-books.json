@@ -1196,5 +1196,193 @@
         "label": "제작 안내 (원본 34쪽)"
       }
     ]
+  },
+  {
+    "slug": "bori-first-water-play",
+    "title": "보리의 첫 물놀이",
+    "description": "류미와 고양이 보리가 함께 물과 친해지는 과정을 그린 그림책입니다.",
+    "author": "김도연",
+    "cover": {
+      "src": "/published-exhibition/bori-first-water-play/page-000.webp",
+      "width": 1200,
+      "height": 1200,
+      "label": "앞표지"
+    },
+    "pages": [
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-000.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "앞표지"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-001.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 1쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-002.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 2쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-003.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 3쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-004.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 4쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-005.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 5쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-006.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 6쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-007.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 7쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-008.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 8쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-009.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 9쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-010.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 10쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-011.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 11쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-012.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 12쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-013.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 13쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-014.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 14쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-015.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 15쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-016.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 16쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-017.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 17쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-018.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 18쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-019.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 19쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-020.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 20쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-021.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 21쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-022.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 22쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-023.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 23쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-024.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 24쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-025.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 25쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-026.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 26쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-027.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "본문 27쪽"
+      },
+      {
+        "src": "/published-exhibition/bori-first-water-play/page-028.webp",
+        "width": 1200,
+        "height": 1200,
+        "label": "마지막 페이지"
+      }
+    ]
   }
 ]
