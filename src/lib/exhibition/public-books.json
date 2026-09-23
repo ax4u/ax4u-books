@@ -1390,32 +1390,32 @@
     "title": "후추&베리",
     "description": "좋아하는 놀이가 서로 다른 두 레오파드게코, 베리와 후추. 함께 놀고 한집의 이웃이 되는 과정을 통해 다름을 존중하며 함께하는 즐거움을 전하는 그림책입니다.",
     "author": "글.그림 정하윤 정윤서",
-    "coverPageIndex": 2,
+    "coverPageIndex": 0,
     "reviewNotice": "검토본 · 전체 오탈자 및 15쪽 장면 연결 검토가 남아 있습니다.",
     "cover": {
       "src": "/published-exhibition/team04-huchu-berry/page-002.webp",
       "width": 1440,
       "height": 1440,
-      "label": "3쪽 · 표지"
+      "label": "1쪽 · 표지"
     },
     "pages": [
       {
-        "src": "/published-exhibition/team04-huchu-berry/page-000.webp",
+        "src": "/published-exhibition/team04-huchu-berry/page-002.webp",
         "width": 1440,
         "height": 1440,
-        "label": "1쪽 · 패턴"
+        "label": "1쪽 · 표지"
       },
       {
-        "src": "/published-exhibition/team04-huchu-berry/page-001.webp",
+        "src": "/published-exhibition/team04-huchu-berry/page-000.webp",
         "width": 1440,
         "height": 1440,
         "label": "2쪽 · 패턴"
       },
       {
-        "src": "/published-exhibition/team04-huchu-berry/page-002.webp",
+        "src": "/published-exhibition/team04-huchu-berry/page-001.webp",
         "width": 1440,
         "height": 1440,
-        "label": "3쪽 · 표지"
+        "label": "3쪽 · 패턴"
       },
       {
         "src": "/published-exhibition/team04-huchu-berry/page-003.webp",

@@ -27,7 +27,8 @@ async function main() {
   for (const book of publishedBooks) {
     assert.equal(book.pages.length, pageCounts[book.slug], 'approved page count');
     for (const [index, page] of book.pages.entries()) {
-      assert.equal(page.src, `/published-exhibition/${book.slug}/page-${String(index).padStart(3, '0')}.webp`, 'original page order');
+      const sourceIndex = book.slug === 'team04-huchu-berry' && index < 3 ? [2, 0, 1][index] : index;
+      assert.equal(page.src, `/published-exhibition/${book.slug}/page-${String(sourceIndex).padStart(3, '0')}.webp`, 'approved reading order');
       const meta = await sharp(readAsset(page.src)).metadata();
       assert.equal(meta.format, 'webp', page.src);
       assert.equal(meta.width, page.width, page.src);

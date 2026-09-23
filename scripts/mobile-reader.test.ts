@@ -15,6 +15,12 @@ test('all approved source pages are ordered, unique and cover independently sele
   for(const b of publishedBooks) {
     assert.equal(b.cover.src,b.pages[b.coverPageIndex ?? 0].src);
     assert.equal(new Set(b.pages.map(p=>p.src)).size,b.pages.length);
-    b.pages.forEach((p,i)=>assert.ok(p.src.endsWith(`page-${String(i).padStart(3,'0')}.webp`)));
+    const order = b.slug === 'team04-huchu-berry' ? [2,0,1,...Array.from({length:31},(_,i)=>i+3)] : b.pages.map((_,i)=>i);
+    b.pages.forEach((p,i)=>assert.ok(p.src.endsWith(`page-${String(order[i]).padStart(3,'0')}.webp`)));
+    if (b.slug === 'team04-huchu-berry') {
+      assert.equal(b.coverPageIndex,0);
+      assert.deepEqual(b.cover,b.pages[0]);
+      assert.deepEqual(b.pages.slice(0,3).map(p=>p.label),['1쪽 · 표지','2쪽 · 패턴','3쪽 · 패턴']);
+    }
   }
 });
