@@ -72,13 +72,14 @@ export default function ExhibitionPage() {
                     <p className={styles.eyebrow}>SELECTED PICTURE BOOK</p>
                     <h3>{book.title}</h3>
                     <p className={styles.bookDescription}>{book.description}</p>
+                    {book.reviewNotice && <p>{book.reviewNotice}</p>}
                     <dl className={styles.bookFacts}>
                       <div><dt>지은이</dt><dd>{book.author}</dd></div>
                       <div><dt>책 속으로</dt><dd>표지 포함 감상 이미지 {book.pages.length}장</dd></div>
                       <div><dt>감상 방법</dt><dd>로그인 없이, 자유롭게</dd></div>
                     </dl>
                     <span className={styles.openBook}>그림책 펼치기 <span aria-hidden="true">↗</span></span>
-                    <small>표지부터 시작하는 온라인 그림책 전시</small>
+                    <small>{book.coverPageIndex ? "원본 첫 쪽부터 순서대로 읽는 온라인 그림책 전시" : "표지부터 시작하는 온라인 그림책 전시"}</small>
                   </div>
                 </Link>
               </article>

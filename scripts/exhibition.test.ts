@@ -4,10 +4,11 @@ import { readFileSync } from 'node:fs';
 import { NextRequest } from 'next/server';
 import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { publishedBooks, getPublishedBook } from '../src/lib/exhibition/catalog';
+import { approvedTitles } from '../src/lib/exhibition/schema';
 import { proxy, config } from '../src/proxy';
 
 test('withdrawn works are absent from the catalog and cannot be resolved', () => {
-  assert.ok(publishedBooks.length === 0 || publishedBooks.length === 6);
+  assert.ok(publishedBooks.length === 0 || publishedBooks.length === approvedTitles.length);
   for (const slug of ['planet-friends', 'private-book', '__proto__', '']) {
     assert.equal(getPublishedBook(slug), undefined);
   }

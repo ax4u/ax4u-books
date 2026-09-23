@@ -44,6 +44,7 @@ export default async function ExhibitionReader({ params }: { params: Promise<{ s
               <h1>{book.title}</h1>
               <p>{book.author}</p>
               <p className={styles.roomDescription}>{book.description}</p>
+              {book.reviewNotice && <p>{book.reviewNotice}</p>}
             </div>
             <div className={styles.roomScene}>
               <GobibiArt scene="library" quiet className={styles.libraryArt} />

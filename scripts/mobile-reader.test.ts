@@ -10,10 +10,10 @@ test('one browser-only flipbook owns page state across desktop and mobile', () =
   assert.ok(!entry.includes('matchMedia'));
   assert.ok(readFileSync('src/app/exhibition/[slug]/MobileReader.tsx','utf8').includes('data-mobile-reader'));
 });
-test('all approved source pages are ordered, unique and cover first', () => {
-  assert.deepEqual(publishedBooks.map(b=>b.pages.length),[43,27,65,16,35,29]);
+test('all approved source pages are ordered, unique and cover independently selected', () => {
+  assert.deepEqual(publishedBooks.map(b=>b.pages.length),[43,27,65,16,35,29,34]);
   for(const b of publishedBooks) {
-    assert.equal(b.cover.src,b.pages[0].src);
+    assert.equal(b.cover.src,b.pages[b.coverPageIndex ?? 0].src);
     assert.equal(new Set(b.pages.map(p=>p.src)).size,b.pages.length);
     b.pages.forEach((p,i)=>assert.ok(p.src.endsWith(`page-${String(i).padStart(3,'0')}.webp`)));
   }

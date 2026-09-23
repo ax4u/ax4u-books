@@ -4,13 +4,14 @@ import { resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { publishedBooks } from '../src/lib/exhibition/catalog';
+import { approvedTitles } from '../src/lib/exhibition/schema';
 
 async function main() {
   if (!publishedBooks.length && process.argv.includes('--allow-empty')) {
     console.log('PREPARATION ONLY: empty catalog; actual book assets are not verified.');
     return;
   }
-  assert.equal(publishedBooks.length, 6, 'Publication requires all six final books; empty preparation catalog cannot deploy.');
+  assert.equal(publishedBooks.length, approvedTitles.length, 'Publication requires all approved books; empty preparation catalog cannot deploy.');
   const root = realpathSync('public');
   const expected = new Set<string>();
   const hashes: Record<string, string> = {};
@@ -22,7 +23,7 @@ async function main() {
     hashes[src] = createHash('sha256').update(data).digest('hex');
     return data;
   }
-  const pageCounts: Record<string, number> = { 'love-treatment-epilogue': 43, 'mom-dreamed-grownup': 27, 'sangmung-haeon-back-to-sea': 65, 'buildergarlic-garlic-robot-alli': 16, 'sangmung-paper-boat-promise': 35, 'bori-first-water-play': 29 };
+  const pageCounts: Record<string, number> = { 'love-treatment-epilogue': 43, 'mom-dreamed-grownup': 27, 'sangmung-haeon-back-to-sea': 65, 'buildergarlic-garlic-robot-alli': 16, 'sangmung-paper-boat-promise': 35, 'bori-first-water-play': 29, 'team04-huchu-berry': 34 };
   for (const book of publishedBooks) {
     assert.equal(book.pages.length, pageCounts[book.slug], 'approved page count');
     for (const [index, page] of book.pages.entries()) {

@@ -1384,5 +1384,225 @@
         "label": "마지막 페이지"
       }
     ]
+  },
+  {
+    "slug": "team04-huchu-berry",
+    "title": "후추&베리",
+    "description": "좋아하는 놀이가 서로 다른 두 레오파드게코, 베리와 후추. 함께 놀고 한집의 이웃이 되는 과정을 통해 다름을 존중하며 함께하는 즐거움을 전하는 그림책입니다.",
+    "author": "글.그림 정하윤 정윤서",
+    "coverPageIndex": 2,
+    "reviewNotice": "검토본 · 전체 오탈자 및 15쪽 장면 연결 검토가 남아 있습니다.",
+    "cover": {
+      "src": "/published-exhibition/team04-huchu-berry/page-002.webp",
+      "width": 1440,
+      "height": 1440,
+      "label": "3쪽 · 표지"
+    },
+    "pages": [
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-000.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "1쪽 · 패턴"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-001.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "2쪽 · 패턴"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-002.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "3쪽 · 표지"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-003.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "4쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-004.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "5쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-005.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "6쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-006.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "7쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-007.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "8쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-008.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "9쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-009.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "10쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-010.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "11쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-011.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "12쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-012.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "13쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-013.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "14쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-014.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "15쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-015.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "16쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-016.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "17쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-017.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "18쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-018.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "19쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-019.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "20쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-020.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "21쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-021.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "22쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-022.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "23쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-023.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "24쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-024.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "25쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-025.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "26쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-026.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "27쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-027.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "28쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-028.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "29쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-029.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "30쪽 · 이야기"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-030.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "31쪽 · 작가의 말 공간"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-031.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "32쪽 · 판권"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-032.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "33쪽 · 패턴"
+      },
+      {
+        "src": "/published-exhibition/team04-huchu-berry/page-033.webp",
+        "width": 1440,
+        "height": 1440,
+        "label": "34쪽 · 패턴"
+      }
+    ]
   }
 ]
