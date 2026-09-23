@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import styles from './celebration.module.css';
 
-type Artwork = { src: string; width: number; height: number; title: string; author: string; slug: string };
+type Artwork = { src: string; width: number; height: number; title: string; author: string };
 type Music = { src: string; title: string; credit: string; source: string; license: string };
 
 export default function Celebration({ names, artwork, music }: { names: string[]; artwork: Artwork[]; music: Music }) {
@@ -86,18 +86,14 @@ export default function Celebration({ names, artwork, music }: { names: string[]
   return (
     <main ref={screen} className={`${styles.screen} ${hidden ? styles.clean : ''}`}>
       <div className={styles.stage} aria-label="그림책 출판 축하 전시" data-scene={scene} data-started={started}>
-        <div className={styles.collage} aria-hidden="true">
-          {Array.from({ length: 8 }, (_, tile) => (
-            <div key={tile} className={styles.frame}>
-              {[0, 1].map(layer => {
-                const art = artwork[(tile + layer * 4) % artwork.length];
-                return art ? <Image key={layer} src={art.src} alt="" width={art.width} height={art.height}
-                  className={`${styles.art} ${scene === layer ? styles.active : ''}`} unoptimized loading="eager" /> : null;
-              })}
-            </div>
+        <div className={styles.collage}>
+          {artwork.map(art => (
+            <figure key={art.src} className={styles.frame}>
+              <Image src={art.src} alt={`${art.title} · ${art.author}`} width={art.width} height={art.height}
+                className={styles.art} unoptimized loading="eager" />
+            </figure>
           ))}
         </div>
-        <div className={styles.wash} />
         <div className={styles.edition}>GOBIBI <span>작은 작가들의 빛나는 첫걸음</span></div>
         <div className={styles.message}>
           <p className={styles.kicker}><span /> A NEW CHAPTER BEGINS <span /></p>
@@ -107,7 +103,7 @@ export default function Celebration({ names, artwork, music }: { names: string[]
           <p className={styles.dedication}>작은 상상이 한 권의 책으로,<br />여러분의 이야기가 세상에 피어났습니다.</p>
         </div>
         <div className={styles.signature}>이야기의 시작을 함께 축하하며 <span>GOBIBI</span></div>
-        <p className={styles.artCredit}>배경 삽화 · 김도연 「보리의 첫 물놀이」</p>
+        <p className={styles.artCredit}>네 권의 그림책, 네 빛깔의 상상</p>
       </div>
 
       <audio ref={audio} src={music.src} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
@@ -128,7 +124,7 @@ export default function Celebration({ names, artwork, music }: { names: string[]
           <details><summary>음악·삽화 출처</summary>
             <p>{music.title} · <a href="https://musopen.org/" target="_blank" rel="noreferrer">Musopen</a><br />
               <a href={music.source} target="_blank" rel="noreferrer">{music.license}</a> · 웹 재생용 MP3 변환</p>
-            <p>공개 중인 김도연 작가의 「보리의 첫 물놀이」 삽화를 재사용했습니다. 다른 축하 대상의 미공개·철회 작품은 포함하지 않았습니다.</p>
+            <p>작가들이 직접 제공하고 이 축하 화면에 공개를 승인한 네 작품의 이미지를 원본 비율 그대로 담았습니다.</p>
           </details>
         </div>
       </div>}
