@@ -192,7 +192,7 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   const visible = single ? [page] : current.filter((p): p is number => p !== null);
   // Stable page size: opening the cover must not suddenly halve its width.
   const ratio = book.pages[0].width / book.pages[0].height * (single ? 1 : 2);
-  const width = Math.min(size.width - 24, (size.height - 24) * ratio) * zoom / 100;
+  const width = Math.min(size.width - 48, (size.height - 48) * ratio) * zoom / 100;
   const progress = turn?.progress ?? 0;
   const coverOffset = wide ? (turn?.from === 0 ? 1 - progress : turn?.to === 0 ? progress : page === 0 ? 1 : 0) : 0;
   // In portrait, the next page is below the outgoing sheet. Going back unfolds
@@ -200,10 +200,18 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   const curlProgress = single && !forward ? 1 - progress : progress;
   const curlForward = single || forward;
   const paperWidth = Math.max(0, width / (single ? 1 : 2));
-  const strips = turn ? paperCurl(curlProgress) : [];
+  const hardCover = !!turn && (turn.from === 0 || turn.to === 0);
+  // A single integrated tangent makes the real front cover a rigid board;
+  // interior pages retain the existing 48-facet flexible paper surface.
+  const strips = turn ? paperCurl(curlProgress, hardCover ? 1 : 48) : [];
   const front = wide ? (forward ? current[1] : current[0]) : (forward ? page : turn?.to ?? page);
   const back = wide ? (forward ? destination[0] : destination[1]) : (forward ? turn?.to ?? page : page);
   const lift = Math.sin(Math.PI * curlProgress);
+  // Decorative binding only: never invent, crop, or renumber source artwork.
+  const readFraction = ((turn ? turn.from + (turn.to - turn.from) * progress : page)) / Math.max(1, count - 1);
+  const blockDepth = Math.min(10, 3 + count * .1);
+  const leftDepth = 1 + blockDepth * readFraction;
+  const rightDepth = 1 + blockDepth * (1 - readFraction);
   // One CSS pixel of texture bleed seals compositor antialiasing cracks between
   // adjacent facets. This does not alter the integrated paper/spine geometry.
   const stripBleed = 1;
@@ -237,19 +245,22 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
       </header>}
       <div ref={stage} data-mobile-stage data-zoomed={zoom > 100} className={styles.stage} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => pointerUp(event)} onPointerCancel={event => pointerUp(event, true)} onLostPointerCapture={event => pointerUp(event, true)}>
         <div className={styles.canvas}>
-        <div data-mobile-book data-single={single} data-closed={wide && page === 0 && !turn} className={styles.book} style={{ width: width > 0 ? width : "100%", height: width > 0 ? width / ratio : "100%", transform: `translateX(${-25 * coverOffset}%)` } as CSSProperties}>
+        <div data-mobile-book data-single={single} data-closed={page === 0 && !turn} className={styles.book} style={{ width: width > 0 ? width : "100%", height: width > 0 ? width / ratio : "100%", transform: `translateX(${-25 * coverOffset}%)` } as CSSProperties}>
+          {(single ? ["right"] : ["left", "right"]).map(side => <div key={side} data-book-board={side} aria-hidden="true" className={`${styles.board} ${side === "left" ? styles.left : styles.right}`} style={{ "--block-depth": `${side === "left" ? leftDepth : rightDepth}px` } as CSSProperties}>
+            <div data-page-block={side} className={styles.pageBlock} />
+          </div>)}
           {single ? <div data-visible-side="single" className={styles.sheet}>{image(turn && !reduceMotion && forward ? turn.to : page)}</div> : <>
             <div data-visible-side="left" className={`${styles.sheet} ${styles.left}`}>{image(turn && !forward ? destination[0] : current[0])}</div>
             <div data-visible-side="right" className={`${styles.sheet} ${styles.right}`}>{image(turn && forward ? destination[1] : current[1])}</div>
-            <div className={styles.spine} aria-hidden="true" />
           </>}
+          <div data-book-binding className={styles.spine} aria-hidden="true" />
           {turn && !reduceMotion && <>
             <div data-curl-shadow aria-hidden="true" className={styles.castShadow} style={{
               left: single ? 0 : "50%", width: paperWidth * (.08 + .48 * lift),
               opacity: .3 * lift, transform: `translateX(${curlForward ? 0 : -100}%)`,
               background: `linear-gradient(${curlForward ? 90 : 270}deg, #100b08, transparent)`,
             }} />
-            <div data-mobile-leaf data-progress={progress} aria-hidden="true" className={`${styles.leaf} ${curlForward ? styles.forward : styles.reverse}`}>
+            <div data-mobile-leaf data-material={hardCover ? "board" : "paper"} data-progress={progress} aria-hidden="true" className={`${styles.leaf} ${curlForward ? styles.forward : styles.reverse}`}>
               {strips.map((s, i) => {
                 const x = curlForward ? s.x : -s.nextX;
                 const z = curlForward ? s.z : s.nextZ;

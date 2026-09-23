@@ -18,7 +18,7 @@
 .canvas { min-width: 100%; min-height: 100%; width: max-content; display: flex; justify-content: center; align-items: center; padding: 12px; }
 .stage[data-zoomed="true"] { overflow: auto; touch-action: pan-x pan-y pinch-zoom; }
 .stage[data-zoomed="true"] .canvas { padding: 24px; }
-.book[data-closed="true"] .left, .book[data-closed="true"] .spine { visibility: hidden; }
+.book[data-closed="true"] .left { visibility: hidden; }
 .tools { flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .tools span { font-size: 11px; color: #d5d7db; }
 @media (max-width: 600px), (max-height: 500px) { .tools span { display: none; } }
@@ -27,7 +27,13 @@
 .controls { border-top: 1px solid #ffffff18; }
 .book { position: relative; flex: none; perspective: 2500px; isolation: isolate; }
 .sheet, .leaf { position: absolute; top: 0; width: 50%; height: 100%; }
-.sheet { background: #fffdf7; box-shadow: 0 2px 3px #0004, 0 6px 16px #0005; }
+.sheet { background: #fffdf7; z-index: 1; }
+.board { position: absolute; top: -2px; width: 50%; height: calc(100% + var(--block-depth) + 5px); background: #51483e; border: 1px solid #756b5d; border-radius: 3px 5px 5px 3px; box-shadow: 0 2px 2px #100b0870, 0 12px 18px #0005, 0 22px 45px #0003; pointer-events: none; }
+.board.left { border-radius: 5px 3px 3px 5px; }
+.pageBlock { position: absolute; top: calc(100% - var(--block-depth) - 3px); left: 1px; right: 1px; height: var(--block-depth); background: repeating-linear-gradient(to bottom, #d3cabb 0px, #f6f0e2 1px, #e9dfcc 2px); border-radius: 0 0 3px 3px; box-shadow: inset 0 -1px 1px #6e5e4940; }
+.board::after { content: ""; position: absolute; top: 2px; bottom: 3px; width: 3px; right: -2px; background: linear-gradient(90deg, #b8ad99, #f1e9d8, #998975); border-radius: 0 2px 3px 0; }
+.board.left::after { left: -2px; right: auto; transform: scaleX(-1); }
+.book[data-single="true"] .board { width: 100%; left: 0; }
 .left { left: 0; }
 .right { left: 50%; }
 /* Preserve every source pixel; any aspect-ratio slack belongs at the fore-edge,
@@ -37,7 +43,9 @@
 .book[data-single="true"] img { object-position: center; }
 .book[data-single="true"] .sheet, .book[data-single="true"] .leaf { width: 100%; left: 0; }
 .book img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
-.spine { position: absolute; z-index: 2; left: calc(50% - 2px); top: 0; bottom: 0; width: 4px; pointer-events: none; background: linear-gradient(90deg, transparent, #30271918, transparent); }
+.spine { position: absolute; z-index: 2; left: calc(50% - 12px); top: 0; bottom: 0; width: 24px; pointer-events: none; background: linear-gradient(90deg, transparent, #30271909 25%, #241a1238 49%, #110c0845 50%, #fff8e51a 53%, #3027190c 70%, transparent); }
+.book[data-closed="true"] .spine { left: 50%; width: 13px; background: linear-gradient(90deg, #17100b50, #fff8e526 28%, #241a1220 48%, transparent); }
+.book[data-single="true"] .spine { left: 0; width: 12px; background: linear-gradient(90deg, #241a1229, #fff8e512 35%, transparent); }
 .leaf { z-index: 3; transform-style: preserve-3d; pointer-events: none; }
 .forward, .reverse { left: 50%; }
 .strip { position: absolute; left: 0; top: 0; height: 100%; transform-origin: left center; transform-style: preserve-3d; }
@@ -45,6 +53,9 @@
 .face img { position: absolute; top: 0; max-width: none; }
 .front { transform: rotateY(0deg); }
 .back { transform: rotateY(180deg); }
+.leaf[data-material="board"] .front { transform: translateZ(1px); }
+.leaf[data-material="board"] .back { transform: rotateY(180deg) translateZ(1px); }
+.leaf[data-material="board"] .face { box-shadow: 0 0 0 1px #77664e, 0 2px 3px #24170c55; }
 .face::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: #23180f; opacity: var(--curl-shade, 0); }
 .castShadow { position: absolute; top: 0; height: 100%; z-index: 2; pointer-events: none; }
 .controls { flex: 0 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding-inline: 4px; }

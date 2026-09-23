@@ -1604,5 +1604,199 @@
         "label": "34쪽 · 패턴"
       }
     ]
+  },
+  {
+    "slug": "susu-popcorn-shop",
+    "title": "수수의 팝콘 가게",
+    "description": "수수와 친구들이 생각과 재주를 모아 함께 만드는 팝콘 가게 이야기.",
+    "author": "창작팀",
+    "cover": {
+      "src": "/published-exhibition/susu-popcorn-shop/page-000.webp",
+      "width": 1400,
+      "height": 1400,
+      "label": "앞표지"
+    },
+    "pages": [
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-000.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "앞표지"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-001.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 2쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-002.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 3쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-003.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 4쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-004.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 5쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-005.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 6쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-006.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 7쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-007.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 8쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-008.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 9쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-009.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 10쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-010.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 11쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-011.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 12쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-012.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 13쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-013.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 14쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-014.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 15쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-015.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 16쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-016.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 17쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-017.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 18쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-018.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 19쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-019.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 20쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-020.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 21쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-021.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 22쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-022.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 23쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-023.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 24쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-024.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 25쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-025.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 26쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-026.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 27쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-027.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 28쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-028.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 29쪽"
+      },
+      {
+        "src": "/published-exhibition/susu-popcorn-shop/page-029.webp",
+        "width": 1400,
+        "height": 1400,
+        "label": "원본 30쪽"
+      }
+    ]
   }
 ]
