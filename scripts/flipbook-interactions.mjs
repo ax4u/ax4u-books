@@ -15,7 +15,20 @@ async function ready(){await page.evaluate(async()=>{await Promise.all([...docum
 async function shot(name){await ready();await page.screenshot({path:`${out}/${name}.png`});}
 async function select(p){await idle();await page.getByLabel('페이지 선택',{exact:true}).selectOption(String(p));await idle();await ready();}
 async function current(p){assert.equal(await root.getAttribute('data-current-page'),String(p));}
-async function drag(dx,dy=0,release=true){const b=await page.locator('[data-mobile-book]').boundingBox();const x=b.x+b.width*.75,y=b.y+b.height*.55;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y+dy,{steps:8});if(release)await page.mouse.up();}
+async function drag(dx,dy=0,release=true){const b=await page.locator('[data-mobile-book]').boundingBox();const x=b.x+b.width*.75,y=b.y+b.height*.55;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y+dy,{steps:8});if(release)await page.mouse.up();return {x,y};}
+// Read the rendered paper, not its untransformed grouping container. This also
+// keeps the interaction contract usable against the previous rigid renderer.
+async function paperPose(previous=null){
+ const handle=await page.waitForFunction(previous=>{
+  const leaf=document.querySelector('[data-mobile-leaf]');if(!leaf)return null;
+  const strips=[...leaf.querySelectorAll('[data-curl-strip]')];
+  const surfaces=strips.length?strips:[leaf];
+  const transforms=surfaces.map(e=>getComputedStyle(e).transform);
+  if(!transforms.some(t=>t.startsWith('matrix3d(')) || JSON.stringify(transforms)===previous)return null;
+  return {signature:JSON.stringify(transforms),bounds:surfaces.map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};})};
+ },previous);
+ try{return await handle.jsonValue();}finally{await handle.dispose();}
+}
 try {
  await page.goto(base+'/exhibition/'+books[0].slug);await root.waitFor();await ready();
  assert.equal(await page.getByLabel('확대',{exact:true}).count(),1,'immersive reader must expose zoom');
@@ -28,15 +41,24 @@ try {
  await page.getByLabel('다음 페이지',{exact:true}).click();await idle();await current(1);
  await page.getByLabel('다음 페이지',{exact:true}).click();await idle();await current(2);
  await shot('desktop-spread');
- await drag(-260,0,false);
+ const start=await drag(-140,0,false);
  assert.equal(await root.getAttribute('data-turning'),'dragging');
  const leaf=page.locator('[data-mobile-leaf]');assert.equal(await leaf.count(),1);
- assert.match(await leaf.evaluate(e=>getComputedStyle(e).transform),/^matrix3d/);
- assert.equal(await leaf.locator('[data-leaf-face="front"] img').getAttribute('data-source-page'),'3');
- assert.equal(await leaf.locator('[data-leaf-face="back"] img').getAttribute('data-source-page'),'4');
+ const firstPose=await paperPose();
+ await current(2); // A held drag must not commit the destination page.
+ await page.mouse.move(start.x-260,start.y,{steps:8});
+ const midpoint=await paperPose(firstPose.signature);
+ assert.equal(await root.getAttribute('data-turning'),'dragging');await current(2);
+ for(const [side,source] of [['front','3'],['back','4']]){
+  const sources=await leaf.locator(`[data-leaf-face="${side}"] img`).evaluateAll(imgs=>imgs.map(img=>img.dataset.sourcePage));
+  assert.deepEqual([...new Set(sources)],[source],`${side} paper fragments must all show the expected original page`);
+ }
  for(const face of await leaf.locator('[data-leaf-face]').all())assert.equal(await face.evaluate(e=>getComputedStyle(e).backfaceVisibility),'hidden');
- const stage=await page.locator('[data-mobile-stage]').boundingBox(), bb=await leaf.boundingBox();
- assert.ok(bb.y>=stage.y-1 && bb.y+bb.height<=stage.y+stage.height+1,'mid-turn paper must remain inside reading stage');
+ const stage=await page.locator('[data-mobile-stage]').boundingBox();
+ for(const pose of [firstPose,midpoint])for(const bb of pose.bounds){
+  assert.ok(bb.width>0 && bb.height>0,'moving paper must have visible geometry');
+  assert.ok(bb.y>=stage.y-1 && bb.y+bb.height<=stage.y+stage.height+1,'every moving paper surface must remain inside reading stage');
+ }
  await shot('desktop-drag-midpoint');await page.mouse.up();await idle();await current(4);
  await page.getByLabel('이전 페이지',{exact:true}).click();await idle();await current(2);
  await drag(-20);await idle();await current(2);

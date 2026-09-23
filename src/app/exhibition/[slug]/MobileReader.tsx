@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import type { ExhibitionBook } from "@/lib/exhibition/catalog";
 import styles from "./mobile-reader.module.css";
+import { paperCurl } from "./paper-curl";
 
 type Turn = { from: number; to: number; direction: 1 | -1; progress: number; settling: boolean };
 type Drag = { id: number; x: number; y: number; axis: "pending" | "horizontal" | "vertical" };
@@ -179,11 +180,11 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
     if (pose.current) settle(!cancelled && pose.current.progress > .16);
     else if (!cancelled && start.axis === "pending" && !controls) { setControls(true); setNotice(""); }
   }
-  function image(p: number | null) {
+  function image(p: number | null, style?: CSSProperties) {
     if (p === null) return null;
     const item = book.pages[p];
     // eslint-disable-next-line @next/next/no-img-element
-    return <img key={`${p}-${retry}`} data-source-page={p} src={item.src} alt={`${book.title} — ${item.label}`} width={item.width} height={item.height} draggable={false} decoding="async" onError={() => setFailed(true)} />;
+    return <img key={`${p}-${retry}`} data-source-page={p} src={item.src} alt={`${book.title} — ${item.label}`} width={item.width} height={item.height} style={style} draggable={false} decoding="async" onError={() => setFailed(true)} />;
   }
   const current = spread(page, count), destination = spread(turn?.to ?? page, count);
   const forward = turn?.direction !== -1;
@@ -194,17 +195,18 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
   const width = Math.min(size.width - 24, (size.height - 24) * ratio) * zoom / 100;
   const progress = turn?.progress ?? 0;
   const coverOffset = wide ? (turn?.from === 0 ? 1 - progress : turn?.to === 0 ? progress : page === 0 ? 1 : 0) : 0;
-  // Reuse the existing CSS 3D two-faced paper. Single-page view tracks the leaf
-  // across one page width; at 180deg its correctly oriented reverse fills the slot.
-  const shift = !wide ? `${progress * (forward ? 100 : -100)}%` : "0%";
-  // Facing pages rotate into the book's depth, keeping the full-height binding
-  // fixed. Scaling the entire leaf used to detach its top/bottom from the spine.
-  // Portrait keeps its existing travelling single-page gesture.
-  const turnScale = wide ? 1 : 1 - (width / 2500 + .02) * Math.sin(Math.PI * progress);
-  const angle = (forward ? 1 : -1) * (wide ? 180 : -180) * progress;
-  const transform = `translateX(${shift}) rotateY(${angle}deg) scale(${turnScale})`;
-  const front = wide ? (forward ? current[1] : current[0]) : page;
-  const back = wide ? (forward ? destination[0] : destination[1]) : (turn?.to ?? page);
+  // In portrait, the next page is below the outgoing sheet. Going back unfolds
+  // the previous sheet from the SAME left binding, not a spinning/sliding card.
+  const curlProgress = single && !forward ? 1 - progress : progress;
+  const curlForward = single || forward;
+  const paperWidth = Math.max(0, width / (single ? 1 : 2));
+  const strips = turn ? paperCurl(curlProgress) : [];
+  const front = wide ? (forward ? current[1] : current[0]) : (forward ? page : turn?.to ?? page);
+  const back = wide ? (forward ? destination[0] : destination[1]) : (forward ? turn?.to ?? page : page);
+  const lift = Math.sin(Math.PI * curlProgress);
+  // One CSS pixel of texture bleed seals compositor antialiasing cracks between
+  // adjacent facets. This does not alter the integrated paper/spine geometry.
+  const stripBleed = 1;
 
   return <>
     <div className={styles.launch}>
@@ -213,7 +215,7 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
       <button ref={launch} type="button" onClick={() => setOpen(true)}>전체뷰로 이어 읽기</button>
       <Link href="/exhibition">전시회 목록으로</Link>
     </div>
-    {open && createPortal(<section ref={root} data-mobile-reader="v3-seam" data-layout={wide ? "landscape" : "portrait"} data-current-page={page} data-turning={turn ? (turn.settling ? "settling" : "dragging") : "idle"} data-controls={controls} data-fullscreen={fullscreen ? "native" : "in-page"} role="dialog" aria-modal="true" aria-label={`${book.title} 그림책 독서실`} tabIndex={-1} className={styles.reader}
+    {open && createPortal(<section ref={root} data-mobile-reader="v4-curl" data-layout={wide ? "landscape" : "portrait"} data-current-page={page} data-turning={turn ? (turn.settling ? "settling" : "dragging") : "idle"} data-controls={controls} data-fullscreen={fullscreen ? "native" : "in-page"} role="dialog" aria-modal="true" aria-label={`${book.title} 그림책 독서실`} tabIndex={-1} className={styles.reader}
       onKeyDown={event => {
         if (event.key === "Escape") { event.preventDefault(); if (zoom !== 100) setZoom(100); else close(); return; }
         if (event.key === "Tab") {
@@ -236,15 +238,36 @@ export default function MobileReader({ book }: { book: ExhibitionBook }) {
       <div ref={stage} data-mobile-stage data-zoomed={zoom > 100} className={styles.stage} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => pointerUp(event)} onPointerCancel={event => pointerUp(event, true)} onLostPointerCapture={event => pointerUp(event, true)}>
         <div className={styles.canvas}>
         <div data-mobile-book data-single={single} data-closed={wide && page === 0 && !turn} className={styles.book} style={{ width: width > 0 ? width : "100%", height: width > 0 ? width / ratio : "100%", transform: `translateX(${-25 * coverOffset}%)` } as CSSProperties}>
-          {single ? <div data-visible-side="single" className={styles.sheet}>{image(turn && !reduceMotion ? null : page)}</div> : <>
+          {single ? <div data-visible-side="single" className={styles.sheet}>{image(turn && !reduceMotion && forward ? turn.to : page)}</div> : <>
             <div data-visible-side="left" className={`${styles.sheet} ${styles.left}`}>{image(turn && !forward ? destination[0] : current[0])}</div>
             <div data-visible-side="right" className={`${styles.sheet} ${styles.right}`}>{image(turn && forward ? destination[1] : current[1])}</div>
             <div className={styles.spine} aria-hidden="true" />
           </>}
-          {turn && !reduceMotion && <div data-mobile-leaf aria-hidden="true" className={`${styles.leaf} ${forward ? styles.forward : styles.reverse}`} style={{ transform }}>
-            <div data-leaf-face="front" className={`${styles.face} ${styles.front}`}>{image(front)}</div>
-            <div data-leaf-face="back" className={`${styles.face} ${styles.back}`}>{image(back)}</div>
-          </div>}
+          {turn && !reduceMotion && <>
+            <div data-curl-shadow aria-hidden="true" className={styles.castShadow} style={{
+              left: single ? 0 : "50%", width: paperWidth * (.08 + .48 * lift),
+              opacity: .3 * lift, transform: `translateX(${curlForward ? 0 : -100}%)`,
+              background: `linear-gradient(${curlForward ? 90 : 270}deg, #100b08, transparent)`,
+            }} />
+            <div data-mobile-leaf data-progress={progress} aria-hidden="true" className={`${styles.leaf} ${curlForward ? styles.forward : styles.reverse}`}>
+              {strips.map((s, i) => {
+                const x = curlForward ? s.x : -s.nextX;
+                const z = curlForward ? s.z : s.nextZ;
+                const angle = s.angle * (curlForward ? 1 : -1);
+                const frontOffset = (curlForward ? s.u : 1 - s.u - s.length) * paperWidth;
+                const backOffset = (curlForward ? 1 - s.u - s.length : s.u) * paperWidth;
+                const shade = lift * (.06 + .22 * Math.abs(Math.sin(s.angle)));
+                return <div key={i} data-curl-strip data-x={s.x} data-z={s.z} data-angle={angle} className={styles.strip} style={{
+                  width: paperWidth * s.length + stripBleed,
+                  transform: `translate3d(${x * paperWidth}px, 0, ${z * paperWidth}px) rotateY(${angle}rad)`,
+                  "--curl-shade": shade,
+                } as CSSProperties}>
+                  <div data-leaf-face="front" className={`${styles.face} ${styles.front}`}>{image(front, { width: paperWidth, left: -frontOffset })}</div>
+                  <div data-leaf-face="back" className={`${styles.face} ${styles.back}`}>{image(back, { width: paperWidth, left: -backOffset - stripBleed })}</div>
+                </div>;
+              })}
+            </div>
+          </>}
         </div>
         </div>
       </div>

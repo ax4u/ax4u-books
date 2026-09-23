@@ -33,10 +33,10 @@ for(const dpr of [1,2])for(const viewport of [{width:1440,height:1000},{width:84
   const x=direction===1?stage.x+stage.width*.85:stage.x+stage.width*.15,y=b.y+b.height*.5;
   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x-direction*Math.max(160,stage.width*.7)*progress,y,{steps:8});await ready();
   const leaf=page.locator('[data-mobile-leaf]');assert.equal(await leaf.count(),1);
-  const pose=await leaf.evaluate(e=>({transform:getComputedStyle(e).transform,origin:getComputedStyle(e).transformOrigin,faces:[...e.children].map(f=>({transform:getComputedStyle(f).transform,page:f.querySelector('img')?.dataset.sourcePage,backface:getComputedStyle(f).backfaceVisibility}))}));
+  const pose=await leaf.evaluate(e=>({transform:getComputedStyle(e).transform,origin:getComputedStyle(e).transformOrigin,strips:[...e.querySelectorAll('[data-curl-strip]')].map(s=>getComputedStyle(s).transform),faces:[...e.querySelectorAll('[data-leaf-face]')].map(f=>({transform:getComputedStyle(f).transform,page:f.querySelector('img')?.dataset.sourcePage,backface:getComputedStyle(f).backfaceVisibility}))}));
   results.push({tag,direction,progress,pose});
-  const matrix=pose.transform.match(/matrix3d\((.*)\)/)?.[1].split(',').map(Number);
-  check(!!matrix && Math.abs(matrix[5]-1)<.00001,'turn must preserve full-height binding, not scale away from spine');
+  check(pose.strips.length>8 && pose.strips.every(t=>{const m=t.match(/matrix3d\((.*)\)/)?.[1].split(',').map(Number);return m && Math.abs(m[5]-1)<.00001;}),'deformed paper preserves full-height binding without whole-page scaling');
+  check(new Set(pose.strips).size>8,'paper deforms rather than rotating one rigid plane');
   const bounds=await leaf.boundingBox();
   check(Math.abs(bounds.y-b.y)<.2 && Math.abs(bounds.height-b.height)<.2,'turning sheet hinge stays attached at top and bottom');
   check(pose.faces.every(f=>f.backface==='hidden'),'both paper faces hide their mirrored reverse');

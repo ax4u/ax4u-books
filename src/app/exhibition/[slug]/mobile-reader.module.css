@@ -38,13 +38,15 @@
 .book[data-single="true"] .sheet, .book[data-single="true"] .leaf { width: 100%; left: 0; }
 .book img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .spine { position: absolute; z-index: 2; left: calc(50% - 2px); top: 0; bottom: 0; width: 4px; pointer-events: none; background: linear-gradient(90deg, transparent, #30271918, transparent); }
-.leaf { z-index: 3; transform-style: preserve-3d; will-change: transform; }
-.forward { left: 50%; transform-origin: left center; }
-.reverse { left: 0; transform-origin: right center; }
-.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #fffdf7; box-shadow: 0 5px 20px #0007; }
+.leaf { z-index: 3; transform-style: preserve-3d; pointer-events: none; }
+.forward, .reverse { left: 50%; }
+.strip { position: absolute; left: 0; top: 0; height: 100%; transform-origin: left center; transform-style: preserve-3d; }
+.face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #fffdf7; }
+.face img { position: absolute; top: 0; max-width: none; }
 .front { transform: rotateY(0deg); }
 .back { transform: rotateY(180deg); }
-.face::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, #30271930, transparent 9%, transparent 90%, #30271918); }
+.face::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: #23180f; opacity: var(--curl-shade, 0); }
+.castShadow { position: absolute; top: 0; height: 100%; z-index: 2; pointer-events: none; }
 .controls { flex: 0 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding-inline: 4px; }
 .controls label { display: flex; align-items: center; gap: 5px; font-size: 11px; }
 .controls output { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
