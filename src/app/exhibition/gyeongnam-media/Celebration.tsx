@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import styles from './celebration.module.css';
 
-const works = [
+const works: { id: string; title: string; author: string; lesson: string; width: number; height: number; coverOnly?: boolean }[] = [
   { id: 'ca24605388', title: '그 시절, 우리는 참 빛나고 있었다', author: '정옥선', lesson: '글씨 편집본', width: 1050, height: 1400 },
   { id: '1b3e7e3de913', title: '나의 화양연화', author: '이연수', lesson: '4차시', width: 987, height: 1401 },
   { id: 'cce6e31d30', title: '마음습관', author: '포근픽', lesson: '3차시', width: 990, height: 1400 },
@@ -15,7 +15,11 @@ const works = [
   { id: 'ec22c05071', title: '불이 켜지면 기억이 된다', author: '별이송송 (포구달빛)', lesson: '표지 수정본', width: 1050, height: 1400 },
   { id: 'a09bef66b4', title: '느려도 괜찮아', author: '황금복', lesson: '글씨 확대본', width: 1023, height: 1400 },
   { id: '83c4c7b4a4', title: '바람은 길을 가지고 있지 않아', author: '권원주 (보현화)', lesson: '완본', width: 990, height: 1400 },
+  { id: 'tomorrow', title: '내일 보관소', author: '김또이', lesson: '표지 전시', width: 1050, height: 1400, coverOnly: true },
+  { id: 'seasons', title: '내가 사랑한 계절들: 나를 찾아가는 시간', author: '오로라', lesson: '표지 전시', width: 1120, height: 1400, coverOnly: true },
+  { id: 'rumi-minji', title: '루미 and 민지의 화양연화', author: 'Ji-eun Park', lesson: '표지 전시', width: 933, height: 1400, coverOnly: true },
 ];
+const coverCount = works.filter(work => work.coverOnly).length;
 
 export default function Celebration() {
   const stage = useRef<HTMLElement>(null);
@@ -75,21 +79,21 @@ export default function Celebration() {
           <div className={styles.shapes} aria-hidden="true"><i /><i /><i /></div>
           <h2>우리의 이야기가<br /><em>책이 된 날.</em></h2>
           <p className={styles.message}>한 장의 상상에서, 한 권의 이야기로.<br />여러분의 디지털그림책 출판을 축하합니다.</p>
-          <p className={styles.names}>정옥선 · 이연수 · 포근픽 · 복기령<br />전나미 · 별이송송 · 황금복 · 권원주</p>
-          <div className={styles.edition}><span>PUBLICATION<br />CELEBRATION</span><span>서로 다른 이야기<br />플립북 {works.length}권</span></div>
+          <p className={styles.names}>정옥선 · 이연수 · 포근픽 · 복기령<br />전나미 · 별이송송 · 황금복 · 권원주<br />김또이 · 오로라 · Ji-eun Park</p>
+          <div className={styles.edition}><span>PUBLICATION<br />CELEBRATION</span><span>서로 다른 이야기<br />완성 플립북 {works.length - coverCount}권<br />표지 전시 {coverCount}작품 · 총 {works.length}작품</span></div>
         </header>
         <section className={styles.artGrid} aria-label="수강생 작품 전시">
           {works.map((work, index) => {
             return <article className={styles.work} key={work.id}>
-              <a href={`https://heyzine.com/flip-book/${work.id}.html`} target="_blank" rel="noopener noreferrer" aria-label={`${work.title} — 플립북 보기 (새 창)`}>
-                <div className={styles.cover}><span className={styles.number} aria-hidden="true">0{index + 1}</span><Image unoptimized src={`/exhibition-events/gyeongnam/${work.id}.webp`} alt={`${work.author}의 ${work.title} 표지`} width={work.width} height={work.height} sizes="(max-width: 700px) 44vw, 23vw" priority /></div>
-                <div className={styles.caption}><span>{work.author} <small>{work.lesson}</small></span><h3>{work.title}</h3><span className={styles.open}>책 펼치기 ↗</span></div>
+              <a href={work.coverOnly ? `/exhibition-events/gyeongnam/${work.id}.webp` : `https://heyzine.com/flip-book/${work.id}.html`} target="_blank" rel="noopener noreferrer" aria-label={`${work.title} — ${work.coverOnly ? '표지 보기' : '플립북 보기'} (새 창)`}>
+                <div className={styles.cover}><span className={styles.number} aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><Image unoptimized src={`/exhibition-events/gyeongnam/${work.id}.webp`} alt={`${work.author}의 ${work.title} 표지`} width={work.width} height={work.height} sizes="(max-width: 700px) 44vw, 23vw" priority /></div>
+                <div className={styles.caption}><span>{work.author} <small>{work.lesson}</small></span><h3>{work.title}</h3><span className={styles.open}>{work.coverOnly ? '표지 보기 ↗' : '책 펼치기 ↗'}</span></div>
               </a>
             </article>;
           })}
         </section>
       </div>
-      <div className={styles.bottomline}><span>각자의 속도로 쓴 이야기, 함께 펼치는 새로운 시작.</span><span>표지를 누르면 원본이 새 창에서 열립니다.</span></div>
+      <div className={styles.bottomline}><span>각자의 속도로 쓴 이야기, 함께 펼치는 새로운 시작.</span><span>완성책은 플립북, 표지 전시 작품은 표지만 새 창에서 열립니다.</span></div>
       <div className={styles.toolbar} hidden={hidden} aria-label="축하 화면 조작">
         <button ref={startButton} onClick={() => setRunning(!running)} aria-pressed={running}>{running ? '일시정지' : '축하 시작'}</button>
         <button onClick={toggleFullscreen}>{fullscreen || immersive ? '전체화면 나가기' : '전체화면'}</button>
