@@ -20,6 +20,8 @@
 .controls { border-top: 1px solid var(--ink); padding-top: 12px; }
 .buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
 .stage button { font: inherit; font-size: 12px; font-weight: 800; min-height: 44px; padding: 10px 16px; border: 1px solid var(--ink); color: var(--ink); background: var(--cream); cursor: pointer; }
+.volume { display: flex; align-items: center; gap: 8px; font-size: 12px; min-height: 44px; }
+.volume input { width: 100px; }
 .buttons button:first-child { color: var(--cream); background: var(--blue); }
 .stage button:hover:not(:disabled) { color: var(--ink); background: var(--yellow); }
 .stage button:disabled { opacity: .45; cursor: default; }
