@@ -67,7 +67,7 @@ export default function Celebration() {
           <h2>우리의 이야기가<br /><em>책이 된 날.</em></h2>
           <p><Link href="/exhibition/gyeongnam-media/ceremony">축하 세레머니 · 빵빠레와 함께 시작하기</Link></p>
           <p className={styles.message}>한 장의 상상에서, 한 권의 이야기로.<br />여러분의 디지털그림책 출판을 축하합니다.</p>
-          <p className={styles.names}>정옥선 · 이연수 · 포근픽 · 복기령<br />전나미 · 별이송송 · 황금복 · 권원주<br />김또이 · 오로라 · Ji-eun Park</p>
+          <p className={styles.names}>{[...new Set(works.map(work => work.author))].join(' · ')}</p>
           <div className={styles.edition}><span>PUBLICATION<br />CELEBRATION</span><span>서로 다른 이야기<br />완성 플립북 {works.length - coverCount}권<br />표지 전시 {coverCount}작품 · 총 {works.length}작품</span></div>
         </header>
         <section className={styles.artGrid} aria-label="수강생 작품 전시">

@@ -103,7 +103,9 @@ export default function Ceremony() {
     <div className={styles.composition}>
       <div className={styles.covers} aria-label="함께 완성한 이야기의 표지">
         {works.map(work => <figure key={work.id}>
-          <Image unoptimized priority src={`/exhibition-events/gyeongnam/${work.id}.webp`} alt={`${work.author}의 ${work.title} 표지`} width={work.width} height={work.height} />
+          <a href={work.coverOnly ? `/exhibition-events/gyeongnam/${work.id}.webp` : `https://heyzine.com/flip-book/${work.id}.html`} target="_blank" rel="noopener noreferrer" title={`${work.title} — ${work.author}`} aria-label={`${work.title} — ${work.coverOnly ? '표지 보기' : '플립북 보기'} (새 창)`}>
+            <Image unoptimized priority src={`/exhibition-events/gyeongnam/${work.id}.webp`} alt={`${work.author}의 ${work.title} 표지`} width={work.width} height={work.height} />
+          </a>
         </figure>)}
       </div>
       <header className={styles.message}>
