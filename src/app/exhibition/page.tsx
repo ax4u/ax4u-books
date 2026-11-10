@@ -40,6 +40,7 @@ export default function ExhibitionPage() {
           <div className={styles.heroActions}>
             <a href="#books" className={styles.primaryLink}>그림책 만나러 가기 <span aria-hidden="true">↓</span></a>
             <Link href="/exhibition/celebration" className={styles.primaryLink}>출판 축하 <span aria-hidden="true">✦</span></Link>
+            <Link href="/exhibition/gyeongnam-media" className={styles.primaryLink}>경남시청자미디어센터 출판 축하 <span aria-hidden="true">↗</span></Link>
             <a href="#reading-guide" className={styles.textLink}>천천히 읽는 법 <span aria-hidden="true">↗</span></a>
           </div>
           <p className={styles.heroNote}>로그인 없이 감상 · 공개가 승인된 그림책 {publishedBooks.length}권</p>
