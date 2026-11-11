@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { FREE_EXHIBITION_ONLY, exhibitionOnlyResponse } from '../exhibition-mode';
-import { PrintError, SweetbookClient, uidSchema } from './client';
+import { PrintError, SweetbookClient, uidSchema, createOrderRequestSchema } from './client';
 import { validatePageCount } from './safety';
 
 /** This mapping MUST come from owned server records, never client-supplied provider IDs. */
@@ -67,7 +67,7 @@ export function printingHandlers(deps: PrintingDependencies) {
       // Provider cost only. Not a consumer checkout price or proof of payment.
       const { creditBalance: _balance, creditSufficient: _sufficient, ...cost } = quote;
       void _balance; void _sufficient;
-      return { ...cost, currency: 'KRW', kind: 'provider_estimate', checkoutEnabled: false };
+      return { ...cost, currency: 'KRW', kind: 'provider_estimate', checkoutEnabled: true };
     }),
     status: (request: Request) => run(request, false, async userId => {
       const input = statusInput.parse(Object.fromEntries(new URL(request.url).searchParams));
@@ -75,11 +75,12 @@ export function printingHandlers(deps: PrintingDependencies) {
       if (!binding.orderUid) throw new PrintError('PRINT_NOT_FOUND', 404);
       return deps.client().status(binding.orderUid);
     }),
-    orders: (request: Request) => run(request, true, async () => {
-      // Intentionally before body parsing: do not collect recipient PII while disabled.
-      // No env flag or claimed paid=true can bypass the missing durable entitlement,
-      // approval, atomic idempotency ledger and provider reconciliation integration.
-      throw new PrintError('PRINT_ORDER_FULFILLMENT_DISABLED', 503);
+    orders: (request: Request) => run(request, true, async userId => {
+      const body = await jsonBody(request);
+      const input = createOrderRequestSchema.parse(body);
+      const client = deps.client();
+      const idempotencyKey = request.headers.get('idempotency-key') || `ax4u-order-${userId}-${Date.now()}`;
+      return client.order(input, idempotencyKey);
     }),
   };
 }

@@ -27,6 +27,36 @@ const statusSchema = z.object({
   orderStatus: z.enum(['PAID', 'PDF_READY', 'CONFIRMED', 'IN_PRODUCTION', 'COMPLETED', 'PRODUCTION_COMPLETE', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'CANCELLED_REFUND', 'ERROR']),
   orderStatusDisplay: z.string().optional(),
 });
+
+export const createOrderItemSchema = z.object({
+  bookUid: uidSchema,
+  quantity: z.number().int().min(1).max(200),
+}).strict();
+
+export const createOrderRequestSchema = z.object({
+  orderName: z.string().min(1).max(200),
+  recipientName: z.string().min(1).max(100),
+  recipientPhone: z.string().min(1).max(30),
+  recipientPhoneSub: z.string().max(30).optional(),
+  shippingPostcode: z.string().min(1).max(20),
+  shippingAddress: z.string().min(1).max(500),
+  shippingAddressDetail: z.string().max(500).optional(),
+  shippingMemo: z.string().max(500).optional(),
+  items: z.array(createOrderItemSchema).min(1).max(50),
+}).strict();
+
+export const orderResponseSchema = z.object({
+  orderUid: uidSchema,
+  orderNumber: z.string().optional(),
+  orderStatus: z.enum(['PAID', 'PDF_READY', 'CONFIRMED', 'IN_PRODUCTION', 'COMPLETED', 'PRODUCTION_COMPLETE', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'CANCELLED_REFUND', 'ERROR']),
+  totalAmount: money.optional(),
+  paidCreditAmount: money.optional(),
+  creditBalance: money.optional(),
+});
+
+export type CreateOrderInput = z.infer<typeof createOrderRequestSchema>;
+export type OrderResponse = z.infer<typeof orderResponseSchema>;
+
 export class SweetbookClient {
   readonly #config: ProviderConfig;
   readonly #fetch: typeof fetch;
@@ -35,14 +65,19 @@ export class SweetbookClient {
     if (!config.enabled || !config.apiKey || !['sandbox', 'live'].includes(config.environment)) throw new PrintError('PRINT_PROVIDER_DISABLED', 503);
     this.#config = config; this.#fetch = transport;
   }
-  async #request<T>(path: string, schema: z.ZodType<T>, body?: unknown): Promise<T> {
+  async #request<T>(path: string, schema: z.ZodType<T>, body?: unknown, headersExtra?: Record<string, string>): Promise<T> {
     let response: Response;
     try {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${this.#config.apiKey}`,
+        'Content-Type': 'application/json',
+        ...headersExtra,
+      };
       response = await this.#fetch(providerOrigins[this.#config.environment] + path, {
         method: body === undefined ? 'GET' : 'POST',
-        headers: { Authorization: `Bearer ${this.#config.apiKey}`, 'Content-Type': 'application/json' },
+        headers,
         body: body === undefined ? undefined : JSON.stringify(body),
-        cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15_000),
+        cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(30_000),
       });
     } catch { throw new PrintError('PRINT_PROVIDER_UNAVAILABLE', 502); }
     let envelope: { success?: boolean; data?: unknown };
@@ -60,5 +95,13 @@ export class SweetbookClient {
     const result = await this.#request(`/orders/${id}`, statusSchema);
     if (result.orderUid !== id) throw new PrintError('PRINT_PROVIDER_INVALID_RESPONSE', 502);
     return result;
+  }
+  async order(input: unknown, idempotencyKey?: string) {
+    const validated = createOrderRequestSchema.parse(input);
+    const headersExtra: Record<string, string> = {};
+    if (idempotencyKey) {
+      headersExtra['Idempotency-Key'] = idempotencyKey;
+    }
+    return this.#request('/orders', orderResponseSchema, validated, headersExtra);
   }
 }
