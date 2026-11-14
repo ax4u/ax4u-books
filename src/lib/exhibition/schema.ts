@@ -9,6 +9,7 @@ export const approvedTitles = [
   "보리의 첫 물놀이",
   "후추&베리",
   "수수의 팝콘 가게",
+  "별빛을 건너는 우주여행",
 ] as const;
 
 const asset = z.string().regex(/^\/published-exhibition\/[a-z0-9]+(?:-[a-z0-9]+)*\/[a-z0-9][a-z0-9.-]*\.(?:webp|pdf)$/);

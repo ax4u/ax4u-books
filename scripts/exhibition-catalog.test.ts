@@ -8,11 +8,11 @@ const fixture = () => approvedTitles.map((title, i) => {
   const page = { src: `/published-exhibition/${slug}/cover.webp`, width: 600, height: 800, label: '앞표지' };
   return { slug, title, description: '테스트 전용 소개', author: '테스트 전용 저자', cover: page, readingPdf: `/published-exhibition/${slug}/reading.pdf`, pages: [page, { ...page, src: `/published-exhibition/${slug}/page-1.webp`, label: '본문 1쪽' }] };
 });
-test('empty preparation state and all eight approved works validate', () => {
-  assert.equal(approvedTitles.length, 8);
+test('empty preparation state and all nine approved works validate', () => {
+  assert.equal(approvedTitles.length, 9);
   assert.equal(exhibitionCatalogSchema.parse([]).length, 0);
-  assert.equal(exhibitionCatalogSchema.parse(fixture()).length, 8);
-  assert.equal(exhibitionCatalogSchema.parse(fixture().map(({ readingPdf, ...book }) => { void readingPdf; return book; })).length, 8);
+  assert.equal(exhibitionCatalogSchema.parse(fixture()).length, 9);
+  assert.equal(exhibitionCatalogSchema.parse(fixture().map(({ readingPdf, ...book }) => { void readingPdf; return book; })).length, 9);
 });
 test('cover page index is independent, legacy defaults to first, and invalid selections fail', () => {
   const books = fixture().map(book => ({ ...book, coverPageIndex: 1, cover: book.pages[1] }));

@@ -1798,5 +1798,67 @@
         "label": "원본 30쪽"
       }
     ]
+  },
+  {
+    "slug": "monet-sangmung-space-trip",
+    "title": "별빛을 건너는 우주여행",
+    "description": "모네 인상파 화풍의 별밤 아래, 모네 캐릭터와 상멍이가 별빛으로 만든 배를 타고 우주로 떠나는 8쪽 그림책입니다. 짙은 밤안개가 길을 삼켜도 서로의 마음이 빛나는 동안은 길을 잃지 않는다는 이야기를 담았습니다.",
+    "author": "글·그림 김동구(빌더갈릭) · AI",
+    "cover": {
+      "src": "/published-exhibition/monet-sangmung-space-trip/page-000.webp",
+      "width": 1273,
+      "height": 1800,
+      "label": "앞표지"
+    },
+    "pages": [
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-000.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "앞표지"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-001.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "본문 1쪽"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-002.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "본문 2쪽"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-003.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "본문 3쪽"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-004.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "본문 4쪽"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-005.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "본문 5쪽"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-006.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "본문 6쪽"
+      },
+      {
+        "src": "/published-exhibition/monet-sangmung-space-trip/page-007.webp",
+        "width": 1273,
+        "height": 1800,
+        "label": "뒤표지"
+      }
+    ]
   }
 ]

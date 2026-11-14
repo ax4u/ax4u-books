@@ -23,7 +23,7 @@ async function main() {
     hashes[src] = createHash('sha256').update(data).digest('hex');
     return data;
   }
-  const pageCounts: Record<string, number> = { 'love-treatment-epilogue': 43, 'mom-dreamed-grownup': 27, 'sangmung-haeon-back-to-sea': 65, 'buildergarlic-garlic-robot-alli': 16, 'sangmung-paper-boat-promise': 35, 'bori-first-water-play': 29, 'team04-huchu-berry': 34, 'susu-popcorn-shop': 30 };
+  const pageCounts: Record<string, number> = { 'love-treatment-epilogue': 43, 'mom-dreamed-grownup': 27, 'sangmung-haeon-back-to-sea': 65, 'buildergarlic-garlic-robot-alli': 16, 'sangmung-paper-boat-promise': 35, 'bori-first-water-play': 29, 'team04-huchu-berry': 34, 'susu-popcorn-shop': 30, 'monet-sangmung-space-trip': 8 };
   for (const book of publishedBooks) {
     assert.equal(book.pages.length, pageCounts[book.slug], 'approved page count');
     for (const [index, page] of book.pages.entries()) {
