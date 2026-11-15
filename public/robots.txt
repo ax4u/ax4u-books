@@ -1,0 +1,15 @@
+#DaumWebMasterTool:1de2b70432ccb60b57d00fd8e22e42cc152c0dacdad06015b08d01e2a499862b:CNSJIIGOISrSV2aL3hPlgQ==
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /login
+Disallow: /dashboard
+Disallow: /books/
+Disallow: /create
+Disallow: /printing/
+Disallow: /my-whale
+Disallow: /exhibition/planet-friends
+
+Sitemap: https://gobibi.art/sitemap.xml
