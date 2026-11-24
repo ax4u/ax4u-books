@@ -256,10 +256,10 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
         alt: region.name,
       })
         .bindPopup(popupHtml(region.id))
-        .bindTooltip(`${isPort ? "⚓ " : ""}${region.short}`, {
+        .bindTooltip(`${isPort ? "⚓ " : ""}${region.label}`, {
           permanent: true,
-          direction: "bottom",
-          offset: [0, 14],
+          direction: index % 2 === 0 ? "bottom" : "top",
+          offset: [0, index % 2 === 0 ? 12 : -12],
           className: "jm-label",
         })
         .addTo(ctx.groups.regions);

@@ -17,6 +17,7 @@ export type Region = {
   id: string;
   name: string;
   short: string;
+  label: string;
   lat: number;
   lon: number;
   radius: number;
@@ -85,6 +86,7 @@ export const REGIONS: Region[] = [
     id: "sokcheon",
     name: "속천항 · 행암만",
     short: "속천항·행암만",
+    label: "속천항",
     lat: 35.136,
     lon: 128.672,
     radius: 2100,
@@ -100,6 +102,7 @@ export const REGIONS: Region[] = [
     id: "myeongdong",
     name: "명동 · 음지도 · 우도 물골",
     short: "명동·우도 물골",
+    label: "명동",
     lat: 35.095,
     lon: 128.711,
     radius: 2300,
@@ -115,6 +118,7 @@ export const REGIONS: Region[] = [
     id: "yongwon",
     name: "용원항 · 가덕수로",
     short: "용원항·가덕수로",
+    label: "용원항",
     lat: 35.085,
     lon: 128.808,
     radius: 2600,
@@ -130,6 +134,7 @@ export const REGIONS: Region[] = [
     id: "gadeok",
     name: "가덕도 남단 · 외양포 · 대항항",
     short: "가덕도 남단",
+    label: "가덕 남단",
     lat: 35.002,
     lon: 128.822,
     radius: 3200,
@@ -145,6 +150,7 @@ export const REGIONS: Region[] = [
     id: "okpo",
     name: "거제 옥포만 · 외포",
     short: "거제 옥포·외포",
+    label: "옥포",
     lat: 34.91,
     lon: 128.708,
     radius: 2500,
@@ -160,6 +166,7 @@ export const REGIONS: Region[] = [
     id: "masan",
     name: "마산만 · 진동만",
     short: "마산만·진동만",
+    label: "진동만",
     lat: 35.115,
     lon: 128.535,
     radius: 3000,
@@ -175,6 +182,7 @@ export const REGIONS: Region[] = [
     id: "jaran",
     name: "고성 하이면 · 자란만",
     short: "고성 자란만",
+    label: "자란만",
     lat: 34.918,
     lon: 128.148,
     radius: 2600,
