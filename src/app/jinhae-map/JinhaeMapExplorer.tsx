@@ -165,12 +165,13 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
           groups[key] = L.layerGroup().addTo(map);
         }
         mapCtx.current = { map, bases, currentBase: "ocean", groups };
+        map.invalidateSize();
         map.fitBounds(
           [
             [34.895, 128.1],
             [35.17, 128.87],
           ],
-          { padding: [22, 22], maxZoom: 10 },
+          { padding: [22, 22], maxZoom: 10, animate: false },
         );
         setMapReady(true);
       })
