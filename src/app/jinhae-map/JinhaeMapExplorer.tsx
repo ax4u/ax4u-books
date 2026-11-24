@@ -350,12 +350,17 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
     }
     const region = regionById(regionId);
     document.getElementById("map")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
-    ctx.map.flyTo([region.lat, region.lon], 11, { duration: prefersReducedMotion() ? 0 : 0.7 });
     const L = (window as any).L;
-    L.popup({ className: "jm-popup", offset: [0, -4] })
+    const popup = L.popup({ className: "jm-popup", offset: [0, -4] })
       .setLatLng([region.lat, region.lon])
-      .setContent(popupHtml(regionId))
-      .openOn(ctx.map);
+      .setContent(popupHtml(regionId));
+    if (prefersReducedMotion()) {
+      ctx.map.setView([region.lat, region.lon], 11, { animate: false });
+      popup.openOn(ctx.map);
+      return;
+    }
+    ctx.map.once("moveend", () => popup.openOn(ctx.map));
+    ctx.map.flyTo([region.lat, region.lon], 11, { duration: 0.7 });
   };
 
   const togglePrey = (id: string) => {

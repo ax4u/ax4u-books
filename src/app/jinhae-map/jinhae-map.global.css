@@ -43,6 +43,8 @@
 .jm-map .leaflet-popup-content {
   margin: 15px 17px;
   width: 236px !important;
+  max-height: 300px;
+  overflow-y: auto;
   font-size: 12px;
   line-height: 1.7;
 }
