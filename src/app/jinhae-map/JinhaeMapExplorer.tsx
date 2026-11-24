@@ -29,7 +29,7 @@ const BASES: { id: BaseId; label: string; url: string; attribution: string; maxN
     label: "바다 지도",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles © Esri — GEBCO, NOAA, National Geographic, HERE",
-    maxNativeZoom: 13,
+    maxNativeZoom: 10,
   },
   {
     id: "satellite",
@@ -170,7 +170,7 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
             [34.895, 128.1],
             [35.17, 128.87],
           ],
-          { padding: [22, 22] },
+          { padding: [22, 22], maxZoom: 10 },
         );
         setMapReady(true);
       })
@@ -240,18 +240,18 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
 
     // 출항지
     PORTS.forEach((port) => {
-      L.marker([port.lat, port.lon], {
+      L.marker([port.lat - 0.005, port.lon + 0.0015], {
         icon: L.divIcon({
           className: "",
           html: '<span class="jm-port" aria-hidden="true">⚓</span>',
-          iconSize: [32, 32],
-          iconAnchor: [16, 30],
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
         }),
         keyboard: false,
         title: `출항지 · ${port.name}`,
         alt: `출항지 ${port.name}`,
       })
-        .bindTooltip(`출항지 · ${port.name}`, { direction: "top", offset: [0, -26], className: "jm-tip" })
+        .bindTooltip(`출항지 · ${port.name}`, { direction: "top", offset: [0, -12], className: "jm-tip" })
         .addTo(ctx.groups.ports);
     });
 
@@ -480,7 +480,7 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
                 </p>
                 <div className={styles.resultFacts}>
                   <div className={styles.fact}>
-                    <span className={styles.factLabel}>그 달의 먹이</span>
+                    <span className={styles.factLabel}>이 수역의 먹이</span>
                     <div className={styles.preyChips}>
                       {resultSpecies.map((prey) => (
                         <span key={prey.id} className={styles.preyChip}>

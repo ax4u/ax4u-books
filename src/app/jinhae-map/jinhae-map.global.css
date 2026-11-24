@@ -100,13 +100,13 @@
 .jm-port {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 1.5px solid #12375a;
-  border-radius: 50% 50% 50% 8px;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid #fff9e9;
+  border-radius: 50%;
   background: #1649dd;
   color: #fff9e9;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1;
   box-shadow: 0 2px 0 #12375a33;
 }

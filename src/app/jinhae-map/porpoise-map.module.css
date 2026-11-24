@@ -256,7 +256,7 @@
 .chart { display: grid; grid-template-columns: repeat(12, minmax(34px, 1fr)); gap: 7px; align-items: end; min-width: 470px; height: 168px; }
 .barButton { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; height: 100%; padding: 0; border: 0; background: none; font-family: inherit; }
 .barValue { font-size: 9px; font-weight: 900; color: #1649dd; line-height: 1; }
-.barTrack { display: flex; align-items: flex-end; height: 100%; }
+.barTrack { display: flex; align-items: flex-end; height: 116px; }
 .barFill { width: 100%; border: 1px solid #12375a3d; border-radius: 9px 9px 4px 4px; background: var(--mint); transition: background .15s; }
 .barButton:hover .barFill { background: var(--butter); }
 .barButton[aria-pressed="true"] .barFill { background: var(--butter); border-color: var(--ink); box-shadow: 0 2px 0 #12375a33; }
@@ -328,8 +328,8 @@
 }
 .legend {
   position: absolute;
-  left: 14px;
-  bottom: 14px;
+  top: 14px;
+  right: 14px;
   z-index: 500;
   max-width: 226px;
   padding: 10px 12px;
@@ -516,11 +516,12 @@
   .alts { grid-template-columns: 1fr; }
   .resultFacts { gap: 8px 12px; }
   .chartCard { padding: 16px 14px 12px; }
-  .chart { height: 148px; min-width: 430px; }
+  .chart { height: auto; min-width: 430px; }
+  .barTrack { height: 96px; }
   .mapFrame { height: 420px; }
   .mapToolbar { padding: 11px 12px; }
   .speciesChip { min-height: 32px; padding: 5px 9px; font-size: 10px; }
-  .legend { left: 8px; bottom: 8px; max-width: 180px; padding: 8px 9px; font-size: 8px; }
+  .legend { top: 8px; right: 8px; max-width: 150px; padding: 8px 9px; font-size: 8px; }
   .mapNote { padding: 10px 12px 12px; font-size: 9px; }
   .regionGrid { grid-template-columns: 1fr; gap: 12px; }
   .ruleGrid { grid-template-columns: 1fr; gap: 22px; }
@@ -534,4 +535,8 @@
   .stat strong { font-size: 30px; }
   .stat span { font-size: 9.5px; }
   .heroNote { font-size: 10px; }
+}
+
+@media (max-width: 600px) {
+  .legend { display: none; }
 }
