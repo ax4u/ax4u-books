@@ -1,0 +1,134 @@
+/* 진해 바다 지도 — Leaflet 전용 스타일 (전역) */
+.jm-map.leaflet-container {
+  font-family: var(--font-nanum-gothic), Arial, sans-serif;
+  background: #c8edf1;
+  color: #12375a;
+  z-index: 0;
+}
+
+.jm-map .leaflet-bar {
+  border: 1px solid #12375a !important;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 0 #12375a22;
+}
+.jm-map .leaflet-bar a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  background: #fff9e9;
+  color: #12375a;
+  border-bottom-color: #12375a55;
+}
+.jm-map .leaflet-bar a:hover { background: #ffe78c; }
+.jm-map .leaflet-control-attribution {
+  background: #fff9e9d9;
+  color: #35536a;
+  font-size: 9px;
+  padding: 2px 6px;
+}
+.jm-map .leaflet-control-attribution a { color: #1649dd; }
+
+.jm-map .leaflet-popup-content-wrapper {
+  border: 1px solid #12375a;
+  border-radius: 18px;
+  background: #fffdf5;
+  color: #12375a;
+  box-shadow: 0 8px 0 #12375a1a;
+}
+.jm-map .leaflet-popup-tip {
+  background: #fffdf5;
+  border: 1px solid #12375a;
+}
+.jm-map .leaflet-popup-content {
+  margin: 15px 17px;
+  width: 236px !important;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.jm-map .leaflet-popup-close-button { color: #12375a; font-size: 20px; padding: 6px 8px 0 0; }
+
+.jm-popup-name { margin: 0 0 4px; font-size: 15px; font-weight: 900; letter-spacing: -.03em; }
+.jm-popup-meta { margin: 0 0 8px; color: #1649dd; font-size: 10px; font-weight: 800; letter-spacing: .02em; }
+.jm-popup-body { margin: 0 0 8px; color: #35536a; font-size: 11px; line-height: 1.75; }
+.jm-popup-tip { margin: 0; padding-top: 8px; border-top: 1px solid #12375a30; font-size: 10px; line-height: 1.7; }
+.jm-popup-score { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 4px 10px; border: 1px solid #12375a; border-radius: 100px; background: #ffe78c; font-size: 10px; font-weight: 900; }
+
+.jm-map .jm-tip {
+  border: 1px solid #12375a;
+  border-radius: 100px;
+  background: #fff9e9;
+  color: #12375a;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  box-shadow: none;
+}
+.jm-map .jm-tip::before { display: none; }
+
+.jm-map .jm-label {
+  border: 0;
+  border-radius: 100px;
+  background: #fff9e9cc;
+  color: #12375a;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  padding: 2px 7px;
+  box-shadow: 0 1px 0 #12375a22;
+  white-space: nowrap;
+}
+.jm-map .jm-label::before { display: none; }
+
+.jm-num {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid #12375a;
+  border-radius: 50%;
+  background: #fff9e9;
+  color: #12375a;
+  font-family: var(--font-nanum-gothic), sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 2px 0 #12375a22;
+}
+.jm-num.is-best { background: #ffe78c; border-width: 2px; }
+
+.jm-port {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid #12375a;
+  border-radius: 50% 50% 50% 8px;
+  background: #1649dd;
+  color: #fff9e9;
+  font-size: 15px;
+  line-height: 1;
+  box-shadow: 0 2px 0 #12375a33;
+}
+
+.jm-arrow {
+  display: block;
+  color: var(--c, #12375a);
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 3px #fff9e9, 0 0 3px #fff9e9;
+}
+.jm-arrow.is-route { font-size: 16px; color: #1649dd; text-shadow: 0 0 4px #fff9e9; }
+
+.jm-flow { stroke-dasharray: 6 9; animation: jmFlow 1.8s linear infinite; }
+@keyframes jmFlow { to { stroke-dashoffset: -30; } }
+
+@media (max-width: 760px) {
+  .jm-map .leaflet-popup-content { width: 210px !important; font-size: 11px; }
+  .jm-map .jm-label { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jm-flow { animation: none; }
+}
