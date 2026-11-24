@@ -238,26 +238,12 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
       .bindTooltip("상괭이 해양생물보호구역(약 2.1㎢) · 외곽 300m 이상", { className: "jm-tip" })
       .addTo(ctx.groups.protected);
 
-    // 출항지
-    PORTS.forEach((port) => {
-      L.marker([port.lat - 0.005, port.lon + 0.0015], {
-        icon: L.divIcon({
-          className: "",
-          html: '<span class="jm-port" aria-hidden="true">⚓</span>',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-        }),
-        keyboard: false,
-        title: `출항지 · ${port.name}`,
-        alt: `출항지 ${port.name}`,
-      })
-        .bindTooltip(`출항지 · ${port.name}`, { direction: "top", offset: [0, -12], className: "jm-tip" })
-        .addTo(ctx.groups.ports);
-    });
-
-    // 수역 번호 핀
+    // 수역 번호 핀 (출항지와 같은 자리면 ⚓로 표시)
     REGIONS.forEach((region, index) => {
       const isBest = region.id === bestId;
+      const isPort = PORTS.some(
+        (port) => Math.abs(port.lat - region.lat) < 0.002 && Math.abs(port.lon - region.lon) < 0.002,
+      );
       L.marker([region.lat, region.lon], {
         icon: L.divIcon({
           className: "",
@@ -270,7 +256,12 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
         alt: region.name,
       })
         .bindPopup(popupHtml(region.id))
-        .bindTooltip(region.short, { permanent: true, direction: "bottom", offset: [0, 14], className: "jm-label" })
+        .bindTooltip(`${isPort ? "⚓ " : ""}${region.short}`, {
+          permanent: true,
+          direction: "bottom",
+          offset: [0, 14],
+          className: "jm-label",
+        })
         .addTo(ctx.groups.regions);
     });
 
@@ -632,8 +623,8 @@ export default function JinhaeMapExplorer({ initialMonth }: { initialMonth: numb
                 상괭이 기대 밀도({monthLabel(month)})
               </span>
               <span className={styles.legendItem}>
-                <span className={styles.legendSwatch} style={{ background: "#12375a", borderRadius: "50% 50% 50% 2px" }} />
-                출항지 · 번호가 수역
+                <span className={styles.legendSwatch} style={{ background: "#1649dd" }} />
+                번호가 수역 · ⚓는 출항지
               </span>
               <span className={styles.legendItem}>
                 <span className={styles.legendSwatch} style={{ background: "#bb5a6b", opacity: 0.35 }} />

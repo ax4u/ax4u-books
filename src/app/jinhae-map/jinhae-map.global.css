@@ -97,20 +97,6 @@
 }
 .jm-num.is-best { background: #ffe78c; border-width: 2px; }
 
-.jm-port {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1.5px solid #fff9e9;
-  border-radius: 50%;
-  background: #1649dd;
-  color: #fff9e9;
-  font-size: 14px;
-  line-height: 1;
-  box-shadow: 0 2px 0 #12375a33;
-}
-
 .jm-arrow {
   display: block;
   color: var(--c, #12375a);
